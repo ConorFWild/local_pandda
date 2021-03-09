@@ -12,7 +12,8 @@ from scipy import spatial as spsp, ndimage as spn, signal as spsi, cluster as sp
 import pandas as pd
 import gemmi
 from sklearn import neighbors
-from rdkit import Chem, AllChem
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 # Custom
 from local_pandda.constants import Constants
