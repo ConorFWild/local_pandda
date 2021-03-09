@@ -992,7 +992,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
 
     # Optimise the scale factor
     for scale in np.linspace(-10, 10, 100):
-        y_s = y * np.exp(scale * r)
+        # y_s = y_s * np.exp(scale * r)
         #
         # knn_y = neighbors.RadiusNeighborsRegressor(0.01)
         # knn_y.fit(r.reshape(-1, 1),
@@ -1000,12 +1000,14 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
         #           )
         # y_f = knn_y.predict(sample_grid[:, np.newaxis]).reshape(-1)
 
+        y_s_sorted = y_sorted * np.exp(scale * r_sorted)
+
         # approximate y_f
         former_sample_point = sample_grid[0]
         y_f_list = []
         for sample_point in sample_grid[1:]:
             mask = (r_sorted<sample_point)*(r_sorted>former_sample_point)
-            y_vals = y_sorted[mask]
+            y_vals = y_s_sorted[mask]
             former_sample_point = sample_point
             y_f_list.append(np.mean(y_vals))
         y_f = np.array(y_f_list)
