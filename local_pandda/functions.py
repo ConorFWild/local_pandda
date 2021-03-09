@@ -371,12 +371,18 @@ def get_datasets(
         structure_regex: str,
         reflections_regex: str,
         smiles_regex: str,
+        debug: bool = True,
 ) -> MutableMapping[str, Dataset]:
     datasets: MutableMapping[str, Dataset] = {}
 
     # Iterate over the paths
     for directory in data_dir.glob("*"):
+        if debug:
+            print(f"\tChecking directoy {directory} for data...")
+
         if directory.is_dir():
+            if debug:
+                print(f"\t\t{directory} is a directory. Checking for regexes: {structure_regex}, {reflections_regex} and {smiles_regex}")
             dtag = directory.name
             structure_path: Optional[Path] = get_path_from_regex(directory, structure_regex)
             reflections_path: Optional[Path] = get_path_from_regex(directory, reflections_regex)
@@ -402,6 +408,8 @@ def get_datasets(
                 datasets[dtag] = dataset
 
             else:
+                if debug:
+                    print(f"\t\t{directory} Lacks either a structure or reflections. Skipping")
                 continue  # Continue if no structure or reflection
 
         else:
