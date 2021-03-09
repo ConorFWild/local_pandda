@@ -70,6 +70,7 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
 
         structure: gemmi.Structure = gemmi.Structure()
         model: gemmi.Model = gemmi.Model(f"{i}")
+        chain: gemmi.Chain = gemmi.Chain(f"{i}")
         residue: gemmi.Residue = gemmi.Residue()
 
         # Get the sequence id
@@ -96,7 +97,8 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
             # Add atom to residue
             residue.add_atom(gemmi_atom)
 
-        model.add_residue(residue)
+        chain.add_residue(residue)
+        model.add_chain(chain)
         structure.add_model(model)
 
         fragment_structures[i] = structure
