@@ -1,5 +1,5 @@
 from typing import *
-from datatypes import *
+from local_pandda.datatypes import *
 from pathlib import Path
 import re
 import itertools
