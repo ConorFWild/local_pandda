@@ -72,6 +72,11 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
         model: gemmi.Model = gemmi.Model(f"{i}")
         residue: gemmi.Residue = gemmi.Residue()
 
+        # Get the sequence id
+        # seqid: gemmi.SeqId = gemmi.SeqId(j, ' ')
+        # gemmi_atom.seqid = seqid
+        # gemmi_atom.seqid = seqid
+
         # Loop over atoms, adding them to a gemmi residue
         for j, atom in enumerate(mol.GetAtoms()):
             # Get the atomic symbol
@@ -82,15 +87,11 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
             pos: np.ndarray = positions[j, :]
             gemmi_pos: gemmi.Position = gemmi.Position(pos[0], pos[1], pos[2])
 
-            # Get the sequence id
-            seqid: gemmi.SeqId = gemmi.SeqId(j, ' ')
-
             # Get the
             gemmi_atom: gemmi.Atom = gemmi.Atom()
             gemmi_atom.name = atom_symbol
             gemmi_atom.pos = gemmi_pos
             gemmi_atom.element = gemmi_element
-            gemmi_atom.seqid = seqid
 
             # Add atom to residue
             residue.add_atom(gemmi_atom)
