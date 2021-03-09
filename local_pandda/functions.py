@@ -68,9 +68,9 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
     for i, conformer in enumerate(mol.GetConformers()):
         positions: np.ndarray = conformer.GetPositions()
 
-        structure: gemmi.Structure = gemmi.Structure(f"{i}")
-        model: gemmi.Model = gemmi.Model(f"{i}")
-        residue: gemmi.Residue = gemmi.Residue(f"{i}")
+        structure: gemmi.Structure = gemmi.Structure()
+        model: gemmi.Model = gemmi.Model()
+        residue: gemmi.Residue = gemmi.Residue()
 
         # Loop over atoms, adding them to a gemmi residue
         for j, atom in enumerate(mol.GetAtoms()):
