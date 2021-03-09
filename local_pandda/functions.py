@@ -8,7 +8,7 @@ import dataclasses
 # 3rd party
 import numpy as np
 import scipy
-from scipy import spatial as spsp, ndimage as spn, signal as spsi, cluster as spc, distance as spd
+from scipy import spatial as spsp, ndimage as spn, signal as spsi, cluster as spc
 import pandas as pd
 import gemmi
 from sklearn import neighbors
@@ -219,7 +219,7 @@ def get_comparator_datasets(
 
     # Get the cophenetic distances
     cophenetic_distances_reduced: np.ndarray = scipy.cluster.hierarchy.cophenet(linkage)
-    cophenetic_distances: np.ndarray = spd.squareform(cophenetic_distances_reduced)
+    cophenetic_distances: np.ndarray = spsp.distance.squareform(cophenetic_distances_reduced)
     distances_from_dataset: np.ndarray = cophenetic_distances[dataset_index, :]
 
     # Find the closest apo cluster
