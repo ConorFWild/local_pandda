@@ -105,7 +105,7 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
 
 def get_fragment_structures(smiles_path: Path) -> MutableMapping[int, Chem.Mol]:
     # Load the mol
-    m: Chem.Mol = Chem.MolFromMolFile('data/input.mol')
+    m: Chem.Mol = Chem.MolFromMolFile(str(smiles_path))
 
     # Generate conformers
     m2: Chem.Mol = Chem.AddHs(m)
