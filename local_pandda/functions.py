@@ -943,7 +943,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     reference_f_array = reference_reflections_table[structure_factors.f].to_numpy()
 
     # Dtag array
-    dtag_reflections = truncated_dataset.reflections.reflections
+    dtag_reflections = truncated_dataset
     dtag_reflections_array = np.array(dtag_reflections,
                                       copy=True,
                                       )
