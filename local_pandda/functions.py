@@ -574,6 +574,8 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
                     dataset_res = dataset.structure[current_res_id][0]
                     dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
+                    if debug:
+                        print(f"\t\tAlignment exception: {e}")
                     continue
 
                 residue_id: ResidueID = get_residue_id(model, chain, ref_res)
@@ -610,6 +612,8 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
                     dataset_res = dataset.structure[current_res_id][0]
                     dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
+                    if debug:
+                        print(f"\t\tAlignment exception: {e}")
                     continue
 
 
