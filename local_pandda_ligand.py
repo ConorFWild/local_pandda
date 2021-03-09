@@ -49,6 +49,7 @@ from local_pandda.functions import (
     print_dataset_summary,
     print_params,
     get_failed_affinity_event,
+    save_mtz,
 )
 
 
@@ -97,6 +98,9 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
         reference_dataset,
         params.structure_factors,
     )
+    if params.output_smoothed_mtzs:
+        for dtag, smoothed_dataset in smoothed_datasets.items():
+            save_mtz(smoothed_dataset.reflections, out_dir / f"{smoothed_dataset.dtag}_smoothed.mtz")
 
     # Find the alignments between the reference and all other datasets
     alignments: MutableMapping[str, Alignment] = get_alignments(smoothed_datasets, reference_dataset)
@@ -104,6 +108,9 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
     # Loop over the residues, sampling the local electron density
     pandda_results: PanDDAAffinityResults = PanDDAAffinityResults()
     for residue_id, residue_datasets in iterate_residues(datasets, reference_dataset):
+        if params.debug:
+            print(f"Processing residue: {residue_id}")
+
         # TODO: REMOVE THIS DEBUG CODE
         if params.debug:
             if residue_id.insertion != 260:
@@ -154,6 +161,9 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
         # If none can be found, make a note of it, and proceed to next dataset
         residue_results: ResidueAffinityResults = ResidueAffinityResults()
         for dataset_index, dtag in enumerate(truncated_datasets):
+            if params.debug:
+                print(f"\tProcessing dataset: {dtag}")
+
             # TODO: REMOVE THIS DEBUG CODE
             if params.debug:
                 if dtag != "HAO1A-x0604":

@@ -158,6 +158,9 @@ class Params:
     min_correlation: float = 0.1
     pruning_threshold: float = 1.5
 
+    # output
+    output_smoothed_mtzs: bool = True
+
     def update(self, **kwargs):
         for key, value in kwargs.items():
 
@@ -189,6 +192,10 @@ class Params:
                 self.min_correlation = value
             elif key == "pruning_threshold":
                 self.pruning_threshold = value
+
+            # output
+            elif key == "output_smoothed_mtz":
+                self.output_smoothed_mtzs = value
 
             # Unknown argument handling
             else:

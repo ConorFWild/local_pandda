@@ -965,25 +965,50 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     r = resolution_array
 
     sample_grid = np.linspace(min(r), max(r), 100)
-
-    knn_x = neighbors.RadiusNeighborsRegressor(0.01)
-    knn_x.fit(r.reshape(-1, 1),
-              x.reshape(-1, 1),
-              )
-    x_f = knn_x.predict(sample_grid[:, np.newaxis]).reshape(-1)
+    #
+    # knn_x = neighbors.RadiusNeighborsRegressor(0.01)
+    # knn_x.fit(r.reshape(-1, 1),
+    #           x.reshape(-1, 1),
+    #           )
+    # x_f = knn_x.predict(sample_grid[:, np.newaxis]).reshape(-1)
+    #
+    sorting = np.sorted(r)
+    r_sorted = r[sorting]
+    x_sorted = r[sorting]
+    y_sorted = r[sorting]
 
     scales = []
     rmsds = []
 
-    # Optimise the scale factor
-    for scale in np.linspace(-4, 4, 100):
-        y_s = y * np.exp(scale * r)
-        knn_y = neighbors.RadiusNeighborsRegressor(0.01)
-        knn_y.fit(r.reshape(-1, 1),
-                  y_s.reshape(-1, 1),
-                  )
+    # Approximate x_f
+    former_sample_point = sample_grid[0]
+    x_f_list = []
+    for sample_point in sample_grid[1:]:
+        mask = (r_sorted < sample_point) * (r_sorted > former_sample_point)
+        x_vals = x_sorted[mask]
+        former_sample_point = sample_point
+        x_f_list.append(np.mean(x_vals))
+    x_f = np.array(x_f_list)
 
-        y_f = knn_y.predict(sample_grid[:, np.newaxis]).reshape(-1)
+    # Optimise the scale factor
+    for scale in np.linspace(-10, 10, 100):
+        y_s = y * np.exp(scale * r)
+        #
+        # knn_y = neighbors.RadiusNeighborsRegressor(0.01)
+        # knn_y.fit(r.reshape(-1, 1),
+        #           y_s.reshape(-1, 1),
+        #           )
+        # y_f = knn_y.predict(sample_grid[:, np.newaxis]).reshape(-1)
+
+        # approximate y_f
+        former_sample_point = sample_grid[0]
+        y_f_list = []
+        for sample_point in sample_grid[1:]:
+            mask = (r_sorted<sample_point)*(r_sorted>former_sample_point)
+            y_vals = y_sorted[mask]
+            former_sample_point = sample_point
+            y_f_list.append(np.mean(y_vals))
+        y_f = np.array(y_f_list)
 
         rmsd = np.sum(np.abs(x_f - y_f))
 
@@ -1215,3 +1240,6 @@ def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset, residue_
     )
 
     return dataset_result
+
+def save_mtz(mtz: gemmi.Mtz, path: Path):
+    mtz.write_to_file(str(path))
