@@ -562,8 +562,20 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
     for model in reference.structure:
         for chain in model:
             for ref_res in chain.get_polymer():
-                if ref_res.name.upper() not in Constants.residue_names:
+                # if ref_res.name.upper() not in Constants.residue_names:
+                #     continue
+                try:
+
+                    # Get ca pos from reference
+                    current_res_id: ResidueID = get_residue_id(model, chain, ref_res)
+                    reference_ca_pos = ref_res["CA"][0].pos
+
+                    # Get the ca pos from the dataset
+                    dataset_res = dataset.structure[current_res_id][0]
+                    dataset_ca_pos = dataset_res["CA"][0].pos
+                except Exception as e:
                     continue
+
                 residue_id: ResidueID = get_residue_id(model, chain, ref_res)
 
                 dataset_res: gemmi.Residue = get_residue(dataset.structure, residue_id)
@@ -586,16 +598,20 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
     for model in reference.structure:
         for chain in model:
             for ref_res in chain.get_polymer():
-                if ref_res.name.upper() not in Constants.residue_names:
+                # if ref_res.name.upper() not in Constants.residue_names:
+                #     continue
+                try:
+
+                    # Get ca pos from reference
+                    current_res_id: ResidueID = get_residue_id(model, chain, ref_res)
+                    reference_ca_pos = ref_res["CA"][0].pos
+
+                    # Get the ca pos from the dataset
+                    dataset_res = dataset.structure[current_res_id][0]
+                    dataset_ca_pos = dataset_res["CA"][0].pos
+                except Exception as e:
                     continue
 
-                # Get ca pos from reference
-                current_res_id: ResidueID = get_residue_id(model, chain, ref_res)
-                reference_ca_pos = ref_res["CA"][0].pos
-
-                # Get the ca pos from the dataset
-                dataset_res = dataset.structure[current_res_id][0]
-                dataset_ca_pos = dataset_res["CA"][0].pos
 
                 # dataset selection
                 dataset_indexes = dataset_tree.query_ball_point(
