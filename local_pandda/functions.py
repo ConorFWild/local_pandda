@@ -929,12 +929,12 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     )
 
     # Truncate
-    truncated_reference = truncate_reflections(reference.reflections, common_reflections)
-    truncated_dataset = truncate_reflections(moving.reflections, common_reflections)
+    truncated_reference: gemmi.Mtz = truncate_reflections(reference.reflections, common_reflections)
+    truncated_dataset: gemmi.Mtz = truncate_reflections(moving.reflections, common_reflections)
 
     # Refference array
-    reference_reflections = truncated_reference.reflections.reflections
-    reference_reflections_array = np.array(reference_reflections,
+    reference_reflections: gemmi.Mtz = truncated_reference
+    reference_reflections_array: np.ndarray = np.array(reference_reflections,
                                            copy=True,
                                            )
     reference_reflections_table = pd.DataFrame(reference_reflections_array,
