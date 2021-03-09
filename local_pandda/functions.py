@@ -974,8 +974,8 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     #
     sorting = np.argsort(r)
     r_sorted = r[sorting]
-    x_sorted = r[sorting]
-    y_sorted = r[sorting]
+    x_sorted = x[sorting]
+    y_sorted = y[sorting]
 
     scales = []
     rmsds = []
@@ -1006,7 +1006,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
         former_sample_point = sample_grid[0]
         y_f_list = []
         for sample_point in sample_grid[1:]:
-            mask = (r_sorted<sample_point)*(r_sorted>former_sample_point)
+            mask = (r_sorted < sample_point)*(r_sorted > former_sample_point)
             y_vals = y_s_sorted[mask]
             former_sample_point = sample_point
             y_f_list.append(np.mean(y_vals))
