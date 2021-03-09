@@ -855,7 +855,7 @@ def get_all_common_reflections(datasets: MutableMapping[str, Dataset], structure
     return running_index.to_list()
 
 
-def truncate_reflections(reflections: gemmi.Reflections, index=None) -> gemmi.Mtz:
+def truncate_reflections(reflections: gemmi.Mtz, index=None) -> gemmi.Mtz:
     new_reflections = gemmi.Mtz(with_base=False)
 
     # Set dataset properties
