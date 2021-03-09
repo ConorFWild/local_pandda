@@ -93,7 +93,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
     for residue_id, residue_datasets in iterate_residues(datasets, reference_dataset):
         # TODO: REMOVE THIS DEBUG CODE
         if params.debug:
-            if residue_id.insertion != 1943:
+            if residue_id.insertion != 260:
                 continue
 
         if params.debug:
@@ -143,7 +143,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
         for dataset_index, dtag in enumerate(truncated_datasets):
             # TODO: REMOVE THIS DEBUG CODE
             if params.debug:
-                if dtag != "BAZ2BA-x434":
+                if dtag != "HAO1A-x0604":
                     continue
 
             dataset = truncated_datasets[dtag]
