@@ -52,7 +52,8 @@ from local_pandda.functions import (
 )
 
 
-def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dtag: Optional[str], **kwargs):
+def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dtag: Optional[str] = None, **kwargs):
+
     # Update the Parameters
     params: Params = Params()
     params.update(**kwargs)
@@ -62,6 +63,17 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
     # Type the input
     data_dir = Path(data_dir)
     out_dir = Path(out_dir)
+
+    if params.debug:
+        print(
+            (
+                "Input:\n"
+                f"\tdata_dir: {data_dir}\n"
+                f"\tout dir: {out_dir}\n"
+                f"\tknown apos: {known_apos}\n"
+                f"\treference_dtag: {reference_dtag}\n"
+            )
+        )
 
     # Load the datasets
     datasets: MutableMapping[str, Dataset] = get_datasets(

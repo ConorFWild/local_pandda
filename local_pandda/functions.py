@@ -399,6 +399,10 @@ def get_datasets(
 
                 if smiles_path:
                     fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(smiles_path)
+                    if debug:
+                        print(
+                            f"\t\tGenerated {len(fragment_structures)} after pruning")
+
                 else:
                     fragment_structures = None
 
