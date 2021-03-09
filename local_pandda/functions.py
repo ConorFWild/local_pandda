@@ -109,7 +109,7 @@ def get_fragment_structures(smiles_path: Path) -> MutableMapping[int, Chem.Mol]:
         smiles_string: str = str(f.read())
 
     # Load the mol
-    m: Chem.Mol = Chem.MolFromMolFile(smiles_string)
+    m: Chem.Mol = Chem.MolFromMolSmiles(smiles_string)
 
     # Generate conformers
     m2: Chem.Mol = Chem.AddHs(m)
