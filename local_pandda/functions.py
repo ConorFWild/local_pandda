@@ -555,7 +555,7 @@ def get_transform_from_atoms(
     return transform_from_translation_rotation(vec, rotation)
 
 
-def get_alignment(reference: Dataset, dataset: Dataset) -> Alignment:
+def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Alignment:
     # Find the common atoms as an array
     dataset_pos_list = []
     reference_pos_list = []
@@ -573,6 +573,10 @@ def get_alignment(reference: Dataset, dataset: Dataset) -> Alignment:
                     reference_pos_list.append([atom_ref.pos.x, atom_ref.pos.y, atom_ref.pos.z, ])
     dataset_atom_array = np.array(dataset_pos_list)
     reference_atom_array = np.array(reference_pos_list)
+
+    if debug:
+        print(f"\t\tdataset atom array size: {dataset_atom_array.shape}")
+        print(f"\t\treference atom array size: {reference_atom_array.shape}")
 
     # dataset kdtree
     dataset_tree = spsp.KDTree(dataset_atom_array)
