@@ -796,7 +796,7 @@ def get_reference(datasets: MutableMapping[str, Dataset], reference_dtag: Option
             key=lambda dataset_dtag: datasets[dataset_dtag].reflections.resolution_high(),
         )
 
-        return reference_dtag
+        return datasets[reference_dtag]
 
 
 def get_linkage_from_correlation_matrix(correlation_matrix):
