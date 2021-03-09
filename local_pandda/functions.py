@@ -615,9 +615,12 @@ def get_alignment(reference: Dataset, dataset: Dataset) -> Alignment:
 def get_alignments(
         datasets: MutableMapping[str, Dataset],
         reference: Dataset,
+        debug: bool = True,
 ) -> MutableMapping[str, Alignment]:
     alignments: MutableMapping[str, Alignment] = {}
     for dtag, dataset in datasets.items():
+        if debug:
+            print(f"\tAligning {dtag} against reference {reference.dtag}")
         alignment: Alignment = get_alignment(reference, dataset)
         alignments[dtag] = alignment
 
@@ -1035,6 +1038,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
         moving.reflections_path,
         moving.fragment_path,
         moving.fragment_structures,
+        min_scale,
     )
 
     return smoothed_dataset
@@ -1044,12 +1048,19 @@ def smooth_datasets(
         datasets: MutableMapping[str, Dataset],
         reference_dataset: Dataset,
         structure_factors: StructureFactors,
+        debug: bool = True,
 ) -> MutableMapping[str, Dataset]:
     # For dataset reflections
     smoothed_datasets: MutableMapping[str, Dataset] = {}
     for dtag, dataset in datasets.items():
+        if debug:
+            print(f"\tSmoothing {dtag} against reference {reference_dataset.dtag}")
         # Minimise distance to reference reflections
         smoothed_datasets[dtag] = smooth(reference_dataset, dataset, structure_factors)
+
+        if debug:
+            print(f"\t\tSmoothinging factor: {smoothed_datasets[dtag].smoothing_factor}")
+
     return smoothed_datasets
 
 

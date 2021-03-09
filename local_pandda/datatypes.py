@@ -23,6 +23,7 @@ class Dataset:
     reflections_path: Path
     fragment_path: Optional[Path]
     fragment_structures: Optional[MutableMapping[int, Chem.Mol]]
+    smoothing_factor: Optional[float] = None
 
 
 @dataclass()

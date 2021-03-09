@@ -201,3 +201,16 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
 
 if __name__ == "__main__":
     fire.Fire(run_pandda)
+
+x = (
+    lambda dir: (
+        lambda datasets: (
+            lambda reference:
+                map(
+                    process_residues,
+                    reference
+                )
+        )(get_reference(datasets)
+    )
+    )(get_datasets(dir))
+)("dir")
