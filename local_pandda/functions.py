@@ -369,7 +369,7 @@ def get_structure(structure_path: Path) -> gemmi.Structure:
 
 
 def get_reflections(reflections_path: Path) -> gemmi.Mtz:
-    reflections: gemmi.Mtz = gemmi.read_mtz(str(reflections_path))
+    reflections: gemmi.Mtz = gemmi.read_mtz_file(str(reflections_path))
     return reflections
 
 
