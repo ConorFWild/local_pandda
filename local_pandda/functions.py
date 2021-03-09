@@ -106,7 +106,7 @@ def get_structures_from_mol(mol: Chem.Mol) -> MutableMapping[int, gemmi.Structur
     return fragment_structures
 
 
-def get_fragment_structures(smiles_path: Path) -> MutableMapping[int, Chem.Mol]:
+def get_fragment_structures(smiles_path: Path, pruning_threshold: float) -> MutableMapping[int, Chem.Mol]:
     # Get smiels string
     with open(str(smiles_path), "r") as f:
         smiles_string: str = str(f.read())
@@ -118,7 +118,7 @@ def get_fragment_structures(smiles_path: Path) -> MutableMapping[int, Chem.Mol]:
     m2: Chem.Mol = Chem.AddHs(m)
 
     # Generate conformers
-    cids = AllChem.EmbedMultipleConfs(m2, numConfs=50, pruneRmsThresh=1.0)
+    cids = AllChem.EmbedMultipleConfs(m2, numConfs=50, pruneRmsThresh=pruning_threshold)
 
     # Translate to structures
     fragment_structures: MutableMapping[int, gemmi.Structure] = get_structures_from_mol(m2)
@@ -378,6 +378,7 @@ def get_datasets(
         structure_regex: str,
         reflections_regex: str,
         smiles_regex: str,
+        pruning_threshold: float,
         debug: bool = True,
 ) -> MutableMapping[str, Dataset]:
     datasets: MutableMapping[str, Dataset] = {}
@@ -398,7 +399,10 @@ def get_datasets(
             if structure_path and reflections_path:
 
                 if smiles_path:
-                    fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(smiles_path)
+                    fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(
+                        smiles_path,
+                    pruning_threshold,
+                    )
                     if debug:
                         print(
                             f"\t\tGenerated {len(fragment_structures)} after pruning")

@@ -81,6 +81,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
         params.structure_regex,
         params.reflections_regex,
         params.smiles_regex,
+        params.pruning_threshold,
     )
     if params.debug:
         print_dataset_summary(datasets)

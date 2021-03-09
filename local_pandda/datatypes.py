@@ -155,6 +155,7 @@ class Params:
     # Fragment searching
     num_fragment_pose_samples: int = 10
     min_correlation: float = 0.1
+    pruning_threshold: float = 1.5
 
     def update(self, **kwargs):
         for key, value in kwargs.items():
@@ -185,6 +186,8 @@ class Params:
                 self.num_fragment_pose_samples = value
             elif key == "min_correlation":
                 self.min_correlation = value
+            elif key == "pruning_threshold":
+                self.pruning_threshold = value
 
             # Unknown argument handling
             else:
