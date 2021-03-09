@@ -137,7 +137,7 @@ class Params:
 
     # Data loading
     structure_regex: str = "*.pdb"
-    reflections_regex: str = "*.reflections"
+    reflections_regex: str = "*.mtz"
     smiles_regex: str = "*.smiles"
 
     # Diffraction handling
