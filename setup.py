@@ -9,7 +9,7 @@ def requirements():
         return [line.strip() for line in f if line.strip()]
 
 setuptools.setup(
-    name="xlib",
+    name="local_pandda",
     version="0.0.1",
     author="Conor Francis Wild",
     author_email="conor.wild@sky.com",
