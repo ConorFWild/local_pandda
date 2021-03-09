@@ -972,7 +972,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     #           )
     # x_f = knn_x.predict(sample_grid[:, np.newaxis]).reshape(-1)
     #
-    sorting = np.sorted(r)
+    sorting = np.argsort(r)
     r_sorted = r[sorting]
     x_sorted = r[sorting]
     y_sorted = r[sorting]
