@@ -860,7 +860,8 @@ def get_alignments(
     )(
         joblib.delayed(get_alignment)(
             reference,
-            dataset
+            dataset,
+            markers,
         )
         for dataset
         in list(datasets.values())
