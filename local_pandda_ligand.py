@@ -237,7 +237,7 @@ def run_pandda(data_dir: str,
                 print(f"\tGot {len(comparator_samples)} comparater samples")
 
             # Characterise the local distribution
-            mean: np.nparray = get_mean(comparator_samples)
+            mean: np.ndarray = get_mean(comparator_samples)
             std: np.ndarray = get_std(comparator_samples)
             z: np.ndarray = get_z(dataset_sample, mean, std)
             if params.debug:
@@ -273,7 +273,7 @@ def run_pandda(data_dir: str,
                     dataset_affinity_map = get_fragment_affinity_map(dataset_sample, fragment_map)
 
                     # Characterise the local distribution of affinity scores
-                    fragment_affinity_mean: np.nparray = get_mean(fragment_affinity_maps)
+                    fragment_affinity_mean: np.ndarray = get_mean(fragment_affinity_maps)
                     fragment_affinity_std: np.ndarray = get_std(fragment_affinity_maps)
                     fragment_affinity_z: np.ndarray = get_z(
                         dataset_affinity_map,
