@@ -600,20 +600,32 @@ def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
     # truncate on reflections
     new_datasets_reflections: MutableMapping[str, Dataset] = {}
     for dtag in resolution_truncated_datasets:
-        reflections = resolution_truncated_datasets[dtag].reflections
+        resolution_truncated_dataset: Dataset = resolution_truncated_datasets[dtag]
+        reflections = resolution_truncated_dataset.reflections
         reflections_array = np.array(reflections)
         print(f"{dtag}")
         print(f"{reflections_array.shape}")
 
-        truncated_dataset = truncate_reflections(
+        truncated_reflections: gemmi.Mtz = truncate_reflections(
             reflections,
             common_reflections,
         )
-        reflections = truncated_dataset.reflections
-        reflections_array = np.array(reflections)
+
+        reflections_array = np.array(truncated_reflections)
         print(f"{dtag}: {reflections_array.shape}")
 
-        new_datasets_reflections[dtag] = truncated_dataset
+        new_dataset: Dataset = Dataset(
+            resolution_truncated_dataset.dtag,
+            resolution_truncated_dataset.structure,
+            truncated_reflections,
+            resolution_truncated_dataset.structure_path,
+            resolution_truncated_dataset.reflections_path,
+            resolution_truncated_dataset.fragment_path,
+            resolution_truncated_dataset.fragment_structures,
+            resolution_truncated_dataset.smoothing_factor,
+        )
+
+        new_datasets_reflections[dtag] = new_dataset
 
     return new_datasets_reflections
 
