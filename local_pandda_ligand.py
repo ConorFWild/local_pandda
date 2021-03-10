@@ -53,7 +53,7 @@ from local_pandda.functions import (
 )
 
 
-def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dtag: Optional[str] = None, **kwargs):
+def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, reference_dtag: Optional[str] = None, **kwargs):
 
     # Update the Parameters
     params: Params = Params()
@@ -86,6 +86,11 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str], reference_dta
     )
     if params.debug:
         print_dataset_summary(datasets)
+
+    if not known_apos:
+        known_apos = [dataset.dtag for dtag, dataset in datasets.items() if dataset.fragment_path]
+        if params.debug:
+            print(f"Got {len(known_apos)} known apos")
 
     # Get a reference dataset against which to sample things
     reference_dataset: Dataset = get_reference(datasets, reference_dtag, known_apos)
