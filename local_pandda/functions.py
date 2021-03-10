@@ -490,6 +490,7 @@ def get_datasets(
     datasets_list: List[Optional[Dataset]] = joblib.Parallel(
         n_jobs=20,
         verbose=50,
+        backend="multiprocessing",
     )(
         joblib.delayed(
             get_dataset_from_dir(
