@@ -217,13 +217,16 @@ class PanDDAResults(MutableMapping[ResidueID, ResidueResults]):
     _pandda_results: Dict[ResidueID, ResidueResults] = field(default_factory=dict)
 
 
-@dataclass()
 class Transform:
-    transform: gemmi.Transform
+
+    def __init__(self, transform: gemmi.Transform):
+        self.transform: gemmi.Transform = transform
 
     def __getstate__(self):
         state = {"mat": self.transform.mat.tolist(),
                  "vec": self.transform.vec.tolist()}
+
+        return state
 
     def __setstate__(self, state):
         transform = gemmi.Transform()
