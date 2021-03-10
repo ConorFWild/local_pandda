@@ -646,11 +646,15 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                     # Get ca pos from reference
                     print("Getting ref ca")
                     current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
+                    print(type(ref_res))
+                    print(ref_res)
                     reference_ca_pos = ref_res["CA"][0].pos
 
                     print("Getting dataset ca")
                     # Get the ca pos from the dataset
                     dataset_res = get_residue(dataset.structure, current_res_id)
+                    print(type(dataset_res))
+                    print(dataset_res)
                     dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
                     if debug:

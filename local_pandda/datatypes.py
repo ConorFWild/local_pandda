@@ -110,8 +110,6 @@ class Dataset:
             "smoothing_factor": self.smoothing_factor,
         }
 
-        print(state)
-
         return state
 
     def __setstate__(self, state):
