@@ -111,7 +111,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
     alignments: MutableMapping[str, Alignment] = get_alignments(smoothed_datasets, reference_dataset)
 
     # Loop over the residues, sampling the local electron density
-    pandda_results: PanDDAAffinityResults = PanDDAAffinityResults()
+    pandda_results: PanDDAAffinityResults = {}
     for residue_id, residue_datasets in iterate_residues(datasets, reference_dataset):
         if params.debug:
             print(f"Processing residue: {residue_id}")
@@ -164,7 +164,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
 
         # For every dataset, find the datasets of the closest known apo cluster
         # If none can be found, make a note of it, and proceed to next dataset
-        residue_results: ResidueAffinityResults = ResidueAffinityResults()
+        residue_results: ResidueAffinityResults = {}
         for dataset_index, dtag in enumerate(truncated_datasets):
             if params.debug:
                 print(f"\tProcessing dataset: {dtag}")

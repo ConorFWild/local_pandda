@@ -242,16 +242,18 @@ class DatasetAffinityResults:
     events: Dict[int, AffinityEvent] = field(default_factory=dict)
     comparators: List[Dataset] = field(default_factory=list)
 
+#
+# @dataclass()
+# class ResidueAffinityResults(MutableMapping[str, DatasetAffinityResults]):
+#     _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
 
-@dataclass()
-class ResidueAffinityResults(MutableMapping[str, DatasetAffinityResults]):
-    _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
+ResidueAffinityResults = MutableMapping[str, DatasetAffinityResults]
 
+# @dataclass()
+# class PanDDAAffinityResults(MutableMapping[ResidueID, ResidueAffinityResults]):
+#     _pandda_results: Dict[ResidueID, ResidueAffinityResults] = field(default_factory=dict)
 
-@dataclass()
-class PanDDAAffinityResults(MutableMapping[ResidueID, ResidueAffinityResults]):
-    _pandda_results: Dict[ResidueID, ResidueAffinityResults] = field(default_factory=dict)
-
+PanDDAAffinityResults = MutableMapping[ResidueID, ResidueAffinityResults]
 
 class Params:
     debug: bool = True
