@@ -223,15 +223,17 @@ class Transform:
         self.transform: gemmi.Transform = transform
 
     def __getstate__(self):
-        state = {"mat": self.transform.mat.tolist(),
-                 "vec": self.transform.vec.tolist()}
+        state = {
+            "mat": self.transform.mat.tolist(),
+                 "vec": self.transform.vec.tolist(),
+        }
 
         return state
 
     def __setstate__(self, state):
-        transform = gemmi.Transform()
-        transform.mat.fromlist(state["mat"])
-        transform.vec.fromlist(state["vec"])
+        self.transform = gemmi.Transform()
+        self.transform.mat.fromlist(state["mat"])
+        self.transform.vec.fromlist(state["vec"])
 
 
 # @dataclass()
