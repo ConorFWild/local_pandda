@@ -361,21 +361,20 @@ def iterate_residues(
     for model in reference_structure:
         for chain in model:
             for residue in chain.get_polymer():
-                if residue.name in Constants.residue_names:
-                    residue_id: ResidueID = ResidueID(model.name, chain.name, residue.seqid.insertion)
+                residue_id: ResidueID = ResidueID(model.name, chain.name, residue.seqid.insertion)
 
-                    residue_datasets: MutableMapping[str, Dataset] = {}
-                    for dtag, dataset in datasets.items():
-                        structure: gemmi.Structure = dataset.structure
+                residue_datasets: MutableMapping[str, Dataset] = {}
+                for dtag, dataset in datasets.items():
+                    structure: gemmi.Structure = dataset.structure
 
-                        try:
-                            res = get_residue(structure, residue_id)
-                            res_ca = res["CA"]
-                            residue_datasets[dtag] = dataset
-                        except:
-                            continue
+                    try:
+                        res = get_residue(structure, residue_id)
+                        res_ca = res["CA"][0]
+                        residue_datasets[dtag] = dataset
+                    except:
+                        continue
 
-                    yield residue_id, residue_datasets
+                yield residue_id, residue_datasets
 
 
 def get_apo_mask(
