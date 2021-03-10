@@ -719,12 +719,30 @@ def get_alignments(
         reference: Dataset,
         debug: bool = True,
 ) -> MutableMapping[str, Alignment]:
-    alignments: MutableMapping[str, Alignment] = {}
-    for dtag, dataset in datasets.items():
-        if debug:
-            print(f"\tAligning {dtag} against reference {reference.dtag}")
-        alignment: Alignment = get_alignment(reference, dataset)
-        alignments[dtag] = alignment
+
+    alignment_list: List[Optional[Dataset]] = joblib.Parallel(
+        n_jobs=20,
+        verbose=50,
+        # backend="multiprocessing",
+    )(
+        joblib.delayed(get_alignment)(
+            reference,
+            dataset
+        )
+        for dataset
+        in list(datasets.values())
+    )
+
+    alignments: MutableMapping[str, Alignment] = {
+        dtag: alignment
+        for dtag, alignment
+        in zip(list(datasets.keys()), alignment_list)
+    }
+    # for dtag, dataset in datasets.items():
+    #     if debug:
+    #         print(f"\tAligning {dtag} against reference {reference.dtag}")
+    #     alignment: Alignment = get_alignment(reference, dataset)
+    #     alignments[dtag] = alignment
 
     return alignments
 
