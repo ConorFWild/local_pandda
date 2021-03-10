@@ -238,7 +238,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
     for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles):
         rotation_index = (x, y, z)
-        rotation = spsp.transform.Rotation.from_euler(x, y, x)
+        rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, x], degrees=True)
         rotation_matrix: np.ndarray = rotation.as_matrix()
         rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
         fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution)
@@ -918,9 +918,6 @@ def sample_dataset(
 
     std = np.std(unaligned_xmap_array)
     unaligned_xmap_array[:, :, :] = unaligned_xmap_array[:, :, :] / std
-
-    print(transform)
-    print(dir(transform))
 
     transform_inverse = transform.transform.inverse()
 
