@@ -326,7 +326,7 @@ def is_event(cluster: Cluster, min_z_cluster_size: int) -> bool:
 def get_mean(comparator_samples: MutableMapping[str, np.ndarray]) -> np.ndarray:
     # Get all the samples as an array
     samples = [sample for dtag, sample in comparator_samples.items()]
-    samples_array = np.ndarray(samples)
+    samples_array = np.stack(samples, axis=0)
 
     # Get the mean
     mean = np.mean(samples_array, axis=0)
@@ -337,7 +337,7 @@ def get_mean(comparator_samples: MutableMapping[str, np.ndarray]) -> np.ndarray:
 def get_std(comparator_samples: MutableMapping[str, np.ndarray]) -> np.ndarray:
     # Get all the samples as an array
     samples = [sample for dtag, sample in comparator_samples.items()]
-    samples_array = np.ndarray(samples)
+    samples_array = np.stack(samples, axis=0)
 
     # Get the standard deviation
     std = np.std(samples_array, axis=0)
