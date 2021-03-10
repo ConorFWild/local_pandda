@@ -371,7 +371,7 @@ def iterate_residues(
                         res = get_residue(structure, residue_id)
                         res_ca = res["CA"][0]
                         residue_datasets[dtag] = dataset
-                    except:
+                    except Exception as e:
                         continue
 
                 yield residue_id, residue_datasets
@@ -618,7 +618,7 @@ def get_transform_from_atoms(
 
     # Get the means
     mean_moving = np.mean(moving_selection, axis=0)
-    mean_reference = np.array(reference_selection, axis=0)
+    mean_reference = np.mean(reference_selection, axis=0)
 
     # Het the transation FROM the moving TO the reference
     vec = np.array(mean_reference - mean_moving)
@@ -720,6 +720,15 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                     dataset_selection,
                     reference_selection,
                 )
+                if debug:
+                    print(
+                        (
+                            f"\t\t\tTransform is:\n"
+                            f"\t\t\t\tMat: {alignment[current_res_id].transform.mat}\n"
+                            f"\t\t\t\tVec: {alignment[current_res_id].transform.vec}\n"
+                        )
+                    )
+
     if debug:
         print("Returning alignment...")
     return alignment

@@ -127,7 +127,8 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
         # Truncate the datasets to the same reflections
         truncated_datasets: MutableMapping[str, Dataset] = get_truncated_datasets(residue_datasets,
                                                                                   reference_dataset,
-                                                                                  params.structure_factors)
+                                                                                  params.structure_factors,
+                                                                                  )
 
         # Truncated dataset apos
         truncated_dataset_apo_mask: np.ndarray = get_dataset_apo_mask(truncated_datasets, known_apos)
