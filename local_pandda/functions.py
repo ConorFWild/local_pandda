@@ -100,13 +100,14 @@ def print_dataclass(dc: dataclass, title: str = ""):
 
 def get_dataset_apo_mask(truncated_datasets: MutableMapping[str, Dataset], known_apos: List[str]) -> np.ndarray:
     apo_mask: List[bool] = []
+
     for dtag in truncated_datasets:
         if dtag in known_apos:
             apo_mask.append(True)
         else:
             apo_mask.append(False)
 
-    apo_mask_array = np.array(apo_mask)
+    apo_mask_array = np.full(len(apo_mask))
 
     return apo_mask_array
 
@@ -915,10 +916,13 @@ def sample_dataset(
     std = np.std(unaligned_xmap_array)
     unaligned_xmap_array[:, :, :] = unaligned_xmap_array[:, :, :] / std
 
-    transform = transform.transform.inverse()
+    print(transform)
+    print(dir(transform))
 
-    transform_vec = np.array(transform.vec.tolist())
-    transform_mat = np.array(transform.mat.tolist())
+    transform_inverse = transform.transform.inverse()
+
+    transform_vec = np.array(transform_inverse.vec.tolist())
+    transform_mat = np.array(transform_inverse.mat.tolist())
 
     transform_mat = np.matmul(transform_mat, np.eye(3) * grid_spacing)
     offset = np.matmul(transform_mat, np.array([grid_size / 2, grid_size / 2, grid_size / 2]).reshape(3, 1)).flatten()
