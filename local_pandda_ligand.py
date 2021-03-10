@@ -204,6 +204,8 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
                 truncated_datasets,
                 params.min_dataset_cluster_size,
             )
+            if params.debug:
+                print(f"\tComparator datasets are: {list(comparator_datasets.keys())}")
 
             # Handle no comparators
             if not comparator_datasets:
@@ -220,12 +222,16 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
                 comparator_datasets,
             )
             if params.debug:
-                print(f"Got {len(comparator_samples)} comparater samples")
+                print(f"\tGot {len(comparator_samples)} comparater samples")
 
             # Characterise the local distribution
             mean: np.nparray = get_mean(comparator_samples)
             std: np.ndarray = get_std(comparator_samples)
             z: np.ndarray = get_z(dataset_sample, mean, std)
+            if params.debug:
+                print(f"\tGot mean: max {np.max(mean)}, min: {np.min(mean)}")
+                print(f"\tGot std: max {np.max(std)}, min: {np.min(std)}")
+                print(f"\tGot z: max {np.max(z)}, min: {np.min(z)}")
 
             # Get the comparator affinity maps
             for fragment_id, fragment_structure in dataset_fragment_structures.items():
@@ -235,6 +241,8 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
                     params.num_fragment_pose_samples,
                     params.sample_rate,
                 )
+                if params.debug:
+                    print(f"\t\tGot {len(fragment_maps)} fragment maps")
 
                 # Get affinity maps for various orientations
                 fragment_affinity_z_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}

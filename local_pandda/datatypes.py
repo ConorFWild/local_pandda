@@ -8,6 +8,9 @@ import gemmi
 from rdkit import Chem
 
 
+
+
+
 @dataclass
 class StructureFactors:
     f: str

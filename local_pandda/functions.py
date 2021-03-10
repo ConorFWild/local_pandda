@@ -1,3 +1,4 @@
+import os
 from typing import *
 from local_pandda.datatypes import *
 from pathlib import Path
@@ -17,6 +18,52 @@ from rdkit.Chem import AllChem
 
 # Custom
 from local_pandda.constants import Constants
+
+
+#
+# def cell_to_python(unit_cell: gemmi.UnitCell, tmp_dir: Path = Path("./tmp")) -> PyCell:
+#
+#     return PyCell()
+#
+# def python_to_cell(PyCell) -> gemmi.UnitCell:
+#
+#
+# def spacegroup_to_python(gemmi.Spacegroup) -> PySpacegroup:
+#
+# def python_to_spacegroup(PySpacegroup) -> gemmi.Spacegroup:
+#
+#
+#
+# def mtz_to_python(gemmi.Mtz) -> PyMtz:
+#
+#
+# def python_to_mtz(PyMtz) -> gemmi.Mtz:
+#
+#
+# def structure_to_python(gemmi.Structure) -> PyStructure:
+#
+# def python_to_structure(PyStructure) -> gemmi.Structure:
+
+
+def try_make(path: Path):
+    if not path.exists():
+        os.mkdir(str(path))
+
+
+def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path) -> Path:
+    return None
+
+
+def python_to_mtz(path: Path) -> gemmi.Mtz:
+    return None
+
+
+def structure_to_python(structure: gemmi.Structure, out_dir: Path) -> PyStructure:
+    return None
+
+
+def python_to_structure(path: Path) -> gemmi.Structure:
+    return None
 
 
 def print_dataset_summary(datasets: MutableMapping[str, Dataset]):
@@ -391,7 +438,8 @@ def get_datasets(
 
         if directory.is_dir():
             if debug:
-                print(f"\t\t{directory} is a directory. Checking for regexes: {structure_regex}, {reflections_regex} and {smiles_regex}")
+                print(
+                    f"\t\t{directory} is a directory. Checking for regexes: {structure_regex}, {reflections_regex} and {smiles_regex}")
             dtag = directory.name
             structure_path: Optional[Path] = get_path_from_regex(directory, structure_regex)
             reflections_path: Optional[Path] = get_path_from_regex(directory, reflections_regex)
@@ -402,7 +450,7 @@ def get_datasets(
                 if smiles_path:
                     fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(
                         smiles_path,
-                    pruning_threshold,
+                        pruning_threshold,
                     )
                     if debug:
                         print(
@@ -556,7 +604,7 @@ def get_transform_from_atoms(
     return transform_from_translation_rotation(vec, rotation)
 
 
-def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Alignment:
+def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> Alignment:
     # Find the common atoms as an array
     dataset_pos_list = []
     reference_pos_list = []
@@ -569,11 +617,11 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
 
                     # Get ca pos from reference
                     current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
-                    reference_ca_pos = ref_res["CA"].pos
+                    reference_ca_pos = ref_res["CA"][0].pos
 
                     # Get the ca pos from the dataset
                     dataset_res = get_residue(dataset.structure, current_res_id)
-                    dataset_ca_pos = dataset_res["CA"].pos
+                    dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
                     if debug:
                         print(f"\t\tAlignment exception: {e}")
@@ -607,16 +655,15 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
 
                     # Get ca pos from reference
                     current_res_id: ResidueID = get_residue_id(model, chain, ref_res)
-                    reference_ca_pos = ref_res["CA"].pos
+                    reference_ca_pos = ref_res["CA"][0].pos
 
                     # Get the ca pos from the dataset
                     dataset_res = get_residue(dataset.structure, current_res_id)[0]
-                    dataset_ca_pos = dataset_res["CA"].pos
+                    dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
                     if debug:
                         print(f"\t\tAlignment exception: {e}")
                     continue
-
 
                 # dataset selection
                 dataset_indexes = dataset_tree.query_ball_point(
@@ -963,8 +1010,8 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
     # Refference array
     reference_reflections: gemmi.Mtz = truncated_reference
     reference_reflections_array: np.ndarray = np.array(reference_reflections,
-                                           copy=True,
-                                           )
+                                                       copy=True,
+                                                       )
     reference_reflections_table = pd.DataFrame(reference_reflections_array,
                                                columns=reference_reflections.column_labels(),
                                                )
@@ -1031,7 +1078,7 @@ def smooth(reference: Dataset, moving: Dataset, structure_factors: StructureFact
         former_sample_point = sample_grid[0]
         y_f_list = []
         for sample_point in sample_grid[1:]:
-            mask = (r_sorted < sample_point)*(r_sorted > former_sample_point)
+            mask = (r_sorted < sample_point) * (r_sorted > former_sample_point)
             y_vals = y_s_sorted[mask]
             former_sample_point = sample_point
             y_f_list.append(np.mean(y_vals))
@@ -1255,7 +1302,8 @@ def get_failed_affinity_event(dataset: Dataset, residue_id: ResidueID) -> Affini
     )
 
 
-def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset, residue_id: ResidueID) -> DatasetAffinityResults:
+def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset,
+                                                      residue_id: ResidueID) -> DatasetAffinityResults:
     dataset_result: DatasetAffinityResults = DatasetAffinityResults(
         dataset.dtag,
         residue_id,
@@ -1267,6 +1315,7 @@ def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset, residue_
     )
 
     return dataset_result
+
 
 def save_mtz(mtz: gemmi.Mtz, path: Path):
     mtz.write_to_file(str(path))
