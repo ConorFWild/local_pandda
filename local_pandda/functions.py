@@ -582,7 +582,7 @@ def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
     # truncate on reflections
     new_datasets_reflections: MutableMapping[str, Dataset] = {}
     for dtag in dataset_resolution_truncated:
-        reflections = dataset_resolution_truncated[dtag].reflections.reflections
+        reflections = dataset_resolution_truncated[dtag].reflections
         reflections_array = np.array(reflections)
         print(f"{dtag}")
         print(f"{reflections_array.shape}")
@@ -591,7 +591,7 @@ def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
             reflections,
             common_reflections,
         )
-        reflections = truncated_dataset.reflections.reflections
+        reflections = truncated_dataset.reflections
         reflections_array = np.array(reflections)
         print(f"{dtag}: {reflections_array.shape}")
 
@@ -1008,7 +1008,7 @@ def get_all_common_reflections(datasets: MutableMapping[str, Dataset], structure
     running_index = None
 
     for dtag, dataset in datasets.items():
-        reflections = dataset.reflections.reflections
+        reflections = dataset.reflections
         reflections_array = np.array(reflections, copy=True)
         reflections_table = pd.DataFrame(reflections_array,
                                          columns=reflections.column_labels(),
