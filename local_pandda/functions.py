@@ -1101,7 +1101,7 @@ def cluster_strong_density(linkage: np.ndarray, cutoff: float) -> np.ndarray:
     clusters: np.ndarray = cluster_linkage(linkage, cutoff)
     # Determine which clusters have known apos in them
 
-    return None
+    return clusters
 
 
 def get_common_reflections(
