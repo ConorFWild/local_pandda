@@ -218,7 +218,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
 
     box = structure_copy.calculate_box()
     box.add_margin(margin)
-    min_pos: gemmi.Position = box.min
+    min_pos: gemmi.Position = box.minimum
 
     for model in structure_copy:
         for chain in model:
