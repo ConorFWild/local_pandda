@@ -351,6 +351,7 @@ def get_z(dataset_sample: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.n
 def iterate_residues(
         datasets: MutableMapping[str, Dataset],
         reference: Dataset,
+        debug: bool = True,
 ) -> Iterator[Tuple[ResidueID, MutableMapping[str, Dataset]]]:
     # Get all unique ResidueIDs from all datasets
     # Order them: Sort by model, then chain, then residue insertion
@@ -372,6 +373,8 @@ def iterate_residues(
                         res_ca = res["CA"][0]
                         residue_datasets[dtag] = dataset
                     except Exception as e:
+                        if debug:
+                            print(e)
                         continue
 
                 yield residue_id, residue_datasets
