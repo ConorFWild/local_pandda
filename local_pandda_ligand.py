@@ -79,6 +79,7 @@ def run_pandda(data_dir: str,
                 f"\tout dir: {out_dir}\n"
                 f"\tknown apos: {known_apos}\n"
                 f"\treference_dtag: {reference_dtag}\n"
+                f"\tmarkers: {markers}\n"
             )
         )
 
@@ -127,7 +128,7 @@ def run_pandda(data_dir: str,
 
         # TODO: REMOVE THIS DEBUG CODE
         if params.debug:
-            if residue_id.insertion != "260":
+            if marker.resid.insertion != "260":
                 continue
 
         if params.debug:
