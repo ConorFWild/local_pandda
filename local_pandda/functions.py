@@ -1083,14 +1083,14 @@ def get_reference(datasets: MutableMapping[str, Dataset], reference_dtag: Option
 
 def get_linkage_from_correlation_matrix(correlation_matrix):
     condensed = spsp.distance.squareform(1.0 - correlation_matrix)
-    linkage = spc.linkage(condensed, method='complete')
+    linkage = spc.hierarchy.linkage(condensed, method='complete')
     # linkage = spc.linkage(condensed, method='ward')
 
     return linkage
 
 
 def cluster_linkage(linkage, cutoff):
-    idx = spc.fcluster(linkage, cutoff, 'distance')
+    idx = spc.hierarchy.fcluster(linkage, cutoff, 'distance')
 
     return idx
 
