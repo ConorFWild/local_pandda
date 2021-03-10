@@ -694,7 +694,7 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                     reference_ca_pos = ref_res["CA"][0].pos
 
                     # Get the ca pos from the dataset
-                    dataset_res = get_residue(dataset.structure, current_res_id)[0]
+                    dataset_res = get_residue(dataset.structure, current_res_id)
                     dataset_ca_pos = dataset_res["CA"][0].pos
                 except Exception as e:
                     if debug:
