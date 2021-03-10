@@ -1,5 +1,7 @@
 from __future__ import annotations
 from typing import *
+import os
+import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -8,7 +10,52 @@ import gemmi
 from rdkit import Chem
 
 
+def try_make(path: Path):
+    if not path.exists():
+        os.mkdir(str(path))
 
+
+def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path = "/tmp/pandda") -> Path:
+    try_make(out_dir)
+    while True:
+
+        token = secrets.token_hex()
+        out_path = out_dir / token
+        if not out_path.exists():
+            mtz.write_to_file(str(out_path))
+            return out_path
+
+
+def path_to_mtz(path: Path) -> gemmi.Mtz:
+
+    mtz = gemmi.read_mtz_file(str(path))
+
+    os.remove(str(path))
+
+    return mtz
+
+
+def structure_to_path(structure: gemmi.Structure, out_dir: Path = "/tmp") -> Path:
+    try_make(out_dir)
+
+    while True:
+        token = secrets.token_hex()
+
+        out_path = out_dir / token
+
+        if not out_path.exists():
+            structure.write_minimal_pdb(str(out_path))
+
+        return out_path
+
+
+def path_to_structure(path: Path) -> gemmi.Structure:
+    structure = gemmi.read_structure(str(path))
+    structure.setup_entities()
+
+    os.remove(str(path))
+
+    return structure
 
 
 @dataclass
@@ -25,8 +72,51 @@ class Dataset:
     structure_path: Path
     reflections_path: Path
     fragment_path: Optional[Path]
-    fragment_structures: Optional[MutableMapping[int, Chem.Mol]]
+    fragment_structures: Optional[MutableMapping[int, gemmi.Structure]]
     smoothing_factor: Optional[float] = None
+
+    def __getstate__(self):
+        if self.fragment_path:
+            fragment_path = self.fragment_path
+        else:
+            fragment_path = None
+
+        if self.fragment_structures:
+            fragment_structures = {
+                idx: structure_to_path(structure)
+                for idx, structure
+                in self.fragment_structures.items()
+            }
+        else:
+            fragment_structures = None
+
+        return {
+            "dtag": self.dtag,
+            "structure": structure_to_path(self.structure),
+            "reflections": mtz_to_path(self.reflections),
+            "structure_path": self.structure_path,
+            "reflections_path": self.reflections_path,
+            "fragment_path": self.fragment_path,
+            "fragment_structures": fragment_structures,
+            "smoothing_factor": self.smoothing_factor,
+        }
+
+    def __setstate__(self, state):
+        self.dtag = state["dtag"]
+        self.structure = path_to_structure(state["structure"])
+        self.reflections = path_to_mtz(state["reflections"])
+        self.structure_path = state["structure_path"]
+        self.reflections_path = state["reflections_path"]
+        self.fragment_path = state["fragment_path"]
+        if state["fragment_structures"]:
+            self.fragment_structures = {
+                idx: path_to_structure(path)
+                for idx, path
+                in state["fragment_structures"].items()
+            }
+        else:
+            self.fragment_structures = state["fragment_structures"]
+        self.smoothing_factor = state["smoothing_factor"]
 
 
 @dataclass()
@@ -45,6 +135,7 @@ class AffinityEvent:
     dtag: str
     residue_id: ResidueID
     correlation: float
+
 
 @dataclass()
 class AffinityMaxima:
@@ -71,6 +162,7 @@ class DatasetResults:
     events: Dict[int, Event] = field(default_factory=dict)
     comparators: List[Dataset] = field(default_factory=list)
 
+
 @dataclass()
 class DatasetAffinityResults:
     dtag: str
@@ -85,6 +177,7 @@ class DatasetAffinityResults:
 @dataclass()
 class ResidueAffinityResults(MutableMapping[str, DatasetResults]):
     _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
+
 
 @dataclass()
 class ResidueResults(MutableMapping[str, DatasetResults]):
@@ -133,7 +226,6 @@ class ResidueAffinityResults(MutableMapping[str, DatasetAffinityResults]):
 @dataclass()
 class PanDDAAffinityResults(MutableMapping[ResidueID, ResidueAffinityResults]):
     _pandda_results: Dict[ResidueID, ResidueAffinityResults] = field(default_factory=dict)
-
 
 
 class Params:
@@ -203,5 +295,3 @@ class Params:
             # Unknown argument handling
             else:
                 raise Exception(f"Unknown paramater: {key} = {value}")
-
-

@@ -15,6 +15,7 @@ import gemmi
 from sklearn import neighbors
 from rdkit import Chem
 from rdkit.Chem import AllChem
+import joblib
 
 # Custom
 from local_pandda.constants import Constants
@@ -421,6 +422,58 @@ def get_reflections(reflections_path: Path) -> gemmi.Mtz:
     return reflections
 
 
+def get_dataset_from_dir(
+        directory: Path,
+        tructure_regex: str,
+        reflections_regex: str,
+        smiles_regex: str,
+        pruning_threshold: float,
+        debug: bool = True,
+) -> Optional[Dataset]:
+    if debug:
+        print(f"\tChecking directoy {directory} for data...")
+
+    if directory.is_dir():
+        if debug:
+            print(
+                f"\t\t{directory} is a directory. Checking for regexes: {structure_regex}, {reflections_regex} and {smiles_regex}")
+        dtag = directory.name
+        structure_path: Optional[Path] = get_path_from_regex(directory, structure_regex)
+        reflections_path: Optional[Path] = get_path_from_regex(directory, reflections_regex)
+        smiles_path: Optional[Path] = get_path_from_regex(directory, smiles_regex)
+
+        if structure_path and reflections_path:
+
+            if smiles_path:
+                fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(
+                    smiles_path,
+                    pruning_threshold,
+                )
+                if debug:
+                    print(
+                        f"\t\tGenerated {len(fragment_structures)} after pruning")
+
+            else:
+                fragment_structures = None
+
+            dataset: Dataset = Dataset(
+                dtag=dtag,
+                structure=get_structure(structure_path),
+                reflections=get_reflections(reflections_path),
+                structure_path=structure_path,
+                reflections_path=reflections_path,
+                fragment_path=smiles_path,
+                fragment_structures=fragment_structures,
+            )
+
+            return dataset
+
+        else:
+            if debug:
+                print(f"\t\t{directory} Lacks either a structure or reflections. Skipping")
+            return None
+
+
 def get_datasets(
         data_dir: Path,
         structure_regex: str,
@@ -429,56 +482,28 @@ def get_datasets(
         pruning_threshold: float,
         debug: bool = True,
 ) -> MutableMapping[str, Dataset]:
-    datasets: MutableMapping[str, Dataset] = {}
-
     # Iterate over the paths
-    for directory in data_dir.glob("*"):
-        if debug:
-            print(f"\tChecking directoy {directory} for data...")
+    directories = list(data_dir.glob("*"))
 
-        if directory.is_dir():
-            if debug:
-                print(
-                    f"\t\t{directory} is a directory. Checking for regexes: {structure_regex}, {reflections_regex} and {smiles_regex}")
-            dtag = directory.name
-            structure_path: Optional[Path] = get_path_from_regex(directory, structure_regex)
-            reflections_path: Optional[Path] = get_path_from_regex(directory, reflections_regex)
-            smiles_path: Optional[Path] = get_path_from_regex(directory, smiles_regex)
+    datasets_list: List[Optional[Dataset]] = joblib.Parallel(
+        n_jobs=20,
+        verbose=50,
+    )(
+        joblib.delayed(
+            get_dataset_from_dir(
+                directory,
+                structure_regex,
+                reflections_regex,
+                smiles_regex,
+                pruning_threshold,
+                debug,
+            )
+            for directory
+            in directories
+        )
+    )
 
-            if structure_path and reflections_path:
-
-                if smiles_path:
-                    fragment_structures: Optional[MutableMapping[int, Chem.Mol]] = get_fragment_structures(
-                        smiles_path,
-                        pruning_threshold,
-                    )
-                    if debug:
-                        print(
-                            f"\t\tGenerated {len(fragment_structures)} after pruning")
-
-                else:
-                    fragment_structures = None
-
-                dataset: Dataset = Dataset(
-                    dtag=dtag,
-                    structure=get_structure(structure_path),
-                    reflections=get_reflections(reflections_path),
-                    structure_path=structure_path,
-                    reflections_path=reflections_path,
-                    fragment_path=smiles_path,
-                    fragment_structures=fragment_structures,
-                )
-
-                datasets[dtag] = dataset
-
-            else:
-                if debug:
-                    print(f"\t\t{directory} Lacks either a structure or reflections. Skipping")
-                continue  # Continue if no structure or reflection
-
-        else:
-            continue  # Continue if not a directory
-    # End loop over directories
+    datasets: MutableMapping[str, Dataset] = {dataset.dtag: dataset for dataset in datasets_list if dataset is not None}
 
     return datasets
 
@@ -616,9 +641,11 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                 try:
 
                     # Get ca pos from reference
+                    print("Getting ref ca")
                     current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
                     reference_ca_pos = ref_res["CA"][0].pos
 
+                    print("Getting dataset ca")
                     # Get the ca pos from the dataset
                     dataset_res = get_residue(dataset.structure, current_res_id)
                     dataset_ca_pos = dataset_res["CA"][0].pos
