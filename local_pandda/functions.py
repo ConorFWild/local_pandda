@@ -683,6 +683,8 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
     for model in reference.structure:
         for chain in model:
             for ref_res in chain.get_polymer():
+                print(f"\t\tGetting transform for residue: {ref_res}")
+
                 # if ref_res.name.upper() not in Constants.residue_names:
                 #     continue
                 try:
@@ -715,6 +717,7 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                     reference_selection,
                 )
 
+    print("Returning alignment...")
     return alignment
 
 
