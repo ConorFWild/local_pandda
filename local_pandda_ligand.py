@@ -118,7 +118,7 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
 
         # TODO: REMOVE THIS DEBUG CODE
         if params.debug:
-            if residue_id.insertion != 260:
+            if residue_id.insertion != "260":
                 continue
 
         if params.debug:

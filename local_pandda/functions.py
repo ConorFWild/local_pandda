@@ -362,7 +362,7 @@ def iterate_residues(
     for model in reference_structure:
         for chain in model:
             for residue in chain.get_polymer():
-                residue_id: ResidueID = ResidueID(model.name, chain.name, residue.seqid.num)
+                residue_id: ResidueID = ResidueID(model.name, chain.name, str(residue.seqid.num))
 
                 residue_datasets: MutableMapping[str, Dataset] = {}
                 for dtag, dataset in datasets.items():
