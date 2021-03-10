@@ -661,7 +661,7 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                         print(f"\t\tAlignment exception: {e}")
                     continue
 
-                residue_id: ResidueID = get_residue_id(model, chain, ref_res)
+                residue_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
 
                 dataset_res: gemmi.Residue = get_residue(dataset.structure, residue_id)
 

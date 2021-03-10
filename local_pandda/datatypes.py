@@ -204,6 +204,17 @@ class PanDDAResults(MutableMapping[ResidueID, ResidueResults]):
 class Transform:
     transform: gemmi.Transform
 
+    def __getstate__(self):
+        state = {"mat": self.transform.mat.tolist(),
+                 "vec": self.transform.vec.tolist()}
+
+    def __setstate__(self, state):
+        transform = gemmi.Transform()
+        transform.mat.fromlist(state["mat"])
+        transform.vec.fromlist(state["vec"])
+
+
+
 
 @dataclass()
 class Alignment(MutableMapping[ResidueID, Transform]):
