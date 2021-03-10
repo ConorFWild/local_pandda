@@ -424,7 +424,7 @@ def get_reflections(reflections_path: Path) -> gemmi.Mtz:
 
 def get_dataset_from_dir(
         directory: Path,
-        tructure_regex: str,
+        structure_regex: str,
         reflections_regex: str,
         smiles_regex: str,
         pruning_threshold: float,
@@ -501,7 +501,7 @@ def get_datasets(
         )
             for directory
             in directories
-        
+
     )
 
     datasets: MutableMapping[str, Dataset] = {dataset.dtag: dataset for dataset in datasets_list if dataset is not None}
