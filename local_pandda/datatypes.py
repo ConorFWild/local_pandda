@@ -15,7 +15,7 @@ def try_make(path: Path):
         os.mkdir(str(path))
 
 
-def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path = "/tmp/pandda") -> Path:
+def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path = Path("/tmp/pandda")) -> Path:
     try_make(out_dir)
     while True:
 
@@ -34,7 +34,7 @@ def path_to_mtz(path: Path) -> gemmi.Mtz:
     return mtz
 
 
-def structure_to_path(structure: gemmi.Structure, out_dir: Path = "/tmp/pandda") -> Path:
+def structure_to_path(structure: gemmi.Structure, out_dir: Path = Path("/tmp/pandda")) -> Path:
     try_make(out_dir)
 
     while True:
