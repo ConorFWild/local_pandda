@@ -472,6 +472,8 @@ def get_dataset_from_dir(
             if debug:
                 print(f"\t\t{directory} Lacks either a structure or reflections. Skipping")
             return None
+    else:
+        return None
 
 
 def get_datasets(

@@ -90,7 +90,7 @@ class Dataset:
         else:
             fragment_structures = None
 
-        return {
+        state = {
             "dtag": self.dtag,
             "structure": structure_to_path(self.structure),
             "reflections": mtz_to_path(self.reflections),
@@ -100,6 +100,10 @@ class Dataset:
             "fragment_structures": fragment_structures,
             "smoothing_factor": self.smoothing_factor,
         }
+
+        print(state)
+
+        return state
 
     def __setstate__(self, state):
         self.dtag = state["dtag"]
