@@ -50,10 +50,15 @@ from local_pandda.functions import (
     print_params,
     get_failed_affinity_event,
     save_mtz,
+    get_markers,
 )
 
 
-def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, reference_dtag: Optional[str] = None,
+def run_pandda(data_dir: str,
+               out_dir: str,
+               known_apos: List[str] = None,
+               reference_dtag: Optional[str] = None,
+               markers: Optional[List[Tuple[float, float, float]]] = None,
                **kwargs):
     # Update the Parameters
     params: Params = Params()
@@ -107,8 +112,11 @@ def run_pandda(data_dir: str, out_dir: str, known_apos: List[str] = None, refere
         for dtag, smoothed_dataset in smoothed_datasets.items():
             save_mtz(smoothed_dataset.reflections, out_dir / f"{smoothed_dataset.dtag}_smoothed.mtz")
 
+    # Get the markers to sample around
+    markers: List[Tuple[float, float, float]] = get_markers(reference_dataset, markers)
+
     # Find the alignments between the reference and all other datasets
-    alignments: MutableMapping[str, Alignment] = get_alignments(smoothed_datasets, reference_dataset)
+    alignments: MutableMapping[str, Alignment] = get_alignments(smoothed_datasets, reference_dataset, markers)
 
     # Loop over the residues, sampling the local electron density
     pandda_results: PanDDAAffinityResults = {}

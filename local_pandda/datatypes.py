@@ -167,6 +167,21 @@ class ResidueID:
 
 
 @dataclass()
+class Marker:
+    x: float
+    y: float
+    z: float
+    resid: Optional[ResidueID]
+
+    def __hash__(self):
+        if self.resid:
+            return hash((self.resid.model, self.resid.chain, self.resid.insertion,))
+        else:
+            return hash((self.x, self.y, self.z,))
+
+
+
+@dataclass()
 class DatasetResults:
     dtag: str
     residue_id: ResidueID

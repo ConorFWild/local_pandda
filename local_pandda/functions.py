@@ -564,7 +564,7 @@ def truncate_resolution(reflections: gemmi.Mtz, resolution: float) -> gemmi.Mtz:
 def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
                            reference_dataset: Dataset,
                            structure_factors: StructureFactors) -> MutableMapping[str, Dataset]:
-    dataset_resolution_truncated = {}
+    resolution_truncated_datasets = {}
 
     # Get the lowest common resolution
     resolution: float = min([dataset.reflections.resolution_high() for dtag, dataset in datasets.items()])
@@ -572,17 +572,26 @@ def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
     # Truncate by common resolution
     for dtag, dataset in datasets.items():
         dataset_reflections: gemmi.Mtz = dataset.reflections
-        truncated_dataset = truncate_resolution(dataset_reflections, resolution)
+        truncated_reflections: gemmi.Mtz = truncate_resolution(dataset_reflections, resolution)
+        truncated_dataset: Dataset = Dataset(dataset.dtag,
+                                             dataset.structure,
+                                             truncated_reflections,
+                                             dataset.structure_path,
+                                             dataset.reflections_path,
+                                             dataset.fragment_path,
+                                             dataset.fragment_structures,
+                                             dataset.smoothing_factor,
+                                             )
 
-        dataset_resolution_truncated[dtag] = truncated_dataset
+        resolution_truncated_datasets[dtag] = truncated_dataset
 
     # Get common set of reflections
-    common_reflections = get_all_common_reflections(dataset_resolution_truncated, structure_factors)
+    common_reflections = get_all_common_reflections(resolution_truncated_datasets, structure_factors)
 
     # truncate on reflections
     new_datasets_reflections: MutableMapping[str, Dataset] = {}
-    for dtag in dataset_resolution_truncated:
-        reflections = dataset_resolution_truncated[dtag].reflections
+    for dtag in resolution_truncated_datasets:
+        reflections = resolution_truncated_datasets[dtag].reflections
         reflections_array = np.array(reflections)
         print(f"{dtag}")
         print(f"{reflections_array.shape}")
@@ -634,7 +643,63 @@ def get_transform_from_atoms(
     return transform_from_translation_rotation(vec, rotation)
 
 
-def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> Alignment:
+def get_markers(
+        reference_dataset: Dataset,
+        markers: Optional[List[Tuple[float, float, float]]],
+        debug: bool = True,
+) -> List[Marker]:
+    new_markers: List[Marker] = []
+
+    if markers:
+        for marker in markers:
+            new_markers.append(
+                Marker(
+                    marker[0],
+                    marker[1],
+                    marker[2],
+                    None,
+                )
+            )
+        return new_markers
+
+    else:
+        for model in reference_dataset.structure:
+            for chain in model:
+                for ref_res in chain.get_polymer():
+                    print(f"\t\tGetting transform for residue: {ref_res}")
+
+                    # if ref_res.name.upper() not in Constants.residue_names:
+                    #     continue
+                    try:
+
+                        # Get ca pos from reference
+                        current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
+                        reference_ca_pos = ref_res["CA"][0].pos
+                        new_markers.append(
+                            Marker(
+                                reference_ca_pos.x,
+                                reference_ca_pos.y,
+                                reference_ca_pos.z,
+                                current_res_id,
+                            )
+                        )
+
+                    except Exception as e:
+                        if debug:
+                            print(f"\t\tAlignment exception: {e}")
+                        continue
+
+        if debug:
+            print(f"Found {len(markers)}: {markers}")
+        return new_markers
+
+
+def get_alignment(
+        reference: Dataset,
+        dataset: Dataset,
+        markers: List[Tuple[float, float, float]],
+        debug: bool = True,
+) -> Alignment:
     # Find the common atoms as an array
     dataset_pos_list = []
     reference_pos_list = []
@@ -678,59 +743,94 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
         print(f"\t\treference atom array size: {reference_atom_array.shape}")
 
     # dataset kdtree
-    dataset_tree = spsp.KDTree(dataset_atom_array)
+    # dataset_tree = spsp.KDTree(dataset_atom_array)
+    reference_tree = spsp.KDTree(reference_atom_array)
 
     # Get the transform for each
+    # alignment: Alignment = {}
+    # for model in reference.structure:
+    #     for chain in model:
+    #         for ref_res in chain.get_polymer():
+    #             print(f"\t\tGetting transform for residue: {ref_res}")
+    #
+    #             # if ref_res.name.upper() not in Constants.residue_names:
+    #             #     continue
+    #             try:
+    #
+    #                 # Get ca pos from reference
+    #                 current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
+    #                 reference_ca_pos = ref_res["CA"][0].pos
+    #
+    #                 # Get the ca pos from the dataset
+    #                 dataset_res = get_residue(dataset.structure, current_res_id)
+    #                 dataset_ca_pos = dataset_res["CA"][0].pos
+    #             except Exception as e:
+    #                 if debug:
+    #                     print(f"\t\tAlignment exception: {e}")
+    #                 continue
+    #
+    #             # dataset selection
+    #             if debug:
+    #                 print("\t\tQuerying")
+    #
+    #             dataset_indexes = dataset_tree.query_ball_point(
+    #                 [dataset_ca_pos.x, dataset_ca_pos.y, dataset_ca_pos.z],
+    #                 7.0,
+    #             )
+    #             # dataset_indexes = reference_tree.query_ball_point(
+    #             #     [dataset_ca_pos.x, dataset_ca_pos.y, dataset_ca_pos.z],
+    #             #     7.0,
+    #             # )
+    #             dataset_selection = dataset_atom_array[dataset_indexes]
+    #
+    #             # Reference selection
+    #             reference_selection = reference_atom_array[dataset_indexes]
+    #
+    #             # Get transform
+    #             if debug:
+    #                 print("\t\tGetting transform")
+    #             alignment[current_res_id] = get_transform_from_atoms(
+    #                 dataset_selection,
+    #                 reference_selection,
+    #             )
+    #             if debug:
+    #                 print(
+    #                     (
+    #                         f"\t\t\tTransform is:\n"
+    #                         f"\t\t\t\tMat: {alignment[current_res_id].transform.mat}\n"
+    #                         f"\t\t\t\tVec: {alignment[current_res_id].transform.vec}\n"
+    #                     )
+    #                 )
     alignment: Alignment = {}
-    for model in reference.structure:
-        for chain in model:
-            for ref_res in chain.get_polymer():
-                print(f"\t\tGetting transform for residue: {ref_res}")
+    for marker in markers:
+        # dataset selection
+        if debug:
+            print("\t\tQuerying")
 
-                # if ref_res.name.upper() not in Constants.residue_names:
-                #     continue
-                try:
+        reference_indexes = reference_tree.query_ball_point(
+            [marker[0], marker[1], marker[2]],
+            7.0,
+        )
+        dataset_selection = dataset_atom_array[reference_indexes]
 
-                    # Get ca pos from reference
-                    current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
-                    reference_ca_pos = ref_res["CA"][0].pos
+        # Reference selection
+        reference_selection = reference_atom_array[reference_indexes]
 
-                    # Get the ca pos from the dataset
-                    dataset_res = get_residue(dataset.structure, current_res_id)
-                    dataset_ca_pos = dataset_res["CA"][0].pos
-                except Exception as e:
-                    if debug:
-                        print(f"\t\tAlignment exception: {e}")
-                    continue
-
-                # dataset selection
-                if debug:
-                    print("\t\tQuerying")
-
-                dataset_indexes = dataset_tree.query_ball_point(
-                    [dataset_ca_pos.x, dataset_ca_pos.y, dataset_ca_pos.z],
-                    7.0,
+        # Get transform
+        if debug:
+            print("\t\tGetting transform")
+        alignment[marker] = get_transform_from_atoms(
+            dataset_selection,
+            reference_selection,
+        )
+        if debug:
+            print(
+                (
+                    f"\t\t\tTransform is:\n"
+                    f"\t\t\t\tMat: {alignment[marker].transform.mat}\n"
+                    f"\t\t\t\tVec: {alignment[marker].transform.vec}\n"
                 )
-                dataset_selection = dataset_atom_array[dataset_indexes]
-
-                # Reference selection
-                reference_selection = reference_atom_array[dataset_indexes]
-
-                # Get transform
-                if debug:
-                    print("\t\tGetting transform")
-                alignment[current_res_id] = get_transform_from_atoms(
-                    dataset_selection,
-                    reference_selection,
-                )
-                if debug:
-                    print(
-                        (
-                            f"\t\t\tTransform is:\n"
-                            f"\t\t\t\tMat: {alignment[current_res_id].transform.mat}\n"
-                            f"\t\t\t\tVec: {alignment[current_res_id].transform.vec}\n"
-                        )
-                    )
+            )
 
     if debug:
         print("Returning alignment...")
@@ -740,9 +840,9 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
 def get_alignments(
         datasets: MutableMapping[str, Dataset],
         reference: Dataset,
+        markers: List[Tuple[float, float, float]],
         debug: bool = True,
 ) -> MutableMapping[str, Alignment]:
-
     alignment_list: List[Alignment] = joblib.Parallel(
         n_jobs=20,
         verbose=50,
@@ -1223,7 +1323,6 @@ def smooth_datasets(
         debug: bool = True,
 ) -> MutableMapping[str, Dataset]:
     # For dataset reflections
-
 
     # smoothed_datasets: MutableMapping[str, Dataset] = {}
     # for dtag, dataset in datasets.items():
