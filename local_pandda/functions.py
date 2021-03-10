@@ -106,7 +106,7 @@ def get_dataset_apo_mask(truncated_datasets: MutableMapping[str, Dataset], known
         else:
             apo_mask.append(False)
 
-    apo_mask_array = np.ndarray(apo_mask)
+    apo_mask_array = np.array(apo_mask)
 
     return apo_mask_array
 
