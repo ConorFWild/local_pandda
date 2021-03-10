@@ -498,9 +498,10 @@ def get_datasets(
                 pruning_threshold,
                 debug,
             )
+        )
             for directory
             in directories
-        )
+        
     )
 
     datasets: MutableMapping[str, Dataset] = {dataset.dtag: dataset for dataset in datasets_list if dataset is not None}
