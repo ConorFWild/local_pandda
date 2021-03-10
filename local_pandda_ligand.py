@@ -17,6 +17,7 @@ from local_pandda.datatypes import (
     Params,
     AffinityMaxima,
     AffinityEvent,
+    Marker,
 )
 from local_pandda.functions import (
     get_comparator_datasets,
@@ -24,7 +25,7 @@ from local_pandda.functions import (
     get_mean,
     get_std,
     get_z,
-    iterate_residues,
+    iterate_markers,
     get_comparator_samples,
     get_datasets,
     get_truncated_datasets,
@@ -113,16 +114,16 @@ def run_pandda(data_dir: str,
             save_mtz(smoothed_dataset.reflections, out_dir / f"{smoothed_dataset.dtag}_smoothed.mtz")
 
     # Get the markers to sample around
-    markers: List[Tuple[float, float, float]] = get_markers(reference_dataset, markers)
+    markers: List[Marker] = get_markers(reference_dataset, markers)
 
     # Find the alignments between the reference and all other datasets
     alignments: MutableMapping[str, Alignment] = get_alignments(smoothed_datasets, reference_dataset, markers)
 
     # Loop over the residues, sampling the local electron density
     pandda_results: PanDDAAffinityResults = {}
-    for residue_id, residue_datasets in iterate_residues(datasets, reference_dataset):
+    for marker, residue_datasets in iterate_markers(datasets, markers):
         if params.debug:
-            print(f"Processing residue: {residue_id}")
+            print(f"Processing residue: {marker}")
 
         # TODO: REMOVE THIS DEBUG CODE
         if params.debug:
@@ -150,7 +151,7 @@ def run_pandda(data_dir: str,
         # Sample the datasets to ndarrays
         sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
             truncated_datasets,
-            residue_id,
+            marker,
             alignments,
             params.structure_factors,
             params.sample_rate,
@@ -189,7 +190,7 @@ def run_pandda(data_dir: str,
             # Get a result object
             dataset_results: DatasetAffinityResults = DatasetAffinityResults(
                 dataset.dtag,
-                residue_id,
+                marker,
                 dataset.structure_path,
                 dataset.reflections_path,
                 dataset.fragment_path,
@@ -221,7 +222,7 @@ def run_pandda(data_dir: str,
             if not comparator_datasets:
                 dataset_results: DatasetAffinityResults = get_not_enough_comparator_dataset_affinity_result(
                     dataset,
-                    residue_id,
+                    marker,
                 )
                 residue_results[dataset.dtag] = dataset_results
                 continue
@@ -299,8 +300,8 @@ def run_pandda(data_dir: str,
                         corrected_density,
                         reference_dataset,
                         dataset,
-                        alignments[dataset.dtag][residue_id],
-                        residue_id,
+                        alignments[dataset.dtag][marker],
+                        marker,
                         params.grid_size,
                         params.grid_spacing,
                         params.structure_factors,
@@ -311,7 +312,7 @@ def run_pandda(data_dir: str,
                     event_map_path: Path = get_affinity_event_map_path(
                         out_dir,
                         dataset,
-                        residue_id,
+                        marker,
                     )
                     write_event_map(
                         event_map,
@@ -322,14 +323,14 @@ def run_pandda(data_dir: str,
                     event: AffinityEvent = get_affinity_event(
                         dataset,
                         maxima,
-                        residue_id,
+                        marker,
                     )
 
                 else:
                     # Record a failed event
                     event: AffinityEvent = get_failed_affinity_event(
                         dataset,
-                        residue_id,
+                        marker,
                     )
 
                 # Record the event

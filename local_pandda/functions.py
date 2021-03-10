@@ -380,6 +380,15 @@ def iterate_residues(
                 yield residue_id, residue_datasets
 
 
+def iterate_markers(
+        datasets: MutableMapping[str, Dataset],
+        markers: List[Marker],
+        debug: bool = True,
+) -> Iterator[Tuple[Marker, MutableMapping[str, Dataset]]]:
+    for marker in markers:
+        yield marker, datasets
+
+
 def get_apo_mask(
         truncated_datasets: MutableMapping[str, Dataset],
         known_apos: List[str],
@@ -691,13 +700,14 @@ def get_markers(
 
         if debug:
             print(f"Found {len(markers)}: {markers}")
+
         return new_markers
 
 
 def get_alignment(
         reference: Dataset,
         dataset: Dataset,
-        markers: List[Tuple[float, float, float]],
+        markers: List[Marker],
         debug: bool = True,
 ) -> Alignment:
     # Find the common atoms as an array
@@ -808,7 +818,7 @@ def get_alignment(
             print("\t\tQuerying")
 
         reference_indexes = reference_tree.query_ball_point(
-            [marker[0], marker[1], marker[2]],
+            [marker.x, marker.y, marker.z],
             7.0,
         )
         dataset_selection = dataset_atom_array[reference_indexes]
@@ -840,7 +850,7 @@ def get_alignment(
 def get_alignments(
         datasets: MutableMapping[str, Dataset],
         reference: Dataset,
-        markers: List[Tuple[float, float, float]],
+        markers: List[Marker],
         debug: bool = True,
 ) -> MutableMapping[str, Alignment]:
     alignment_list: List[Alignment] = joblib.Parallel(
@@ -914,7 +924,7 @@ def sample_dataset(
 
 def sample_datasets(
         truncated_datasets: MutableMapping[str, Dataset],
-        residue_id: ResidueID,
+        marker: Marker,
         alignments: MutableMapping[str, Alignment],
         structure_factors: StructureFactors,
         sample_rate: float,
@@ -924,7 +934,7 @@ def sample_datasets(
     samples: MutableMapping[str, np.ndarray] = {}
     for dtag, dataset in truncated_datasets.items():
         alignment: Alignment = alignments[dtag]
-        residue_transform: Transform = alignment[residue_id]
+        residue_transform: Transform = alignment[marker]
 
         sample: np.ndarray = sample_dataset(
             dataset,
@@ -1409,7 +1419,7 @@ def get_backtransformed_map(
         reference_dataset: Dataset,
         dataset: Dataset,
         transform: Transform,
-        residue_id: ResidueID,
+        marker: Marker,
         grid_size: int,
         grid_spacing: float,
         structure_factors: StructureFactors,
@@ -1432,8 +1442,9 @@ def get_backtransformed_map(
 
     # mask
     mask: gemmi.Int8Grid = gemmi.Int8Grid()
-    residue_ca: gemmi.Atom = dataset.structure[residue_id.model][residue_id.chain][residue_id.insertion][0]["CA"]
-    dataset_centroid: gemmi.Pos = residue_ca.pos
+    # residue_ca: gemmi.Atom = dataset.structure[residue_id.model][residue_id.chain][residue_id.insertion][0]["CA"]
+    # dataset_centroid: gemmi.Pos = residue_ca.pos
+    dataset_centroid: gemmi.Position = gemmi.Position(marker.x, marker.y, marker.z)
     mask.set_points_around(dataset_centroid, radius=6, value=1)
 
     # Get indexes of grid points around moving residue
@@ -1458,42 +1469,51 @@ def get_backtransformed_map(
 def get_affinity_event_map_path(
         out_dir,
         dataset,
-        residue_id,
+        marker: Marker,
 ) -> Path:
-    path: Path = out_dir / Constants.affinity_event_map_path.format(
-        dtag=dataset.dtag,
-        model=residue_id.model,
-        chain=residue_id.chain,
-        insertion=residue_id.insertion,
-    )
+    if marker.resid:
+        path: Path = out_dir / Constants.affinity_event_map_res_path.format(
+            dtag=dataset.dtag,
+            model=marker.resid.model,
+            chain=marker.resid.chain,
+            insertion=marker.resid.insertion,
+        )
+    else:
+        path: Path = out_dir / Constants.affinity_event_map_res_path.format(
+            dtag=dataset.dtag,
+            x=round(marker.x, 3),
+            y=round(marker.y, 3),
+            z=round(marker.z, 3),
+        )
+
     return path
 
 
 def get_affinity_event(
         dataset: Dataset,
         maxima: AffinityMaxima,
-        residue_id: ResidueID,
+        marker: Marker,
 ) -> AffinityEvent:
     return AffinityEvent(
         dataset.dtag,
-        residue_id,
+        marker,
         maxima.correlation,
     )
 
 
-def get_failed_affinity_event(dataset: Dataset, residue_id: ResidueID) -> AffinityEvent:
+def get_failed_affinity_event(dataset: Dataset, marker: Marker) -> AffinityEvent:
     return AffinityEvent(
         dataset.dtag,
-        residue_id,
+        marker,
         0,
     )
 
 
 def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset,
-                                                      residue_id: ResidueID) -> DatasetAffinityResults:
+                                                      marker: Marker) -> DatasetAffinityResults:
     dataset_result: DatasetAffinityResults = DatasetAffinityResults(
         dataset.dtag,
-        residue_id,
+        marker,
         structure_path=dataset.structure_path,
         reflections_path=dataset.reflections_path,
         fragment_path=dataset.fragment_path,

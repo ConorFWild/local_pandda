@@ -144,7 +144,7 @@ class Event:
 @dataclass()
 class AffinityEvent:
     dtag: str
-    residue_id: ResidueID
+    marker: Marker
     correlation: float
 
 
@@ -178,7 +178,6 @@ class Marker:
             return hash((self.resid.model, self.resid.chain, self.resid.insertion,))
         else:
             return hash((self.x, self.y, self.z,))
-
 
 
 @dataclass()
@@ -232,14 +231,12 @@ class Transform:
         transform.vec.fromlist(state["vec"])
 
 
-
-
 # @dataclass()
 # class Alignment(MutableMapping[ResidueID, Transform]):
 #     _residue_alignments: MutableMapping[ResidueID, Transform] = field(default_factory=dict)
 
 
-Alignment = MutableMapping[ResidueID, Transform]
+Alignment = MutableMapping[Marker, Transform]
 
 
 @dataclass()
@@ -253,12 +250,13 @@ class Cluster(object):
 @dataclass()
 class DatasetAffinityResults:
     dtag: str
-    residue_id: ResidueID
+    marker: Marker
     structure_path: Path
     reflections_path: Path
     fragment_path: Path
     events: Dict[int, AffinityEvent] = field(default_factory=dict)
     comparators: List[Dataset] = field(default_factory=list)
+
 
 #
 # @dataclass()
@@ -272,6 +270,7 @@ ResidueAffinityResults = MutableMapping[str, DatasetAffinityResults]
 #     _pandda_results: Dict[ResidueID, ResidueAffinityResults] = field(default_factory=dict)
 
 PanDDAAffinityResults = MutableMapping[ResidueID, ResidueAffinityResults]
+
 
 class Params:
     debug: bool = True
