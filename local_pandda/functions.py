@@ -244,7 +244,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
 
 
 def get_residue_id(model: gemmi.Model, chain: gemmi.Chain, insertion: str):
-    return ResidueID(model.name, chain.name, insertion)
+    return ResidueID(model.name, chain.name, str(insertion))
 
 
 def get_residue(structure: gemmi.Structure, residue_id: ResidueID) -> gemmi.Residue:
