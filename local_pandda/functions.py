@@ -58,7 +58,7 @@ def python_to_mtz(path: Path) -> gemmi.Mtz:
     return None
 
 
-def structure_to_python(structure: gemmi.Structure, out_dir: Path) -> PyStructure:
+def structure_to_python(structure: gemmi.Structure, out_dir: Path) -> Path:
     return None
 
 
