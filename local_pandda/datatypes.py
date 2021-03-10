@@ -20,7 +20,7 @@ def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path = Path("/tmp/pandda")) -> Path:
     while True:
 
         token = secrets.token_hex()
-        out_path = out_dir / token
+        out_path = out_dir / f"{token}.mtz"
         if not out_path.exists():
             mtz.write_to_file(str(out_path))
             return out_path
@@ -40,7 +40,7 @@ def structure_to_path(structure: gemmi.Structure, out_dir: Path = Path("/tmp/pan
     while True:
         token = secrets.token_hex()
 
-        out_path = out_dir / token
+        out_path = out_dir / f"{token}.pdb"
 
         if not out_path.exists():
             structure.write_minimal_pdb(str(out_path))
