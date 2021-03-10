@@ -216,9 +216,12 @@ class Transform:
 
 
 
-@dataclass()
-class Alignment(MutableMapping[ResidueID, Transform]):
-    _residue_alignments: MutableMapping[ResidueID, Transform] = field(default_factory=dict)
+# @dataclass()
+# class Alignment(MutableMapping[ResidueID, Transform]):
+#     _residue_alignments: MutableMapping[ResidueID, Transform] = field(default_factory=dict)
+
+
+Alignment = MutableMapping[ResidueID, Transform]
 
 
 @dataclass()

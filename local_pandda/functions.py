@@ -679,7 +679,7 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
     dataset_tree = spsp.KDTree(dataset_atom_array)
 
     # Get the transform for each
-    alignment: Alignment = Alignment()
+    alignment: Alignment = {}
     for model in reference.structure:
         for chain in model:
             for ref_res in chain.get_polymer():
