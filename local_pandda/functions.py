@@ -1011,7 +1011,7 @@ def get_distance_matrix(samples: MutableMapping[str, np.ndarray]) -> np.ndarray:
     # For every sample
     # Find the distance to every other sample
     # Enter it into the matrix
-    return None
+    return correlation_matrix
 
 
 def get_z_clusters(z: np.ndarray, mean: np.ndarray) -> MutableMapping[int, Cluster]:
