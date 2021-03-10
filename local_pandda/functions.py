@@ -699,7 +699,7 @@ def get_markers(
                         continue
 
         if debug:
-            print(f"Found {len(markers)}: {markers}")
+            print(f"Found {len(new_markers)}: {new_markers}")
 
         return new_markers
 
