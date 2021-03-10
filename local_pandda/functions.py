@@ -567,7 +567,7 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool=True) -> Ali
                 try:
 
                     # Get ca pos from reference
-                    current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.insertion)
+                    current_res_id: ResidueID = get_residue_id(model, chain, ref_res.seqid.num)
                     reference_ca_pos = ref_res["CA"][0].pos
 
                     # Get the ca pos from the dataset
