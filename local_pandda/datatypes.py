@@ -27,7 +27,6 @@ def mtz_to_path(mtz: gemmi.Mtz, out_dir: Path = "/tmp/pandda") -> Path:
 
 
 def path_to_mtz(path: Path) -> gemmi.Mtz:
-
     mtz = gemmi.read_mtz_file(str(path))
 
     os.remove(str(path))
@@ -64,16 +63,26 @@ class StructureFactors:
     phi: str
 
 
-@dataclass
 class Dataset:
-    dtag: str
-    structure: gemmi.Structure
-    reflections: gemmi.Mtz
-    structure_path: Path
-    reflections_path: Path
-    fragment_path: Optional[Path]
-    fragment_structures: Optional[MutableMapping[int, gemmi.Structure]]
-    smoothing_factor: Optional[float] = None
+
+    def __init__(self,
+                 dtag: str,
+                 structure: gemmi.Structure,
+                 reflections: gemmi.Mtz,
+                 structure_path: Path,
+                 reflections_path: Path,
+                 fragment_path: Optional[Path],
+                 fragment_structures: Optional[MutableMapping[int, gemmi.Structure]],
+                 smoothing_factor: Optional[float] = None,
+                 ):
+        self.dtag = dtag
+        self.structure = structure
+        self.reflections = reflections
+        self.structure_path = structure_path
+        self.reflections_path = reflections_path
+        self.fragment_path = fragment_path
+        self.fragment_structures = fragment_structures
+        self.smoothing_factor = smoothing_factor
 
     def __getstate__(self):
         if self.fragment_path:
