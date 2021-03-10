@@ -702,6 +702,9 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                     continue
 
                 # dataset selection
+                if debug:
+                    print("\t\tQuerying")
+
                 dataset_indexes = dataset_tree.query_ball_point(
                     [dataset_ca_pos.x, dataset_ca_pos.y, dataset_ca_pos.z],
                     7.0,
@@ -712,12 +715,14 @@ def get_alignment(reference: Dataset, dataset: Dataset, debug: bool = True) -> A
                 reference_selection = reference_atom_array[dataset_indexes]
 
                 # Get transform
+                if debug:
+                    print("\t\tGetting transform")
                 alignment[current_res_id] = get_transform_from_atoms(
                     dataset_selection,
                     reference_selection,
                 )
-
-    print("Returning alignment...")
+    if debug:
+        print("Returning alignment...")
     return alignment
 
 
