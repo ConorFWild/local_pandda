@@ -162,6 +162,9 @@ class ResidueID:
     chain: str
     insertion: str
 
+    def __hash__(self):
+        return hash((self.model, self.chain, self.insertion,))
+
 
 @dataclass()
 class DatasetResults:
