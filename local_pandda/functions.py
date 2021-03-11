@@ -595,7 +595,7 @@ def get_truncated_datasets(datasets: MutableMapping[str, Dataset],
     resolution_truncated_datasets = {}
 
     # Get the lowest common resolution
-    resolution: float = min([dataset.reflections.resolution_high() for dtag, dataset in datasets.items()])
+    resolution: float = max([dataset.reflections.resolution_high() for dtag, dataset in datasets.items()])
 
     # Truncate by common resolution
     for dtag, dataset in datasets.items():
