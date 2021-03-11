@@ -1459,7 +1459,9 @@ def get_backtransformed_map(
     )
 
     # mask
-    mask: gemmi.Int8Grid = gemmi.Int8Grid()
+    mask: gemmi.Int8Grid = gemmi.Int8Grid(grid.nu, grid.nv, grid.nw)
+    mask.set_unit_cell(grid.unit_cell)
+    mask.spacegroup = gemmi.find_spacegroup_by_name('P 1')
     # residue_ca: gemmi.Atom = dataset.structure[residue_id.model][residue_id.chain][residue_id.insertion][0]["CA"]
     # dataset_centroid: gemmi.Pos = residue_ca.pos
     dataset_centroid: gemmi.Position = gemmi.Position(marker.x, marker.y, marker.z)
