@@ -215,9 +215,9 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
 
     arr = np.zeros(
         (
-            (distance.x / sample_rate) + 1,
-            (distance.y / sample_rate) + 1,
-            (distance.z / sample_rate) + 1,
+            int(distance.x / sample_rate) + 1,
+            int(distance.y / sample_rate) + 1,
+            int(distance.z / sample_rate) + 1,
              ),
         dtype=np.float32
     )
