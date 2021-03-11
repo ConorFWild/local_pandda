@@ -207,7 +207,7 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
 
 
 def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix,
-                               margin: float = 1.5) -> gemmi.Structure:
+                               margin: float = 3.0) -> gemmi.Structure:
     # print(rotation_matrix)
     structure_copy = fragment_structure.clone()
     transform: gemmi.Transform = gemmi.Transform()
@@ -240,7 +240,11 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     new_z = pos.z - min_pos.z
                     atom.pos = gemmi.Position(new_x, new_y, new_z)
 
-    structure_copy.cell = gemmi.UnitCell(box.maximum[0], box.maximum[1], box.maximum[2], 90.0, 90.0, 90.0)
+    structure_copy.cell = gemmi.UnitCell(
+        box.maximum.x - box.minimum.x,
+        box.maximum.y - box.minimum.y,
+        box.maximum.z - box.minimum.z,
+        90.0, 90.0, 90.0)
     structure_copy.spacegroup_hm = gemmi.find_spacegroup_by_name("P 1").xhm()
 
     return structure_copy
