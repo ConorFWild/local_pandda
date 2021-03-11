@@ -211,10 +211,12 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
         for chain in model:
             for residue in chain:
                 for atom in residue:
+                    print(atom.pos)
                     pos: gemmi.Position = atom.pos
                     rotated_vec = transform.apply(pos)
                     rotated_position = gemmi.Position(rotated_vec.x, rotated_vec.y, rotated_vec.z)
                     atom.pos = rotated_position
+                    print(atom.pos)
 
     box = structure_copy.calculate_box()
     box.add_margin(margin)
