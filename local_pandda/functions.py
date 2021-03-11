@@ -945,6 +945,8 @@ def sample_dataset(
     transform_mat = np.matmul(transform_mat.T, np.eye(3) * grid_spacing)
     offset = np.matmul(transform_mat, np.array([grid_size / 2, grid_size / 2, grid_size / 2]).reshape(3, 1)).flatten()
     print(f"Offset from: {offset}")
+    print(f"transform_vec from: {transform_vec}")
+
     offset_tranform_vec = transform_vec - offset
     marker_offset_tranform_vec = offset_tranform_vec + np.array([marker.x, marker.y, marker.z])
     print(f"Sampling from: {marker_offset_tranform_vec}")
