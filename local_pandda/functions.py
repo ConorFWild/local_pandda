@@ -1479,7 +1479,8 @@ def get_backtransformed_map(
             index_position.y - dataset_centroid.y,
             index_position.z - dataset_centroid.z,
         )
-        transformed_position: gemmi.Position = transform.transform.inverse().apply(index_relative_position)
+        transformed_vec: gemmi.Vec3 = transform.transform.inverse().apply(index_relative_position)
+        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x, transformed_vec.y, transformed_vec.z, )
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
 
