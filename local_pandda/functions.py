@@ -202,6 +202,7 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float) -> np.ndarra
 
 def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix,
                                margin: float = 1.5) -> gemmi.Structure:
+    print(rotation_matrix)
     structure_copy = fragment_structure.clone()
     transform: gemmi.Transform = gemmi.Transform()
     transform.mat.fromlist(rotation_matrix.tolist())
@@ -214,6 +215,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     print(atom.pos)
                     pos: gemmi.Position = atom.pos
                     rotated_vec = transform.apply(pos)
+                    print(rotated_vec)
                     rotated_position = gemmi.Position(rotated_vec.x, rotated_vec.y, rotated_vec.z)
                     atom.pos = rotated_position
                     print(atom.pos)
