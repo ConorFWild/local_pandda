@@ -235,7 +235,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     atom.pos = gemmi.Position(new_x, new_y, new_z)
 
     structure_copy.cell = gemmi.UnitCell(box.maximum[0], box.maximum[1], box.maximum[2], 90.0, 90.0, 90.0)
-    structure_copy.spacegroup = gemmi.find_spacegroup_by_name("P 1")
+    structure_copy.spacegroup_hm = gemmi.find_spacegroup_by_name("P 1").xhm()
 
     return structure_copy
 
