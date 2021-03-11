@@ -1473,7 +1473,7 @@ def get_backtransformed_map(
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
-        index_position: gemmi.Position = grid.get_position(index[0], index[1], index[2])
+        index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
         index_relative_position: gemmi.Position = gemmi.Position(
             index_position.x - dataset_centroid.x,
             index_position.y - dataset_centroid.y,
