@@ -185,7 +185,7 @@ def get_fragment_affinity_map(dataset_sample: np.ndarray, fragment_map: np.ndarr
     return affinity_map
 
 
-def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int) -> np.ndarray:
+def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int, sample_rate: float, margin: float = 1.5) -> np.ndarray:
     dencalc: gemmi.DensityCalculatorE = gemmi.DensityCalculatorE()
 
     dencalc.d_min = resolution
@@ -200,10 +200,32 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
 
     grid: gemmi.FloatGrid = dencalc.grid
     print(grid)
-    array: np.ndarray = np.array(grid, copy=True)
+    # array: np.ndarray = np.array(grid, copy=True)
 
+    box = structure.calculate_box()
+    box.add_margin(margin)
+    min_pos: gemmi.Position = box.minimum
+    max_pos = box.maximum
 
-    return array
+    distance = max_pos - min_pos
+
+    tr = gemmi.Transform()
+    tr.mat.fromlist([[1*sample_rate,0,0], [0,1*sample_rate,0], [0,0,1*sample_rate]])
+    tr.vec.fromlist([min_pos.x, min_pos.y, min_pos.z])
+
+    arr = np.zeros(
+        (
+            (distance.x / sample_rate) + 1,
+            (distance.y / sample_rate) + 1,
+            (distance.z / sample_rate) + 1,
+             ),
+        dtype=np.float32
+    )
+
+    grid.interpolate_values(arr, tr)
+    print(arr.shape)
+
+    return arr
 
 
 def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix,
@@ -245,6 +267,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
         box.maximum.y - box.minimum.y,
         box.maximum.z - box.minimum.z,
         90.0, 90.0, 90.0)
+
     structure_copy.spacegroup_hm = gemmi.find_spacegroup_by_name("P 1").xhm()
 
     return structure_copy
@@ -260,7 +283,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
         rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, z], degrees=True)
         rotation_matrix: np.ndarray = rotation.as_matrix()
         rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
-        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing)
+        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing, sample_rate)
         fragment_maps[rotation_index] = fragment_map
 
     return fragment_maps
