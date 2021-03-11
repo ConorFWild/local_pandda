@@ -185,16 +185,21 @@ def get_fragment_affinity_map(dataset_sample: np.ndarray, fragment_map: np.ndarr
     return affinity_map
 
 
-def get_fragment_map(structure: gemmi.Structure, resolution: float, sample_rate: float) -> np.ndarray:
+def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int) -> np.ndarray:
     dencalc: gemmi.DensityCalculatorE = gemmi.DensityCalculatorE()
 
     dencalc.d_min = resolution
-    dencalc.rate = resolution / (2*sample_rate)
+    dencalc.rate = resolution / (2*grid_spacing)
 
+    print(resolution)
+    print(grid_spacing)
+    print(structure.spacegroup_hm)
+    print(structure.cell)
     dencalc.set_grid_cell_and_spacegroup(structure)
     dencalc.put_model_density_on_grid(structure[0])
 
     grid: gemmi.FloatGrid = dencalc.grid
+    print(grid)
     array: np.ndarray = np.array(grid, copy=True)
 
     return array
@@ -240,7 +245,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     return structure_copy
 
 
-def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, num_samples: int, sample_rate: float):
+def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, num_samples: int, sample_rate: float, grid_spacing: int):
     sample_angles = np.linspace(0, 360, num=10, endpoint=False).tolist()
 
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
@@ -250,7 +255,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
         rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, z], degrees=True)
         rotation_matrix: np.ndarray = rotation.as_matrix()
         rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
-        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, sample_rate)
+        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing)
         fragment_maps[rotation_index] = fragment_map
 
     return fragment_maps
