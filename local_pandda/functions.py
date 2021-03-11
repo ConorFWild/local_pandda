@@ -939,7 +939,9 @@ def sample_dataset(
 
     transform_inverse = transform.transform.inverse()
 
-    transform_vec = np.array(transform_inverse.vec.tolist())
+    # transform_vec = np.array(transform_inverse.vec.tolist())
+    transform_vec = -np.array(transform.transform.vec.tolist())
+
     transform_mat = np.array(transform_inverse.mat.tolist())
 
     transform_mat = np.matmul(transform_mat.T, np.eye(3) * grid_spacing)
