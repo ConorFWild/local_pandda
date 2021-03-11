@@ -212,13 +212,13 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
         for chain in model:
             for residue in chain:
                 for atom in residue:
-                    print(atom.pos)
+                    # print(atom.pos)
                     pos: gemmi.Position = atom.pos
                     rotated_vec = transform.apply(pos)
-                    print(rotated_vec)
+                    # print(rotated_vec)
                     rotated_position = gemmi.Position(rotated_vec.x, rotated_vec.y, rotated_vec.z)
                     atom.pos = rotated_position
-                    print(atom.pos)
+                    # print(atom.pos)
 
     box = structure_copy.calculate_box()
     box.add_margin(margin)
@@ -242,7 +242,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
 
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
     for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles):
-        print([x, y, z])
+        # print([x, y, z])
         rotation_index = (x, y, z)
         rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, z], degrees=True)
         rotation_matrix: np.ndarray = rotation.as_matrix()
