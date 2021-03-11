@@ -960,6 +960,7 @@ def sample_dataset(
     tr.mat.fromlist(transform_non_inv_mat.tolist())
     tr.vec.fromlist(marker_offset_tranform_vec.tolist())
 
+
     arr = np.zeros([grid_size, grid_size, grid_size], dtype=np.float32)
 
     unaligned_xmap.interpolate_values(arr, tr)
