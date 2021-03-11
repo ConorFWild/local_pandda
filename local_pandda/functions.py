@@ -954,10 +954,10 @@ def sample_dataset(
     print(f"Sampling from: {marker_offset_tranform_vec}")
 
     tr = gemmi.Transform()
-    # tr.mat.fromlist(transform_mat.tolist())
-    transform_non_inv_mat = np.array(transform.transform.mat.tolist()).T
-    transform_non_inv_mat = np.matmul(transform_non_inv_mat, np.eye(3) * grid_spacing)
-    tr.mat.fromlist(transform_non_inv_mat.tolist())
+    tr.mat.fromlist(transform_mat.tolist())
+    # transform_non_inv_mat = np.array(transform.transform.mat.tolist()).T
+    # transform_non_inv_mat = np.matmul(transform_non_inv_mat, np.eye(3) * grid_spacing)
+    # tr.mat.fromlist(transform_non_inv_mat.tolist())
     tr.vec.fromlist(marker_offset_tranform_vec.tolist())
 
     arr = np.zeros([grid_size, grid_size, grid_size], dtype=np.float32)
