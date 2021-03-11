@@ -1395,7 +1395,7 @@ def get_fragment_z_maxima(
     for rotation_index, affinity_map in fragment_affinity_z_maps.items():
         #
         max_index: np.ndarray = np.argmax(affinity_map)
-        max_value: float = affinity_map[max_index]
+        max_value: float = affinity_map.flatten()[max_index]
         maxima: AffinityMaxima = AffinityMaxima(
             max_index,
             max_value,
