@@ -680,7 +680,7 @@ def get_transform_from_atoms(
     de_meaned_moving = moving_selection - mean_moving
     de_meaned_referecnce = reference_selection - mean_reference
 
-    rotation, rmsd = scipy.spatial.transform.Rotation.align_vectors(de_meaned_moving, de_meaned_referecnce)
+    rotation, rmsd = scipy.spatial.transform.Rotation.align_vectors(de_meaned_referecnce, de_meaned_moving)
 
     return transform_from_translation_rotation(vec, rotation)
 
