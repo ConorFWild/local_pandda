@@ -944,6 +944,7 @@ def sample_dataset(
     offset = np.matmul(transform_mat, np.array([grid_size / 2, grid_size / 2, grid_size / 2]).reshape(3, 1)).flatten()
     offset_tranform_vec = transform_vec - offset
     marker_offset_tranform_vec = offset_tranform_vec + np.array([marker.x, marker.y, marker.z])
+    print(f"Sampling from: {marker_offset_tranform_vec}")
 
     tr = gemmi.Transform()
     tr.mat.fromlist(transform_mat.tolist())
