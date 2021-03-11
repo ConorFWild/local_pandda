@@ -185,11 +185,11 @@ def get_fragment_affinity_map(dataset_sample: np.ndarray, fragment_map: np.ndarr
     return affinity_map
 
 
-def get_fragment_map(structure: gemmi.Structure, resolution: float) -> np.ndarray:
+def get_fragment_map(structure: gemmi.Structure, resolution: float, sample_rate: float) -> np.ndarray:
     dencalc: gemmi.DensityCalculatorE = gemmi.DensityCalculatorE()
 
     dencalc.d_min = resolution
-    dencalc.rate = 3.0
+    dencalc.rate = resolution / (2*sample_rate)
 
     dencalc.set_grid_cell_and_spacegroup(structure)
     dencalc.put_model_density_on_grid(structure[0])
@@ -234,6 +234,9 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     new_z = pos.z - min_pos.z
                     atom.pos = gemmi.Position(new_x, new_y, new_z)
 
+    structure_copy.cell = gemmi.UnitCell(box.maximum[0], box.maximum[1], box.maximum[2], 90.0, 90.0, 90.0)
+    structure_copy.spacegroup = gemmi.find_spacegroup_by_name("P 1")
+
     return structure_copy
 
 
@@ -247,7 +250,7 @@ def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, nu
         rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, z], degrees=True)
         rotation_matrix: np.ndarray = rotation.as_matrix()
         rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
-        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution)
+        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, sample_rate)
         fragment_maps[rotation_index] = fragment_map
 
     return fragment_maps
