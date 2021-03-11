@@ -202,6 +202,7 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
     print(grid)
     array: np.ndarray = np.array(grid, copy=True)
 
+
     return array
 
 
@@ -916,6 +917,7 @@ def get_alignments(
 def sample_dataset(
         dataset: Dataset,
         transform: Transform,
+        marker: Marker,
         structure_factors: StructureFactors,
         sample_rate: float,
         grid_size: int,
@@ -941,10 +943,11 @@ def sample_dataset(
     transform_mat = np.matmul(transform_mat, np.eye(3) * grid_spacing)
     offset = np.matmul(transform_mat, np.array([grid_size / 2, grid_size / 2, grid_size / 2]).reshape(3, 1)).flatten()
     offset_tranform_vec = transform_vec - offset
+    marker_offset_tranform_vec = offset_tranform_vec + np.array([marker.x, marker.y, marker.z])
 
     tr = gemmi.Transform()
     tr.mat.fromlist(transform_mat.tolist())
-    tr.vec.fromlist(offset_tranform_vec.tolist())
+    tr.vec.fromlist(marker_offset_tranform_vec.tolist())
 
     arr = np.zeros([grid_size, grid_size, grid_size], dtype=np.float32)
 
@@ -970,6 +973,7 @@ def sample_datasets(
         sample: np.ndarray = sample_dataset(
             dataset,
             residue_transform,
+            marker,
             structure_factors,
             sample_rate,
             grid_size,
