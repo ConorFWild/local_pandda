@@ -210,15 +210,15 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
     distance = max_pos - min_pos
 
     tr = gemmi.Transform()
-    tr.mat.fromlist([[1*sample_rate,0,0], [0,1*sample_rate,0], [0,0,1*sample_rate]])
+    tr.mat.fromlist([[1*grid_spacing,0,0], [0,1*grid_spacing,0], [0,0,1*grid_spacing]])
     tr.vec.fromlist([min_pos.x, min_pos.y, min_pos.z])
 
     arr = np.zeros(
-        (
+        [
             int(distance.x / grid_spacing) + 1,
             int(distance.y / grid_spacing) + 1,
             int(distance.z / grid_spacing) + 1,
-             ),
+        ],
         dtype=np.float32
     )
 
