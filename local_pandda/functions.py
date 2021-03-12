@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import itertools
 import dataclasses
+import math
 
 # 3rd party
 import numpy as np
@@ -1127,9 +1128,9 @@ def get_affinity_background_corrected_density(
     fragment_min_x = max([0,  int(fragment_map.shape[0]/2)-index[0]])
     fragment_min_y = max([0,  int(fragment_map.shape[1]/2)-index[1]])
     fragment_min_z = max([0,  int(fragment_map.shape[2]/2)-index[2]])
-    fragment_max_x = min([fragment_shape[0], 1+int(fragment_shape[0]/2)+(dataset_shape[0]-index[0])])
-    fragment_max_y = min([fragment_shape[1], 1+int(fragment_shape[1]/2)+(dataset_shape[1]-index[1])])
-    fragment_max_z = min([fragment_shape[2], 1+int(fragment_shape[2]/2)+(dataset_shape[2]-index[2])])
+    fragment_max_x = min([fragment_shape[0], math.ceil(fragment_shape[0]/2)+(dataset_shape[0]-index[0])])
+    fragment_max_y = min([fragment_shape[1], math.ceil(fragment_shape[1]/2)+(dataset_shape[1]-index[1])])
+    fragment_max_z = min([fragment_shape[2], math.ceil(fragment_shape[2]/2)+(dataset_shape[2]-index[2])])
 
     fragment_overlap = fragment_map[fragment_min_x:fragment_max_x, fragment_min_y:fragment_max_y, fragment_min_z:fragment_max_z, ]
     print(dataset_sample.shape)
