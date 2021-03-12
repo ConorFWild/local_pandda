@@ -1145,7 +1145,7 @@ def get_affinity_background_corrected_density(
     for b in np.linspace(0.0, 1.0, 20):
         residual_map = sample_overlap - (b*mean_overlap)
         scaled_fragment_map = (1-b)*fragment_overlap
-        sum_absolute_differance = np.sum(np.abs(residual_map[fragment_mask] - scaled_fragment_map[fragment_mask]))
+        sum_absolute_differance = np.sum(np.abs(residual_map[fragment_mask>0] - scaled_fragment_map[fragment_mask>0]))
         print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
 
     return None
