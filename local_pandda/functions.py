@@ -225,7 +225,11 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
     grid.interpolate_values(arr, tr)
     print(arr.shape)
 
-    arr[arr > np.mean(arr)] = 1.0
+    mean = np.mean(arr)
+    great_mask = arr > mean
+    less_mask = arr <= mean
+    arr[great_mask] = 1.0
+    arr[less_mask] = 0.0
 
     return arr
 
