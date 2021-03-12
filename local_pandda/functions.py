@@ -225,11 +225,7 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
     grid.interpolate_values(arr, tr)
     print(arr.shape)
 
-    mean = np.mean(arr)
-    great_mask = arr > mean
-    less_mask = arr <= mean
-    arr[great_mask] = 1.0
-    arr[less_mask] = 0.0
+
 
     return arr
 
@@ -1100,6 +1096,55 @@ def get_background_corrected_density(
 ) -> np.ndarray:
     # Select the cluster density
     # Set it to some relatively large sigma
+
+    return None
+
+
+def get_affinity_background_corrected_density(
+        dataset_sample: np.ndarray,
+        fragment_map: np.ndarray,
+        maxima: AffinityMaxima,
+        mean: np.ndarray,
+) -> np.ndarray:
+    # Select the cluster density
+    # Set it to some relatively large sigma
+    index = maxima.index
+    # np.unravel_index(1621, (6, 7, 8, 9))
+
+    dataset_shape = dataset_sample.shape
+    fragment_shape = fragment_map.shape
+
+    dataset_min_x = max([0, index[0]-int(fragment_shape[0]/2)])
+    dataset_min_y = max([0, index[1]-int(fragment_shape[1]/2)])
+    dataset_min_z = max([0, index[2]-int(fragment_shape[2]/2)])
+    dataset_max_x = min([dataset_shape[0], index[0]+int(fragment_shape[0]/2)])
+    dataset_max_y = min([dataset_shape[1], index[1]+int(fragment_shape[1]/2)])
+    dataset_max_z = min([dataset_shape[2], index[2]+int(fragment_shape[2]/2)])
+
+    sample_overlap = dataset_sample[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
+    mean_overlap = mean[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
+
+    fragment_min_x = max([0,  int(fragment_map.shape[0]/2)-(index[0]-int(dataset_shape[0]/2))])
+    fragment_min_y = max([0,  int(fragment_map.shape[1]/2)-(index[1]-int(dataset_shape[1]/2))])
+    fragment_min_z = max([0,  int(fragment_map.shape[2]/2)-(index[2]-int(dataset_shape[2]/2))])
+    fragment_max_x = min([dataset_sample.shape[0], int(fragment_shape[0]/2)+(int(dataset_shape[0]/2)-index[0])])
+    fragment_max_y = min([dataset_sample.shape[1], int(fragment_shape[1]/2)+(int(dataset_shape[1]/2)-index[1])])
+    fragment_max_z = min([dataset_sample.shape[2], int(fragment_shape[2]/2)+(int(dataset_shape[2]/2)-index[2])])
+
+    fragment_overlap = fragment_map[fragment_min_x:fragment_max_x, fragment_min_y:fragment_max_y, fragment_min_z:fragment_max_z, ]
+    print(sample_overlap.shape)
+    print(fragment_overlap.shape)
+
+    fragment_mask = fragment_overlap.copy()
+    fragment_mask[fragment_overlap < fragment_overlap.mean()] = 0.0
+    fragment_mask[fragment_overlap >= fragment_overlap.mean()] = 1.0
+
+    for b in np.linspace(0.0, 1.0, 20):
+        residual_map = sample_overlap - (b*mean_overlap)
+        scaled_fragment_map = (1-b)*fragment_overlap
+        sum_absolute_differance = np.sum(np.abs(residual_map[fragment_mask] - scaled_fragment_map[fragment_mask]))
+        print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
+
     return None
 
 
