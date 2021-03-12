@@ -1118,9 +1118,9 @@ def get_affinity_background_corrected_density(
     dataset_min_x = max([0, index[0]-int(fragment_shape[0]/2)])
     dataset_min_y = max([0, index[1]-int(fragment_shape[1]/2)])
     dataset_min_z = max([0, index[2]-int(fragment_shape[2]/2)])
-    dataset_max_x = min([dataset_shape[0], index[0]+int(fragment_shape[0]/2)])
-    dataset_max_y = min([dataset_shape[1], index[1]+int(fragment_shape[1]/2)])
-    dataset_max_z = min([dataset_shape[2], index[2]+int(fragment_shape[2]/2)])
+    dataset_max_x = min([dataset_shape[0], index[0]+math.ceil(fragment_shape[0]/2)])
+    dataset_max_y = min([dataset_shape[1], index[1]+math.ceil(fragment_shape[1]/2)])
+    dataset_max_z = min([dataset_shape[2], index[2]+math.ceil(fragment_shape[2]/2)])
 
     sample_overlap = dataset_sample[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
     mean_overlap = mean[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
