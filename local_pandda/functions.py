@@ -1647,35 +1647,35 @@ def get_backtransformed_map(
     if (dataset_centroid_frac.z // 1) != (max_pos_frac.z // 1):
         max_pos_frac.z = 1.0
 
-    print(f"min_pos_frac: {min_pos_frac}")
-    print(f"max_pos_frac: {max_pos_frac}")
+    # print(f"min_pos_frac: {min_pos_frac}")
+    # print(f"max_pos_frac: {max_pos_frac}")
 
     min_pos_frac_np_mod = np.mod(np.array([min_pos_frac.x, min_pos_frac.y, min_pos_frac.z]), 1)
-    print(f"min_pos_frac_np_mod: {min_pos_frac_np_mod}")
+    # print(f"min_pos_frac_np_mod: {min_pos_frac_np_mod}")
     max_pos_frac_np_mod = np.mod(np.array([max_pos_frac.x, max_pos_frac.y, max_pos_frac.z]), 1)
-    print(f"max_pos_frac_np_mod: {max_pos_frac_np_mod}")
+    # print(f"max_pos_frac_np_mod: {max_pos_frac_np_mod}")
 
     min_wrapped_frac = gemmi.Fractional(max(0.0, min_pos_frac_np_mod[0]),
                                         max(0.0, min_pos_frac_np_mod[1]),
                                         max(0.0, min_pos_frac_np_mod[2]), )
-    print(f"min_wrapped_frac: {min_wrapped_frac}")
+    # print(f"min_wrapped_frac: {min_wrapped_frac}")
 
     max_wrapped_frac = gemmi.Fractional(min(1.0, max_pos_frac_np_mod[0]),
                                         min(1.0, max_pos_frac_np_mod[1]),
                                         min(1.0, max_pos_frac_np_mod[2]), )
-    print(f"max_wrapped_frac: {max_wrapped_frac}")
+    # print(f"max_wrapped_frac: {max_wrapped_frac}")
 
     min_wrapped_coord = np.array([min_wrapped_frac.x * grid.nu,
                                   min_wrapped_frac.y * grid.nv,
                                   min_wrapped_frac.z * grid.nw,
                                   ])
-    print(f"Min wrapped coord: {min_wrapped_coord}")
+    # print(f"Min wrapped coord: {min_wrapped_coord}")
 
     max_wrapped_coord = np.array([max_wrapped_frac.x * grid.nu,
                                   max_wrapped_frac.y * grid.nv,
                                   max_wrapped_frac.z * grid.nw,
                                   ])
-    print(f"Max wrapped coord: {max_wrapped_coord}")
+    # print(f"Max wrapped coord: {max_wrapped_coord}")
 
     r = gemmi.Transform()
     r.mat.fromlist(transform.transform.mat.tolist())
@@ -1691,7 +1691,8 @@ def get_backtransformed_map(
             [z for z in range(int(min_wrapped_coord[2]), int(max_wrapped_coord[2]))],
         )
     )
-    print(f"Num non-zero indexes: {len(indexes)}")
+    # print(f"Num non-zero indexes: {len(indexes)}")
+
 
     fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
     wrapped_centroid_frac = gemmi.Fractional(
@@ -1703,22 +1704,22 @@ def get_backtransformed_map(
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
-        print(f"Index: {index}")
+        # print(f"Index: {index}")
         # Get the 3d position of the point to sample on the
         index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
-        print(f"index position: {index_position}")
+        # print(f"index position: {index_position}")
         # Get the position relative to the box centroid
         index_relative_position: gemmi.Position = gemmi.Position(
             index_position.x - wrapped_centroid_orth.x,
             index_position.y - wrapped_centroid_orth.y,
             index_position.z - wrapped_centroid_orth.z,
         )
-        print(f"index_relative_position: {index_relative_position}")
+        # print(f"index_relative_position: {index_relative_position}")
         # Rotate it translate it to reference frame
         # transformed_vec: gemmi.Vec3 = transform.transform.apply(index_relative_position)
         transformed_vec: gemmi.Vec3 = r.apply(index_relative_position)
 
-        print(f"transformed_vec: {transformed_vec}")
+        # print(f"transformed_vec: {transformed_vec}")
         # transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x - marker.x,
         #                                                       transformed_vec.y - marker.y,
         #                                                       transformed_vec.z - marker.z, )
@@ -1726,13 +1727,13 @@ def get_backtransformed_map(
                                                               transformed_vec.y,
                                                               transformed_vec.z,
                                                               )
-        print(f"transformed_position: {transformed_position}")
+        # print(f"transformed_position: {transformed_position}")
         transformed_sample_position = gemmi.Position(
             transformed_position.x + (grid_size * grid_spacing) / 2,
             transformed_position.y + (grid_size * grid_spacing) / 2,
             transformed_position.z + (grid_size * grid_spacing) / 2,
         )
-        print(f"transformed_sample_position: {transformed_sample_position}")
+        # print(f"transformed_sample_position: {transformed_sample_position}")
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
 
