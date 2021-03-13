@@ -1620,8 +1620,8 @@ def get_backtransformed_map(
     # mask.set_points_around(dataset_centroid, radius=10, value=1)
 
     dataset_centroid_np = np.array([dataset_centroid.x, dataset_centroid.y, dataset_centroid.z])
-    box_min = dataset_centroid_np - 5
-    box_max = dataset_centroid_np + 5
+    box_min = dataset_centroid_np - ((grid_size * grid_spacing) / 2)
+    box_max = dataset_centroid_np + ((grid_size * grid_spacing) / 2)
     min_pos = gemmi.Position(*box_min)
     max_pos = gemmi.Position(*box_max)
     min_pos_frac = grid.unit_cell.fractionalize(min_pos)
@@ -1668,7 +1668,11 @@ def get_backtransformed_map(
     print(f"Num non-zero indexes: {len(indexes)}")
 
     fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
-    wrapped_centroid_frac = gemmi.Fractional(fractional_centroid.x %1, fractional_centroid.y %1, fractional_centroid.z %1)
+    wrapped_centroid_frac = gemmi.Fractional(
+        fractional_centroid.x % 1,
+        fractional_centroid.y % 1,
+        fractional_centroid.z % 1,
+    )
     wrapped_centroid_orth = grid.unit_cell.orthogonalize(wrapped_centroid_frac)
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
@@ -1697,9 +1701,11 @@ def get_backtransformed_map(
                                                               transformed_vec.z,
                                                               )
         print(f"transformed_position: {transformed_position}")
-        transformed_sample_position = gemmi.Position(transformed_position.x + (grid_size * grid_spacing) / 2,
-                                                     transformed_position.y + (grid_size * grid_spacing) / 2,
-                                                     transformed_position.z + (grid_size * grid_spacing) / 2, )
+        transformed_sample_position = gemmi.Position(
+            transformed_position.x + (grid_size * grid_spacing) / 2,
+            transformed_position.y + (grid_size * grid_spacing) / 2,
+            transformed_position.z + (grid_size * grid_spacing) / 2,
+        )
         print(f"transformed_sample_position: {transformed_sample_position}")
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
