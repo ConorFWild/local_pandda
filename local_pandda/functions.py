@@ -1626,12 +1626,14 @@ def get_backtransformed_map(
     for index in indexes:
         # Get the 3d position of the point to sample on the
         index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
+        print(f"index position: {index_position}")
         # Get the position relative to the box centroid
         index_relative_position: gemmi.Position = gemmi.Position(
             index_position.x - dataset_centroid.x,
             index_position.y - dataset_centroid.y,
             index_position.z - dataset_centroid.z,
         )
+        print(f"index_relative_position: {index_relative_position}")
         # Rotate it translate it to reference frame
         transformed_vec: gemmi.Vec3 = transform.transform.apply(index_relative_position)
         print(f"transformed_vec: {transformed_vec}")
