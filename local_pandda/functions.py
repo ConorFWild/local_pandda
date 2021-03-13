@@ -1628,6 +1628,8 @@ def get_backtransformed_map(
     max_pos = gemmi.Position(*box_max)
     min_pos_frac = grid.unit_cell.fractionalize(min_pos)
     max_pos_frac = grid.unit_cell.fractionalize(max_pos)
+    print(f"min_pos_frac: {min_pos_frac}")
+    print(f"max_pos_frac: {max_pos_frac}")
 
     min_pos_frac_np_mod = np.mod(np.array([min_pos_frac.x, min_pos_frac.y, min_pos_frac.z]), 1)
     print(f"min_pos_frac_np_mod: {min_pos_frac_np_mod}")
