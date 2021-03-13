@@ -1610,7 +1610,7 @@ def get_backtransformed_map(
 
     dataset_centroid_vec: gemmi.Position = inverse_transform.apply(gemmi.Position(marker.x, marker.y, marker.z))
     dataset_centroid = gemmi.Position(dataset_centroid_vec[0], dataset_centroid_vec[1], dataset_centroid_vec[2])
-    mask.set_points_around(dataset_centroid, radius=6, value=1)
+    mask.set_points_around(dataset_centroid, radius=10, value=1)
 
     # Get indexes of grid points around moving residue
     mask_array: np.ndarray = np.array(mask, copy=False)
