@@ -1174,10 +1174,10 @@ def get_affinity_background_corrected_density(
 
 
 def write_event_map(event_map: gemmi.FloatGrid, out_path: Path):
-    ccp4 = gemmi.CCP4Map()
+    ccp4 = gemmi.Ccp4Map()
     ccp4.grid = event_map
     ccp4.setup()
-    ccp4.set_header(True, 2)
+    ccp4.update_ccp4_header(2, True)
 
     ccp4.write_ccp4_map(str(out_path))
 
