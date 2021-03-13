@@ -1611,6 +1611,7 @@ def get_backtransformed_map(
     # Get indexes of grid points around moving residue
     mask_array: np.ndarray = np.array(mask, copy=False)
     indexes: np.ndarray = np.argwhere(mask_array == 1)
+    print(f"Num non-zero indexes: {indexes.shape}")
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
