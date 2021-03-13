@@ -1115,26 +1115,31 @@ def get_affinity_background_corrected_density(
     dataset_shape = dataset_sample.shape
     fragment_shape = fragment_map.shape
 
-    dataset_min_x = max([0, index[0]-math.floor((fragment_shape[0]-1)/2)])
-    print([0, index[0]-math.floor((fragment_shape[0]-1)/2)])
-    dataset_min_y = max([0, index[1]-math.floor((fragment_shape[1]-1)/2)])
-    dataset_min_z = max([0, index[2]-math.floor((fragment_shape[2]-1)/2)])
-    dataset_max_x = min([dataset_shape[0], 1+index[0]+math.floor((fragment_shape[0]-1)/2)])
-    print([dataset_shape[0], 1+index[0]+math.floor((fragment_shape[0]-1)/2)])
-    dataset_max_y = min([dataset_shape[1], 1+index[1]+math.floor((fragment_shape[1]-1)/2)])
-    dataset_max_z = min([dataset_shape[2], 1+index[2]+math.floor((fragment_shape[2]-1)/2)])
+    offset_dataset_to_fragment = np.array(index)-np.floor((fragment_shape - 1)/2)
+    dataset_frame_fragment_max = offset_dataset_to_fragment + fragment_shape
+
+    dataset_min_x = max([0, -offset_dataset_to_fragment[0]])
+    print([0, -offset_dataset_to_fragment[0]])
+    dataset_min_y = max([0, -offset_dataset_to_fragment[1]])
+    dataset_min_z = max([0, -offset_dataset_to_fragment[2]])
+    dataset_max_x = min([dataset_shape[0], dataset_frame_fragment_max[0]])
+    print([dataset_shape[0], dataset_frame_fragment_max[0]])
+    dataset_max_y = min([dataset_shape[1], dataset_frame_fragment_max[1]])
+    dataset_max_z = min([dataset_shape[2], dataset_frame_fragment_max[2]])
 
     sample_overlap = dataset_sample[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
     mean_overlap = mean[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
 
-    fragment_min_x = max([0,  math.floor((fragment_map.shape[0]-1)/2)-index[0]])
-    print([0,  math.floor(fragment_map.shape[0]/2)-index[0]])
-    fragment_min_y = max([0,  math.floor((fragment_map.shape[1]-1)/2)-index[1]])
-    fragment_min_z = max([0,  math.floor((fragment_map.shape[2]-1)/2)-index[2]])
-    fragment_max_x = min([fragment_shape[0], 1+math.floor((fragment_shape[0]-1)/2)+(dataset_shape[0]-index[0])])
-    print([fragment_shape[0], 1+math.ceil(fragment_shape[0]/2)+(dataset_shape[0]-index[0])])
-    fragment_max_y = min([fragment_shape[1], 1+math.floor((fragment_shape[1]-1)/2)+(dataset_shape[1]-index[1])])
-    fragment_max_z = min([fragment_shape[2], 1+math.floor((fragment_shape[2]-1)/2)+(dataset_shape[2]-index[2])])
+    offset_fragment_to_dataset = -offset_dataset_to_fragment
+    fragment_frame_dataset_max = offset_fragment_to_dataset + dataset_shape
+    fragment_min_x = max([0,  offset_fragment_to_dataset[0]])
+    print([0,  offset_fragment_to_dataset[0]])
+    fragment_min_y = max([0,  offset_fragment_to_dataset[1]])
+    fragment_min_z = max([0,  offset_fragment_to_dataset[2]])
+    fragment_max_x = min([fragment_shape[0], fragment_frame_dataset_max[0]])
+    print([fragment_shape[0], fragment_frame_dataset_max[0]])
+    fragment_max_y = min([fragment_shape[1], fragment_frame_dataset_max[1]])
+    fragment_max_z = min([fragment_shape[2], fragment_frame_dataset_max[2]])
 
     fragment_overlap = fragment_map[fragment_min_x:fragment_max_x, fragment_min_y:fragment_max_y, fragment_min_z:fragment_max_z, ]
     print(dataset_sample.shape)
