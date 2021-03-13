@@ -1112,13 +1112,15 @@ def get_affinity_background_corrected_density(
     index = maxima.index
     # np.unravel_index(1621, (6, 7, 8, 9))
 
-    dataset_shape = dataset_sample.shape
-    fragment_shape = fragment_map.shape
+    dataset_shape_tuple = dataset_sample.shape
+    fragment_shape_tuple = fragment_map.shape
+    dataset_shape = np.array([dataset_shape_tuple[0], dataset_shape_tuple[1], dataset_shape_tuple[2]])
+    fragment_shape = np.array([fragment_shape_tuple[0], fragment_shape_tuple[1], fragment_shape_tuple[2]])
 
     print(index)
     print(np.array([index[0], index[1], index[2]]))
-    offset_dataset_to_fragment = np.array([index[0], index[1], index[2]]) - np.floor((np.array([fragment_shape[0], fragment_shape[1], fragment_shape[2]]) - 1)/2)
-    print(offset_dataset_to_fragment)
+    offset_dataset_to_fragment = np.array([index[0], index[1], index[2]]) - np.floor((fragment_shape - 1)/2)
+    print(f"Offset dataset to fragment: {offset_dataset_to_fragment}")
     dataset_frame_fragment_max = offset_dataset_to_fragment + fragment_shape
 
     dataset_min_x = max([0, -offset_dataset_to_fragment[0]])
