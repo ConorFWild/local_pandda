@@ -1115,10 +1115,10 @@ def get_affinity_background_corrected_density(
     dataset_shape = dataset_sample.shape
     fragment_shape = fragment_map.shape
 
-    dataset_min_x = max([0, index[0]-math.floor(fragment_shape[0]/2)])
-    print([0, index[0]-math.floor(fragment_shape[0]/2)])
-    dataset_min_y = max([0, index[1]-math.floor(fragment_shape[1]/2)])
-    dataset_min_z = max([0, index[2]-math.floor(fragment_shape[2]/2)])
+    dataset_min_x = max([0, index[0]-math.floor((fragment_shape[0]-1)/2)])
+    print([0, index[0]-math.floor((fragment_shape[0]-1)/2)])
+    dataset_min_y = max([0, index[1]-math.floor((fragment_shape[1]-1)/2)])
+    dataset_min_z = max([0, index[2]-math.floor((fragment_shape[2]-1)/2)])
     dataset_max_x = min([dataset_shape[0], index[0]+math.ceil(fragment_shape[0]/2)])
     print([dataset_shape[0], index[0]+math.ceil(fragment_shape[0]/2)])
     dataset_max_y = min([dataset_shape[1], index[1]+math.ceil(fragment_shape[1]/2)])
