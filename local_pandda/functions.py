@@ -1668,7 +1668,7 @@ def get_backtransformed_map(
     print(f"Num non-zero indexes: {len(indexes)}")
 
     fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
-    wrapped_centroid_frac = gemmi.Position(fractional_centroid.x %1, fractional_centroid.y %1, fractional_centroid.z %1)
+    wrapped_centroid_frac = gemmi.Fractional(fractional_centroid.x %1, fractional_centroid.y %1, fractional_centroid.z %1)
     wrapped_centroid_orth = grid.unit_cell.orthogonalize(wrapped_centroid_frac)
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
@@ -1694,7 +1694,8 @@ def get_backtransformed_map(
         #                                                       transformed_vec.z - marker.z, )
         transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x,
                                                               transformed_vec.y,
-                                                              transformed_vec.z, )
+                                                              transformed_vec.z,
+                                                              )
         print(f"transformed_position: {transformed_position}")
         transformed_sample_position = gemmi.Position(transformed_position.x + (grid_size * grid_spacing) / 2,
                                                      transformed_position.y + (grid_size * grid_spacing) / 2,
