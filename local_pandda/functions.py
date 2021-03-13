@@ -1643,11 +1643,13 @@ def get_backtransformed_map(
                                   min_wrapped_frac.z * grid.nw,
 
                                   ])
+    print(f"Min wrapped coord: {min_wrapped_coord}")
 
     max_wrapped_coord = np.array([max_wrapped_frac.x * grid.nu,
                                   max_wrapped_frac.y * grid.nv,
                                   max_wrapped_frac.z * grid.nw,
                                   ])
+    print(f"Max wrapped coord: {max_wrapped_coord}")
 
     r = gemmi.Transform()
     r.mat.fromlist(transform.transform.mat.tolist())
@@ -1658,9 +1660,9 @@ def get_backtransformed_map(
     # indexes: np.ndarray = np.argwhere(mask_array == 1)
     indexes = list(
         itertools.product(
-            [x for x in range(min_wrapped_coord[0], max_wrapped_coord[0])],
-            [y for y in range(min_wrapped_coord[1], max_wrapped_coord[1])],
-            [z for z in range(min_wrapped_coord[2], max_wrapped_coord[2])],
+            [x for x in range(int(min_wrapped_coord[0]), int(max_wrapped_coord[0]))],
+            [y for y in range(int(min_wrapped_coord[1]), int(max_wrapped_coord[1]))],
+            [z for z in range(int(min_wrapped_coord[2]), int(max_wrapped_coord[2]))],
         )
     )
     print(f"Num non-zero indexes: {len(indexes)}")
