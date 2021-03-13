@@ -1586,6 +1586,10 @@ def get_backtransformed_map(
     corrected_density_grid.set_unit_cell(unit_cell)
     corrected_density_grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
 
+    for index, value in np.ndenumerate(corrected_density):
+        corrected_density_grid.set_value(index[0], index[1], index[2], value)
+
+
     # FFT
     grid: gemmi.FloatGrid = dataset.reflections.transform_f_phi_to_map(
         structure_factors.f,
