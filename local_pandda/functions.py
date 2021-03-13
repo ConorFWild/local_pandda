@@ -1588,6 +1588,10 @@ def get_backtransformed_map(
         structure_factors.phi,
         sample_rate=sample_rate,
     )
+    grid.fill(0)
+
+    # reference to moving
+    inverse_transform = transform.transform.inverse()
 
     # mask
     mask: gemmi.Int8Grid = gemmi.Int8Grid(grid.nu, grid.nv, grid.nw)
@@ -1595,7 +1599,9 @@ def get_backtransformed_map(
     mask.spacegroup = gemmi.find_spacegroup_by_name('P 1')
     # residue_ca: gemmi.Atom = dataset.structure[residue_id.model][residue_id.chain][residue_id.insertion][0]["CA"]
     # dataset_centroid: gemmi.Pos = residue_ca.pos
-    dataset_centroid: gemmi.Position = gemmi.Position(marker.x, marker.y, marker.z)
+
+    dataset_centroid_vec: gemmi.Position = inverse_transform.apply(gemmi.Position(marker.x, marker.y, marker.z))
+    dataset_centroid = gemmi.Position(dataset_centroid_vec[0], dataset_centroid_vec[1], dataset_centroid_vec[2])
     mask.set_points_around(dataset_centroid, radius=6, value=1)
 
     # Get indexes of grid points around moving residue
@@ -1604,13 +1610,16 @@ def get_backtransformed_map(
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
+        # Get the 3d position of the point to sample on the
         index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
+        # Get the position relative to the box centroid
         index_relative_position: gemmi.Position = gemmi.Position(
             index_position.x - dataset_centroid.x,
             index_position.y - dataset_centroid.y,
             index_position.z - dataset_centroid.z,
         )
-        transformed_vec: gemmi.Vec3 = transform.transform.inverse().apply(index_relative_position)
+        # Rotate it translate it to reference frame
+        transformed_vec: gemmi.Vec3 = transform.transform.apply(index_relative_position)
         transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x, transformed_vec.y, transformed_vec.z, )
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
