@@ -1162,7 +1162,7 @@ def get_affinity_background_corrected_density(
         scaled_fragment_map = (1-b)*fragment_overlap
         sum_absolute_differance = np.sum(np.abs(residual_map[fragment_mask>0] - scaled_fragment_map[fragment_mask>0]))
         print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
-        sum_absolute_differance[b] = sum_absolute_differance
+        sum_absolute_differances[b] = sum_absolute_differance
 
     print(min(sum_absolute_differances, key=lambda x: sum_absolute_differances[x]))
 
