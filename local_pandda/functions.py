@@ -186,11 +186,12 @@ def get_fragment_affinity_map(dataset_sample: np.ndarray, fragment_map: np.ndarr
     return affinity_map
 
 
-def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int, sample_rate: float, margin: float = 1.5) -> np.ndarray:
+def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int, sample_rate: float,
+                     margin: float = 1.5) -> np.ndarray:
     dencalc: gemmi.DensityCalculatorE = gemmi.DensityCalculatorE()
 
     dencalc.d_min = resolution
-    dencalc.rate = resolution / (2*grid_spacing)
+    dencalc.rate = resolution / (2 * grid_spacing)
 
     print(resolution)
     print(grid_spacing)
@@ -211,7 +212,7 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
     distance = max_pos - min_pos
 
     tr = gemmi.Transform()
-    tr.mat.fromlist([[1*grid_spacing,0,0], [0,1*grid_spacing,0], [0,0,1*grid_spacing]])
+    tr.mat.fromlist([[1 * grid_spacing, 0, 0], [0, 1 * grid_spacing, 0], [0, 0, 1 * grid_spacing]])
     tr.vec.fromlist([min_pos.x, min_pos.y, min_pos.z])
 
     arr = np.zeros(
@@ -225,8 +226,6 @@ def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing
 
     grid.interpolate_values(arr, tr)
     print(arr.shape)
-
-
 
     return arr
 
@@ -276,7 +275,8 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     return structure_copy
 
 
-def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, num_samples: int, sample_rate: float, grid_spacing: int):
+def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, num_samples: int, sample_rate: float,
+                      grid_spacing: int):
     sample_angles = np.linspace(0, 360, num=10, endpoint=False).tolist()
 
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
@@ -1119,7 +1119,7 @@ def get_affinity_background_corrected_density(
 
     print(index)
     print(np.array([index[0], index[1], index[2]]))
-    offset_dataset_to_fragment = np.array([index[0], index[1], index[2]]) - np.floor((fragment_shape - 1)/2)
+    offset_dataset_to_fragment = np.array([index[0], index[1], index[2]]) - np.floor((fragment_shape - 1) / 2)
     print(f"Offset dataset to fragment: {offset_dataset_to_fragment}")
     dataset_frame_fragment_max = offset_dataset_to_fragment + fragment_shape
 
@@ -1132,21 +1132,23 @@ def get_affinity_background_corrected_density(
     dataset_max_y = int(np.min([dataset_shape[1], dataset_frame_fragment_max[1]]))
     dataset_max_z = int(np.min([dataset_shape[2], dataset_frame_fragment_max[2]]))
 
-    sample_overlap = dataset_sample[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
+    sample_overlap = dataset_sample[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y,
+                     dataset_min_z:dataset_max_z, ]
     mean_overlap = mean[dataset_min_x:dataset_max_x, dataset_min_y:dataset_max_y, dataset_min_z:dataset_max_z, ]
 
     offset_fragment_to_dataset = -offset_dataset_to_fragment
     fragment_frame_dataset_max = offset_fragment_to_dataset + dataset_shape
-    fragment_min_x = int(np.max([0,  offset_fragment_to_dataset[0]]))
-    print([0,  offset_fragment_to_dataset[0]])
-    fragment_min_y = int(np.max([0,  offset_fragment_to_dataset[1]]))
-    fragment_min_z = int(np.max([0,  offset_fragment_to_dataset[2]]))
+    fragment_min_x = int(np.max([0, offset_fragment_to_dataset[0]]))
+    print([0, offset_fragment_to_dataset[0]])
+    fragment_min_y = int(np.max([0, offset_fragment_to_dataset[1]]))
+    fragment_min_z = int(np.max([0, offset_fragment_to_dataset[2]]))
     fragment_max_x = int(np.min([fragment_shape[0], fragment_frame_dataset_max[0]]))
     print([fragment_shape[0], fragment_frame_dataset_max[0]])
     fragment_max_y = int(np.min([fragment_shape[1], fragment_frame_dataset_max[1]]))
     fragment_max_z = int(np.min([fragment_shape[2], fragment_frame_dataset_max[2]]))
 
-    fragment_overlap = fragment_map[fragment_min_x:fragment_max_x, fragment_min_y:fragment_max_y, fragment_min_z:fragment_max_z, ]
+    fragment_overlap = fragment_map[fragment_min_x:fragment_max_x, fragment_min_y:fragment_max_y,
+                       fragment_min_z:fragment_max_z, ]
     print(dataset_sample.shape)
     print(sample_overlap.shape)
     print(fragment_map.shape)
@@ -1158,9 +1160,10 @@ def get_affinity_background_corrected_density(
 
     sum_absolute_differances = {}
     for b in np.linspace(0.0, 1.0, 100):
-        residual_map = sample_overlap - (b*mean_overlap)
-        scaled_fragment_map = (1-b)*fragment_overlap
-        sum_absolute_differance = np.sum(np.abs(residual_map[fragment_mask>0] - scaled_fragment_map[fragment_mask>0]))
+        residual_map = sample_overlap - (b * mean_overlap)
+        scaled_fragment_map = (1 - b) * fragment_overlap
+        sum_absolute_differance = np.sum(
+            np.abs(residual_map[fragment_mask > 0] - scaled_fragment_map[fragment_mask > 0]))
         print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
         sum_absolute_differances[b] = sum_absolute_differance
 
@@ -1168,7 +1171,7 @@ def get_affinity_background_corrected_density(
 
     print(bcd)
 
-    bcd_map = (dataset_sample - (bcd*mean)) / (1-bcd)
+    bcd_map = (dataset_sample - (bcd * mean)) / (1 - bcd)
 
     return bcd, bcd_map
 
@@ -1178,7 +1181,6 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, fractional_box):
     ccp4.grid = event_map
 
     ccp4.set_extent(fractional_box)
-
 
     ccp4.setup()
     ccp4.update_ccp4_header(2, True)
@@ -1590,7 +1592,6 @@ def get_backtransformed_map(
     for index, value in np.ndenumerate(corrected_density):
         corrected_density_grid.set_value(index[0], index[1], index[2], value)
 
-
     # FFT
     grid: gemmi.FloatGrid = dataset.reflections.transform_f_phi_to_map(
         structure_factors.f,
@@ -1616,19 +1617,57 @@ def get_backtransformed_map(
     # dataset_origin = gemmi.Position(dataset_centroid.x - (grid_size * grid_spacing),
     #                                 dataset_centroid.y - (grid_size * grid_spacing),
     #                                 dataset_centroid.z - (grid_size * grid_spacing))
-    mask.set_points_around(dataset_centroid, radius=10, value=1)
+    # mask.set_points_around(dataset_centroid, radius=10, value=1)
+
+    dataset_centroid_np = np.array([dataset_centroid.x, dataset_centroid.y, dataset_centroid.z])
+    box_min = dataset_centroid_np - 5
+    box_max = dataset_centroid_np + 5
+    min_pos = gemmi.Position(*box_min)
+    max_pos = gemmi.Position(*box_max)
+    min_pos_frac = grid.unit_cell.fractionalize(min_pos)
+    max_pos_frac = grid.unit_cell.fractionalize(max_pos)
+
+    min_pos_frac_np_mod = np.mod(np.array([min_pos_frac.x, min_pos_frac.y, min_pos_frac.z]), 1)
+    max_pos_frac_np_mod = np.mod(np.array([max_pos_frac.x, max_pos_frac.y, max_pos_frac.z]), 1)
+
+    min_wrapped_frac = gemmi.Fractional(max(0.0, min_pos_frac_np_mod[0]),
+                                        max(0.0, min_pos_frac_np_mod[1]),
+                                        max(0.0, min_pos_frac_np_mod[2]), )
+
+    max_wrapped_frac = gemmi.Fractional(min(1.0, max_pos_frac_np_mod[0]),
+                                        min(1.0, max_pos_frac_np_mod[1]),
+                                        min(1.0, max_pos_frac_np_mod[2]), )
+
+    min_wrapped_coord = np.array([min_wrapped_frac.x * grid.nu,
+                                  min_wrapped_frac.y * grid.nv,
+                                  min_wrapped_frac.z * grid.nw,
+
+                                  ])
+
+    max_wrapped_coord = np.array([max_wrapped_frac.x * grid.nu,
+                                  max_wrapped_frac.y * grid.nv,
+                                  max_wrapped_frac.z * grid.nw,
+                                  ])
 
     r = gemmi.Transform()
     r.mat.fromlist(transform.transform.mat.tolist())
-    r.vec.fromlist([0.0,0.0,0.0])
+    r.vec.fromlist([0.0, 0.0, 0.0])
 
     # Get indexes of grid points around moving residue
-    mask_array: np.ndarray = np.array(mask, copy=False)
-    indexes: np.ndarray = np.argwhere(mask_array == 1)
-    print(f"Num non-zero indexes: {indexes.shape}")
+    # mask_array: np.ndarray = np.array(mask, copy=False)
+    # indexes: np.ndarray = np.argwhere(mask_array == 1)
+    indexes = list(
+        itertools.product(
+            [x for x in range(min_wrapped_coord[0], max_wrapped_coord[0])],
+            [y for y in range(min_wrapped_coord[1], max_wrapped_coord[1])],
+            [z for z in range(min_wrapped_coord[2], max_wrapped_coord[2])],
+        )
+    )
+    print(f"Num non-zero indexes: {len(indexes)}")
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
+        print(f"Index: {index}")
         # Get the 3d position of the point to sample on the
         index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
         print(f"index position: {index_position}")
@@ -1647,13 +1686,13 @@ def get_backtransformed_map(
         # transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x - marker.x,
         #                                                       transformed_vec.y - marker.y,
         #                                                       transformed_vec.z - marker.z, )
-        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x ,
-                                                              transformed_vec.y ,
-                                                              transformed_vec.z , )
+        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x,
+                                                              transformed_vec.y,
+                                                              transformed_vec.z, )
         print(f"transformed_position: {transformed_position}")
-        transformed_sample_position = gemmi.Position(transformed_position.x + (grid_size * grid_spacing)/2,
-                                                     transformed_position.y + (grid_size * grid_spacing)/2,
-                                                     transformed_position.z + (grid_size * grid_spacing)/2,)
+        transformed_sample_position = gemmi.Position(transformed_position.x + (grid_size * grid_spacing) / 2,
+                                                     transformed_position.y + (grid_size * grid_spacing) / 2,
+                                                     transformed_position.z + (grid_size * grid_spacing) / 2, )
         print(f"transformed_sample_position: {transformed_sample_position}")
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
