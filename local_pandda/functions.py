@@ -1123,10 +1123,10 @@ def get_affinity_background_corrected_density(
     print(f"Offset dataset to fragment: {offset_dataset_to_fragment}")
     dataset_frame_fragment_max = offset_dataset_to_fragment + fragment_shape
 
-    dataset_min_x = int(np.max([0, -offset_dataset_to_fragment[0]]))
+    dataset_min_x = int(np.max([0, offset_dataset_to_fragment[0]]))
     print([0, -offset_dataset_to_fragment[0]])
-    dataset_min_y = int(np.max([0, -offset_dataset_to_fragment[1]]))
-    dataset_min_z = int(np.max([0, -offset_dataset_to_fragment[2]]))
+    dataset_min_y = int(np.max([0, offset_dataset_to_fragment[1]]))
+    dataset_min_z = int(np.max([0, offset_dataset_to_fragment[2]]))
     dataset_max_x = int(np.min([dataset_shape[0], dataset_frame_fragment_max[0]]))
     print([dataset_shape[0], dataset_frame_fragment_max[0]])
     dataset_max_y = int(np.min([dataset_shape[1], dataset_frame_fragment_max[1]]))
