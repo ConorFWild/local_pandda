@@ -1667,6 +1667,10 @@ def get_backtransformed_map(
     )
     print(f"Num non-zero indexes: {len(indexes)}")
 
+    fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
+    wrapped_centroid_frac = gemmi.Position(fractional_centroid.x %1, fractional_centroid.y %1, fractional_centroid.z %1)
+    wrapped_centroid_orth = grid.unit_cell.orthogonalize(wrapped_centroid_frac)
+
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
         print(f"Index: {index}")
@@ -1675,9 +1679,9 @@ def get_backtransformed_map(
         print(f"index position: {index_position}")
         # Get the position relative to the box centroid
         index_relative_position: gemmi.Position = gemmi.Position(
-            index_position.x - dataset_centroid.x,
-            index_position.y - dataset_centroid.y,
-            index_position.z - dataset_centroid.z,
+            index_position.x - wrapped_centroid_orth.x,
+            index_position.y - wrapped_centroid_orth.y,
+            index_position.z - wrapped_centroid_orth.z,
         )
         print(f"index_relative_position: {index_relative_position}")
         # Rotate it translate it to reference frame
