@@ -1106,7 +1106,7 @@ def get_affinity_background_corrected_density(
         fragment_map: np.ndarray,
         maxima: AffinityMaxima,
         mean: np.ndarray,
-) -> np.ndarray:
+) -> Tuple[float, np.ndarray]:
     # Select the cluster density
     # Set it to some relatively large sigma
     index = maxima.index
@@ -1164,9 +1164,13 @@ def get_affinity_background_corrected_density(
         print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
         sum_absolute_differances[b] = sum_absolute_differance
 
-    print(min(sum_absolute_differances, key=lambda x: sum_absolute_differances[x]))
+    bcd = min(sum_absolute_differances, key=lambda x: sum_absolute_differances[x])
 
-    return None
+    print(bcd)
+
+    bcd_map = (dataset_sample - (bcd*mean)) / (1-bcd)
+
+    return bcd, bcd_map
 
 
 def write_event_map(event_map: gemmi.FloatGrid, out_path: Path):
