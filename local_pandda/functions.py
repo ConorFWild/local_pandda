@@ -1633,6 +1633,23 @@ def get_backtransformed_map(
     print(f"max_pos_frac: {max_pos_frac}")
     print(f"dataset_centroid_frac: {dataset_centroid_frac}")
 
+    if (dataset_centroid_frac.x // 1) != (min_pos_frac.x // 1):
+        min_pos_frac.x = 0.0
+    if (dataset_centroid_frac.y // 1) != (min_pos_frac.y // 1):
+        min_pos_frac.y = 0.0
+    if (dataset_centroid_frac.z // 1) != (min_pos_frac.z // 1):
+        min_pos_frac.z = 0.0
+
+    if (dataset_centroid_frac.x // 1) != (max_pos_frac.x // 1):
+        max_pos_frac.x = 1.0
+    if (dataset_centroid_frac.y // 1) != (max_pos_frac.y // 1):
+        max_pos_frac.y = 1.0
+    if (dataset_centroid_frac.z // 1) != (max_pos_frac.z // 1):
+        max_pos_frac.z = 1.0
+
+    print(f"min_pos_frac: {min_pos_frac}")
+    print(f"max_pos_frac: {max_pos_frac}")
+
     min_pos_frac_np_mod = np.mod(np.array([min_pos_frac.x, min_pos_frac.y, min_pos_frac.z]), 1)
     print(f"min_pos_frac_np_mod: {min_pos_frac_np_mod}")
     max_pos_frac_np_mod = np.mod(np.array([max_pos_frac.x, max_pos_frac.y, max_pos_frac.z]), 1)
