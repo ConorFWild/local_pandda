@@ -1580,7 +1580,8 @@ def get_backtransformed_map(
 ) -> gemmi.FloatGrid:
     # Embed corrected density in grid at origin
     corrected_density_grid: gemmi.FloatGrid = gemmi.FloatGrid(*corrected_density.shape)
-    unit_cell: gemmi.UnitCell = gemmi.UnitCell(grid_size * grid_spacing, grid_size * grid_spacing,
+    unit_cell: gemmi.UnitCell = gemmi.UnitCell(grid_size * grid_spacing,
+                                               grid_size * grid_spacing,
                                                grid_size * grid_spacing,
                                                90, 90, 90)
     corrected_density_grid.set_unit_cell(unit_cell)
@@ -1610,7 +1611,11 @@ def get_backtransformed_map(
 
     dataset_centroid_vec: gemmi.Position = inverse_transform.apply(gemmi.Position(marker.x, marker.y, marker.z))
     dataset_centroid = gemmi.Position(dataset_centroid_vec[0], dataset_centroid_vec[1], dataset_centroid_vec[2])
+    dataset_origin = gemmi.Position(dataset_centroid.x - (grid_size * grid_spacing),
+                                    dataset_centroid.y - (grid_size * grid_spacing),
+                                    dataset_centroid.z - (grid_size * grid_spacing))
     mask.set_points_around(dataset_centroid, radius=10, value=1)
+
 
     # Get indexes of grid points around moving residue
     mask_array: np.ndarray = np.array(mask, copy=False)
@@ -1629,8 +1634,16 @@ def get_backtransformed_map(
         )
         # Rotate it translate it to reference frame
         transformed_vec: gemmi.Vec3 = transform.transform.apply(index_relative_position)
-        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x, transformed_vec.y, transformed_vec.z, )
-        interpolated_value: float = corrected_density_grid.interpolate_value(transformed_position)
+        print(f"transformed_vec: {transformed_vec}")
+        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x - marker.x,
+                                                              transformed_vec.y - marker.y,
+                                                              transformed_vec.z - marker.z, )
+        print(f"transformed_position: {transformed_position}")
+        transformed_sample_position = gemmi.Position(transformed_position.x + (grid_size * grid_spacing)/2,
+                                                     transformed_position.y + (grid_size * grid_spacing)/2,
+                                                     transformed_position.z + (grid_size * grid_spacing)/2,)
+        print(f"transformed_sample_position: {transformed_sample_position}")
+        interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
 
     return grid
