@@ -1224,7 +1224,7 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
 
     box = st.calculate_fractional_box(margin=32)
 
-    ccp4 = gemmi.Ccp4Mapccp4 = gemmi.Ccp4Map()
+    ccp4 = gemmi.Ccp4Map()
     ccp4.grid = event_map
     ccp4.setup()
     ccp4.update_ccp4_header(2, True)
@@ -1233,12 +1233,6 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
 
     ccp4.setup()
     ccp4.update_ccp4_header(2, True)()
-    ccp4.grid = event_map
-
-    ccp4.set_extent(box)
-
-    ccp4.setup()
-    ccp4.update_ccp4_header(2, True)
 
     ccp4.write_ccp4_map(str(out_path))
 
