@@ -17,6 +17,10 @@ from sklearn import neighbors
 from rdkit import Chem
 from rdkit.Chem import AllChem
 import joblib
+from scipy import signal as spsi
+from scipy import ndimage
+from scipy.signal import fftconvolve, oaconvolve
+from skimage.transform import rescale, resize, downscale_local_mean
 
 # Custom
 from local_pandda.constants import Constants
@@ -186,8 +190,13 @@ def get_fragment_affinity_map(dataset_sample: np.ndarray, fragment_map: np.ndarr
     return affinity_map
 
 
-def get_fragment_map(structure: gemmi.Structure, resolution: float, grid_spacing: int, sample_rate: float,
-                     margin: float = 1.5) -> np.ndarray:
+def get_fragment_map(
+        structure: gemmi.Structure,
+        resolution: float,
+        grid_spacing: float,
+        sample_rate: float,
+        margin: float = 1.5,
+) -> np.ndarray:
     dencalc: gemmi.DensityCalculatorE = gemmi.DensityCalculatorE()
 
     dencalc.d_min = resolution
@@ -275,8 +284,12 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     return structure_copy
 
 
-def get_fragment_maps(fragment_structure: gemmi.Structure, resolution: float, num_samples: int, sample_rate: float,
-                      grid_spacing: int):
+def get_fragment_maps(
+        fragment_structure: gemmi.Structure,
+        resolution: float,
+        num_poses: int,
+        sample_rate: float,
+        grid_spacing: float):
     sample_angles = np.linspace(0, 360, num=10, endpoint=False).tolist()
 
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
@@ -307,7 +320,7 @@ def get_comparator_datasets(
         apo_mask: np.ndarray,
         datasets: MutableMapping[str, Dataset],
         min_cluster_size: int,
-        num_datasets:int,
+        num_datasets: int,
 ) -> Optional[MutableMapping[str, Dataset]]:
     #
     apo_cluster_indexes: np.ndarray = np.unique(dataset_clusters[apo_mask])
@@ -343,14 +356,13 @@ def get_comparator_datasets(
     closest_cluster_dtag_resolutions = {dtag: datasets[dtag].reflections.resolution_high()
                                         for dtag in closest_cluster_dtag_array}
     sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
-                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
+                                     key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
     highest_resolution_dtags = sorted_resolution_dtags[:min(len(sorted_resolution_dtags), num_datasets)]
 
     closest_cluster_datasets: MutableMapping[str, Dataset] = {dtag: datasets[dtag]
                                                               for dtag
                                                               in highest_resolution_dtags
                                                               }
-
 
     return closest_cluster_datasets
 
@@ -1188,11 +1200,42 @@ def get_affinity_background_corrected_density(
     return bcd, bcd_map
 
 
-def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, fractional_box):
-    ccp4 = gemmi.Ccp4Map()
+def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, dataset: Dataset):
+    st: gemmi.Structure = gemmi.Structure()
+    model: gemmi.Model = gemmi.Model(f"{1}")
+    chain: gemmi.Chain = gemmi.Chain(f"{1}")
+    residue: gemmi.Residue = gemmi.Residue()
+
+    # Get the
+    gemmi_atom: gemmi.Atom = gemmi.Atom()
+    gemmi_atom.name = "H"
+    gemmi_atom.pos = gemmi.Position(marker.x, marker.y, marker.z)
+    gemmi_atom.element = gemmi.Element("H")
+
+    # Add atom to residue
+    residue.add_atom(gemmi_atom)
+
+    st.cell = dataset.structure.cell
+    st.spacegroup_hm = dataset.structure.spacegroup_hm
+
+    chain.add_residue(residue)
+    model.add_chain(chain)
+    st.add_model(model)
+
+    box = st.calculate_fractional_box(margin=32)
+
+    ccp4 = gemmi.Ccp4Mapccp4 = gemmi.Ccp4Map()
+    ccp4.grid = event_map
+    ccp4.setup()
+    ccp4.update_ccp4_header(2, True)
+
+    ccp4.set_extent(box)
+
+    ccp4.setup()
+    ccp4.update_ccp4_header(2, True)()
     ccp4.grid = event_map
 
-    ccp4.set_extent(fractional_box)
+    ccp4.set_extent(box)
 
     ccp4.setup()
     ccp4.update_ccp4_header(2, True)
@@ -1540,24 +1583,48 @@ def write_result_html(pandda_results: PanDDAResults) -> Path:
 def get_fragment_z_maxima(
         fragment_affinity_z_maps: MutableMapping[Tuple[float, float, float], np.ndarray]
 ) -> AffinityMaxima:
-    maximas: MutableMapping[Tuple[float, float, float], AffinityMaxima] = {}
-    for rotation_index, affinity_map in fragment_affinity_z_maps.items():
-        #
-        max_index: np.ndarray = np.argmax(affinity_map)
-        max_value: float = affinity_map.flatten()[max_index]
-        maxima: AffinityMaxima = AffinityMaxima(
-            max_index,
-            max_value,
-            rotation_index,
-        )
-        maximas[rotation_index] = maxima
+    # maximas: MutableMapping[Tuple[float, float, float], AffinityMaxima] = {}
+    # for rotation_index, affinity_map in fragment_affinity_z_maps.items():
+    #     #
+    #     max_index: np.ndarray = np.argmax(affinity_map)
+    #     max_value: float = affinity_map.flatten()[max_index]
+    #     maxima: AffinityMaxima = AffinityMaxima(
+    #         max_index,
+    #         max_value,
+    #         rotation_index,
+    #     )
+    #     maximas[rotation_index] = maxima
+    #
+    # best_maxima: AffinityMaxima = max(
+    #     list(maximas.values()),
+    #     key=lambda _maxima: _maxima.correlation,
+    # )
+    #
+    # return best_maxima
 
-    best_maxima: AffinityMaxima = max(
-        list(maximas.values()),
-        key=lambda _maxima: _maxima.correlation,
+    #
+    fragment_affinity_z_maps_rotation_list = list(fragment_affinity_z_maps.keys())
+    fragment_affinity_z_maps_list = list(fragment_affinity_z_maps.values())
+
+    max_fragment_affinity_z_map_rotation = fragment_affinity_z_maps_rotation_list[0]
+    max_fragment_affinity_z_map = fragment_affinity_z_maps_list[0]
+
+    for rotation, fragment_affinity_z_map in zip(fragment_affinity_z_maps_rotation_list[1:],
+                                                 fragment_affinity_z_maps_list[1:]):
+        #     print([rotation, np.max(fragment_affinity_z_map)])
+        if np.max(fragment_affinity_z_map) > np.max(max_fragment_affinity_z_map):
+            max_fragment_affinity_z_map = fragment_affinity_z_map
+            max_fragment_affinity_z_map_rotation = rotation
+
+    # Extract the maxima indexes
+    maxima = AffinityMaxima(
+        [2 * x for x in
+         np.unravel_index(np.argmax(max_fragment_affinity_z_map), max_fragment_affinity_z_map.shape)],
+        np.max(max_fragment_affinity_z_map),
+        max_fragment_affinity_z_map_rotation,
     )
 
-    return best_maxima
+    return maxima
 
 
 def is_affinity_event(affinity_maxima: AffinityMaxima, min_correlation: float) -> bool:
@@ -1705,7 +1772,6 @@ def get_backtransformed_map(
     )
     print(f"Num non-zero indexes: {len(indexes)}")
 
-
     fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
     wrapped_centroid_frac = gemmi.Fractional(
         fractional_centroid.x % 1,
@@ -1812,3 +1878,336 @@ def get_not_enough_comparator_dataset_affinity_result(dataset: Dataset,
 
 def save_mtz(mtz: gemmi.Mtz, path: Path):
     mtz.write_to_file(str(path))
+
+
+def analyse_dataset(
+        dataset: Dataset,
+        residue_datasets: MutableMapping[str, Dataset],
+        marker: Marker,
+        alignments: MutableMapping[str, Alignment],
+        reference_dataset: Dataset,
+        linkage: np.ndarray,
+        dataset_clusters: np.ndarray,
+        dataset_index: int,
+        known_apos: List[str],
+        out_dir: Path,
+        params: Params,
+) -> Optional[DatasetAffinityResults]:
+    # Get a result object
+    dataset_results: DatasetAffinityResults = DatasetAffinityResults(
+        dataset.dtag,
+        marker,
+        dataset.structure_path,
+        dataset.reflections_path,
+        dataset.fragment_path,
+    )
+
+    # Get the fragment
+    dataset_fragment_structures: Optional[MutableMapping[str, gemmi.Structure]] = dataset.fragment_structures
+
+    # No need to analyse if no fragment present
+    if not dataset_fragment_structures:
+        return None
+
+    # Select the comparator datasets
+    comparator_datasets: Optional[MutableMapping[str, Dataset]] = get_comparator_datasets(
+        linkage,
+        dataset_clusters,
+        dataset_index,
+        get_dataset_apo_mask(residue_datasets, known_apos),
+        residue_datasets,
+        params.min_dataset_cluster_size,
+        params.min_dataset_cluster_size,
+    )
+
+    if params.debug:
+        print(f"\tComparator datasets are: {list(comparator_datasets.keys())}")
+
+    # Handle no comparators
+    if not comparator_datasets:
+        dataset_results: DatasetAffinityResults = get_not_enough_comparator_dataset_affinity_result(
+            dataset,
+            marker,
+        )
+        return dataset_results
+        # continue
+
+    # Get the truncated comparator datasets
+    comparator_truncated_datasets: MutableMapping[str, Dataset] = get_truncated_datasets(
+        comparator_datasets,
+        dataset,
+        params.structure_factors,
+    )
+    comparator_truncated_datasets[dataset.dtag] = dataset
+    print(len(comparator_truncated_datasets))
+
+    # Get the local density samples associated with the comparator datasets
+    comparator_sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
+        comparator_truncated_datasets,
+        marker,
+        alignments,
+        params.structure_factors,
+        params.sample_rate,
+        params.grid_size,
+        params.grid_spacing,
+    )
+    print(max([comparator_truncated_dataset.reflections.resolution_high() for comparator_truncated_dataset in
+               comparator_truncated_datasets.values()]))
+
+    # Get the sample associated with the dataset of interest
+    dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
+
+    if params.debug:
+        print(f"\tGot {len(comparator_sample_arrays)} comparater samples")
+
+    resolution: float = list(comparator_truncated_datasets.values())[0].reflections.resolution_high()
+    if params.debug:
+        print(f"Resolution is: {resolution}")
+
+    # Characterise the local distribution
+    sample_mean: np.ndarray = get_mean(comparator_sample_arrays)
+    sample_std: np.ndarray = get_std(comparator_sample_arrays)
+    sample_z: np.ndarray = get_z(dataset_sample, sample_mean, sample_std)
+    if params.debug:
+        print(f"\tGot mean: max {np.max(sample_mean)}, min: {np.min(sample_mean)}")
+        print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
+        print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
+
+    # Get the comparator affinity maps
+    downscaled_comparator_samples = {dtag: downscale_local_mean(comparator_sample, (2, 2, 2)) for
+                                     dtag, comparator_sample in
+                                     comparator_sample_arrays.items()}
+    downsampled_dataset_sample = downscale_local_mean(comparator_sample_arrays[dataset.dtag], (2, 2, 2))
+    downsampled_sample_mean = downscale_local_mean(sample_mean, (2, 2, 2))
+    downsampled_sample_std = downscale_local_mean(sample_std, (2, 2, 2))
+
+    for fragment_id, fragment_structure in dataset_fragment_structures.items():
+        if params.debug:
+            print(f"\t\tProcessing fragment: {fragment_id}")
+
+        fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_maps(
+            fragment_structure,
+            resolution,
+            params.num_fragment_pose_samples,
+            params.sample_rate,
+            params.grid_spacing,
+        )
+        downscaled_fragment_maps = {rotation_index: downscale_local_mean(fragment_map, (2, 2, 2)) for
+                                    rotation_index, fragment_map in fragment_maps.items()}
+
+        fragment_masks = {}
+        for rotation, fragment_map in downscaled_fragment_maps.items():
+            arr = fragment_map.copy()
+            mean = np.mean(arr)
+            great_mask = arr > mean
+            less_mask = arr <= mean
+            arr[great_mask] = 1.0
+            arr[less_mask] = 0.0
+            fragment_masks[rotation] = arr
+
+        if params.debug:
+            print(f"\t\tGot {len(fragment_maps)} fragment maps")
+
+        stack = np.stack(([get_z(comparator_sample, downsampled_sample_mean, downsampled_sample_std) for
+                           comparator_dtag, comparator_sample in downscaled_comparator_samples.items()]), axis=0)
+        print(stack.shape)
+
+        # Get affinity maps for various orientations
+        fragment_affinity_z_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
+        for rotation_index, fragment_mask in fragment_masks.items():
+            if params.debug:
+                print(f"\t\t\tProcessing rotation: {rotation_index}")
+                print(
+                    f"\tGot fragment map: max {np.max(fragment_mask)}, min: {np.min(fragment_mask)}; shape: {fragment_mask.shape}")
+
+            # Get the affinity map for each dataset at this orientation
+            fragment_affinity_maps: MutableMapping[str, np.ndarray] = {}
+
+            filters = fragment_mask[np.newaxis, :, :, :]
+            print(filters.shape)
+            affinity_maps = oaconvolve(stack, filters, mode="same")
+            print(affinity_maps.shape)
+            fragment_affinity_maps = {dtag: affinity_maps[i, :, :, :] for i, dtag in
+                                      enumerate(downscaled_comparator_samples)}
+            print([x.shape for x in fragment_affinity_maps.values()])
+
+            # Get the current dataset affinity maps
+            dataset_affinity_map = oaconvolve(
+                get_z(downsampled_dataset_sample, downsampled_sample_mean, downsampled_sample_std),
+                fragment_mask,
+                mode="same"
+            )
+
+            print(
+                f"\tGot dataset affinity map: max {np.max(dataset_affinity_map)}, min: {np.min(dataset_affinity_map)}")
+
+            # Characterise the local distribution of affinity scores
+            fragment_affinity_mean: np.ndarray = get_mean(fragment_affinity_maps)
+            fragment_affinity_std: np.ndarray = get_std(fragment_affinity_maps)
+            fragment_affinity_z: np.ndarray = get_z(
+                dataset_affinity_map,
+                downsampled_sample_mean,
+                downsampled_sample_std,
+            )
+            fragment_affinity_z_maps[rotation_index] = fragment_affinity_z
+            if params.debug:
+                print(f"\t\tGot mean: max {np.max(fragment_affinity_mean)}, min: {np.min(fragment_affinity_mean)}")
+                print(f"\t\tGot std: max {np.max(fragment_affinity_std)}, min: {np.min(fragment_affinity_std)}")
+                print(f"\t\tGot z: max {np.max(fragment_affinity_z)}, min: {np.min(fragment_affinity_z)}")
+
+        # End loop over versions of fragment
+
+        # Get the maxima
+        maxima: AffinityMaxima = get_fragment_z_maxima(fragment_affinity_z_maps)
+
+        # Check if the maxima is an event: if so
+        if is_affinity_event(maxima, params.min_correlation):
+
+            # Produce the corrected density by subtracting (1-affinity) * ED mean map
+            bcd, corrected_density = get_affinity_background_corrected_density(
+                dataset_sample,
+                fragment_maps[maxima.rotation_index],
+                maxima,
+                sample_mean,
+            )
+
+            # Resample the corrected density onto the original map
+            event_map: gemmi.FloatGrid = get_backtransformed_map(
+                corrected_density,
+                reference_dataset,
+                dataset,
+                alignments[dataset.dtag][marker],
+                marker,
+                params.grid_size,
+                params.grid_spacing,
+                params.structure_factors,
+                params.sample_rate,
+            )
+
+            # Write the event map
+            event_map_path: Path = get_affinity_event_map_path(
+                out_dir,
+                dataset,
+                marker,
+            )
+            write_event_map(
+                event_map,
+                event_map_path,
+                marker,
+                dataset,
+            )
+
+            # Record event
+            event: AffinityEvent = get_affinity_event(
+                dataset,
+                maxima,
+                marker,
+            )
+
+            break
+
+        else:
+            # Record a failed event
+            event: AffinityEvent = get_failed_affinity_event(
+                dataset,
+                marker,
+            )
+
+        # Record the event
+        dataset_results.events[0] = event
+        # End loop over fragment builds
+
+    return dataset_results
+
+
+def analyse_residue(
+        residue_datasets: MutableMapping[str, Dataset],
+        marker: Marker,
+        alignments: MutableMapping[str, Alignment],
+        reference_dataset: Dataset,
+        known_apos: List[str],
+        out_dir: Path,
+        params: Params,
+) -> ResidueAffinityResults:
+    if params.debug:
+        print(f"Found {len(residue_datasets)} residue datasets")
+
+    # Truncate the datasets to the same reflections
+    truncated_datasets: MutableMapping[str, Dataset] = get_truncated_datasets(
+        residue_datasets,
+        reference_dataset,
+        params.structure_factors,
+    )
+
+    # Truncated dataset apos
+    truncated_dataset_apo_mask: np.ndarray = get_dataset_apo_mask(truncated_datasets, known_apos)
+
+    # resolution
+    resolution: float = list(truncated_datasets.values())[0].reflections.resolution_high()
+    if params.debug:
+        print(f"Resolution is: {resolution}")
+
+    # Sample the datasets to ndarrays
+    if params.debug:
+        print(f"Getting sample arrays...")
+    sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
+        truncated_datasets,
+        marker,
+        alignments,
+        params.structure_factors,
+        params.sample_rate,
+        params.grid_size,
+        params.grid_spacing,
+        #     1.0,
+    )
+
+    # Get the distance matrix
+    distance_matrix: np.ndarray = get_distance_matrix(sample_arrays)
+    if params.debug:
+        print(f"First line of distance matrix: {distance_matrix[0, :]}")
+
+    # Get the distance matrix linkage
+    linkage: np.ndarray = get_linkage_from_correlation_matrix(distance_matrix)
+
+    # Cluster the available density
+    dataset_clusters: np.ndarray = cluster_strong_density(
+        linkage,
+        params.strong_density_cluster_cutoff,
+    )
+
+    # For every dataset, find the datasets of the closest known apo cluster
+    # If none can be found, make a note of it, and proceed to next dataset
+    residue_results: ResidueAffinityResults = {}
+    for dataset_index, dtag in enumerate(truncated_datasets):
+        if params.debug:
+            print(f"\tProcessing dataset: {dtag}")
+
+        dataset = residue_datasets[dtag]
+
+        dataset_results: DatasetAffinityResults = analyse_dataset(
+            dataset,
+            residue_datasets,
+            marker,
+            alignments,
+            reference_dataset,
+            linkage,
+            dataset_clusters,
+            dataset_index,
+            known_apos,
+            out_dir,
+            params,
+        )
+
+        # Record the dataset results
+        residue_results[dtag] = dataset_results
+
+    # End loop over truncated datasets
+
+    return residue_results
+    #
+    # # Update the program log
+    # pandda_results[residue_id] = residue_results
+    # # End loop over residues
+    #
+    # # Write the summary and graphs of the output
+    # write_result_html(pandda_results)
