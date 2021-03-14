@@ -307,6 +307,7 @@ def get_comparator_datasets(
         apo_mask: np.ndarray,
         datasets: MutableMapping[str, Dataset],
         min_cluster_size: int,
+        num_datasets:int,
 ) -> Optional[MutableMapping[str, Dataset]]:
     #
     apo_cluster_indexes: np.ndarray = np.unique(dataset_clusters[apo_mask])
@@ -338,10 +339,18 @@ def get_comparator_datasets(
     closest_cluster_index: int = min(cluster_distances, key=lambda x: cluster_distances[x])
     closest_cluster_dtag_array: np.ndarray = np.array(list(datasets.keys()))[dataset_clusters == closest_cluster_index]
 
+    # Sort by resolution
+    closest_cluster_dtag_resolutions = {dtag: datasets[dtag].reflections.resolution_high()
+                                        for dtag in closest_cluster_dtag_array}
+    sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
+                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
+    highest_resolution_dtags = sorted_resolution_dtags[:min(len(sorted_resolution_dtags), num_datasets)]
+
     closest_cluster_datasets: MutableMapping[str, Dataset] = {dtag: datasets[dtag]
                                                               for dtag
-                                                              in closest_cluster_dtag_array
+                                                              in highest_resolution_dtags
                                                               }
+
 
     return closest_cluster_datasets
 
