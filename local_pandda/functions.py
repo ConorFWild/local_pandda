@@ -2156,8 +2156,8 @@ def analyse_residue(
         alignments,
         params.structure_factors,
         params.sample_rate,
-        params.grid_size,
-        params.grid_spacing,
+        int(params.grid_size / 2),
+        params.grid_spacing * 2,
         #     1.0,
     )
 
