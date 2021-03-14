@@ -2059,62 +2059,64 @@ def analyse_dataset(
 
         # Get the maxima
         maxima: AffinityMaxima = get_fragment_z_maxima(fragment_affinity_z_maps)
+        if params.debug:
+            print(f"\t\t\tGot maxima: {maxima}")
 
         # Check if the maxima is an event: if so
-        if is_affinity_event(maxima, params.min_correlation):
+        # if is_affinity_event(maxima, params.min_correlation):
 
-            # Produce the corrected density by subtracting (1-affinity) * ED mean map
-            bcd, corrected_density = get_affinity_background_corrected_density(
-                dataset_sample,
-                fragment_maps[maxima.rotation_index],
-                maxima,
-                sample_mean,
-            )
+        # Produce the corrected density by subtracting (1-affinity) * ED mean map
+        bcd, corrected_density = get_affinity_background_corrected_density(
+            dataset_sample,
+            fragment_maps[maxima.rotation_index],
+            maxima,
+            sample_mean,
+        )
 
-            # Resample the corrected density onto the original map
-            event_map: gemmi.FloatGrid = get_backtransformed_map(
-                corrected_density,
-                reference_dataset,
-                dataset,
-                alignments[dataset.dtag][marker],
-                marker,
-                params.grid_size,
-                params.grid_spacing,
-                params.structure_factors,
-                params.sample_rate,
-            )
+        # Resample the corrected density onto the original map
+        event_map: gemmi.FloatGrid = get_backtransformed_map(
+            corrected_density,
+            reference_dataset,
+            dataset,
+            alignments[dataset.dtag][marker],
+            marker,
+            params.grid_size,
+            params.grid_spacing,
+            params.structure_factors,
+            params.sample_rate,
+        )
 
-            # Write the event map
-            event_map_path: Path = get_affinity_event_map_path(
-                out_dir,
-                dataset,
-                marker,
-            )
-            write_event_map(
-                event_map,
-                event_map_path,
-                marker,
-                dataset,
-            )
+        # Write the event map
+        event_map_path: Path = get_affinity_event_map_path(
+            out_dir,
+            dataset,
+            marker,
+        )
+        write_event_map(
+            event_map,
+            event_map_path,
+            marker,
+            dataset,
+        )
 
-            # Record event
-            event: AffinityEvent = get_affinity_event(
-                dataset,
-                maxima,
-                marker,
-            )
+        # Record event
+        event: AffinityEvent = get_affinity_event(
+            dataset,
+            maxima,
+            marker,
+        )
 
-            break
-
-        else:
-            # Record a failed event
-            event: AffinityEvent = get_failed_affinity_event(
-                dataset,
-                marker,
-            )
+        # else:
+        #     # Record a failed event
+        #     event: AffinityEvent = get_failed_affinity_event(
+        #         dataset,
+        #         marker,
+        #     )
 
         # Record the event
         dataset_results.events[0] = event
+        break
+
         # End loop over fragment builds
 
     return dataset_results
