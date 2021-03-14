@@ -1232,7 +1232,7 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
     ccp4.set_extent(box)
 
     ccp4.setup()
-    ccp4.update_ccp4_header(2, True)()
+    ccp4.update_ccp4_header(2, True)
 
     ccp4.write_ccp4_map(str(out_path))
 
