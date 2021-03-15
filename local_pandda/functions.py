@@ -1193,19 +1193,27 @@ def get_affinity_background_corrected_density(
         print(f"\tmax: {np.max(residual_map[fragment_mask > 0])}, {np.max(scaled_fragment_map[fragment_mask > 0])}")
         print(f"\tmin: {np.min(residual_map[fragment_mask > 0])}, {np.min(scaled_fragment_map[fragment_mask > 0])}")
 
+
+
+
         masked_residual_map = residual_map[fragment_mask > 0]
         masked_scaled_fragment_map = scaled_fragment_map[fragment_mask > 0]
 
-        rescaled_masked_residual_map = (masked_residual_map - np.mean(masked_residual_map)) / np.std(masked_residual_map)
-        rescaled_masked_scaled_fragment_map = (masked_scaled_fragment_map - np.mean(masked_scaled_fragment_map)) / np.std(masked_scaled_fragment_map)
+        residual_map_quantile_low = np.quantile(masked_residual_map, 0.25)
+        residual_map_quantile_high = np.quantile(masked_residual_map, 0.75)
 
-        rescaled_sum_absolute_differance = np.sum(
-            np.square(rescaled_masked_residual_map - rescaled_masked_scaled_fragment_map))
-        print(f"For b: {b}: rescaled sum absolute diff: {rescaled_sum_absolute_differance}")
+
+        #
+        # rescaled_masked_residual_map = (masked_residual_map - np.mean(masked_residual_map)) / np.std(masked_residual_map)
+        # rescaled_masked_scaled_fragment_map = (masked_scaled_fragment_map - np.mean(masked_scaled_fragment_map)) / np.std(masked_scaled_fragment_map)
+        #
+        # rescaled_sum_absolute_differance = np.sum(
+        #     np.square(rescaled_masked_residual_map - rescaled_masked_scaled_fragment_map))
+        # print(f"For b: {b}: rescaled sum absolute diff: {rescaled_sum_absolute_differance}")
 
         correlation, intercept = np.polyfit(
-            rescaled_masked_residual_map,
-            rescaled_masked_scaled_fragment_map,
+            masked_residual_map[(masked_residual_map>residual_map_quantile_low)*(masked_residual_map<residual_map_quantile_high)],
+            masked_scaled_fragment_map[(masked_residual_map>residual_map_quantile_low)*(masked_residual_map<residual_map_quantile_high)],
             deg=1,
         )
         print(f"Correlation is: {correlation}")
