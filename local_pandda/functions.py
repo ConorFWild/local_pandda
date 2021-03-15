@@ -1217,6 +1217,7 @@ def get_affinity_background_corrected_density(
             deg=1,
         )
         print(f"Correlation is: {correlation}")
+        print(f"Intercept is: {intercept}")
 
         sum_absolute_differances[b] = sum_absolute_differance
 
