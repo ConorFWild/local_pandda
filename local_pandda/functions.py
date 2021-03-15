@@ -1193,10 +1193,15 @@ def get_affinity_background_corrected_density(
         print(f"\tmax: {np.max(residual_map[fragment_mask > 0])}, {np.max(scaled_fragment_map[fragment_mask > 0])}")
         print(f"\tmin: {np.min(residual_map[fragment_mask > 0])}, {np.min(scaled_fragment_map[fragment_mask > 0])}")
 
+        masked_residual_map = residual_map[fragment_mask > 0]
+        masked_scaled_fragment_map = residual_map[fragment_mask > 0]
+
+        rescaled_masked_residual_map = (masked_residual_map - np.mean(masked_residual_map)) / np.std(masked_residual_map)
+        rescaled_masked_scaled_fragment_map = (masked_scaled_fragment_map - np.mean(masked_scaled_fragment_map)) / np.std(masked_scaled_fragment_map)
 
         correlation, intercept = np.polyfit(
-            residual_map[fragment_mask > 0],
-            scaled_fragment_map[fragment_mask > 0],
+            rescaled_masked_residual_map,
+            rescaled_masked_scaled_fragment_map,
             deg=1,
         )
         print(f"Correlation is: {correlation}")
