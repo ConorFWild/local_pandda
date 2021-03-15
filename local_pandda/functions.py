@@ -1190,7 +1190,15 @@ def get_affinity_background_corrected_density(
             np.square(residual_map[fragment_mask > 0] - scaled_fragment_map[fragment_mask > 0]))
         print(f"For b: {b}: sum absolute diff: {sum_absolute_differance}")
 
-        correlation, intercept = np.polyfit(residual_map[fragment_mask > 0], scaled_fragment_map[fragment_mask > 0], deg=1)
+        print(f"\tmax: {np.max(residual_map[fragment_mask > 0])}, {np.max(scaled_fragment_map[fragment_mask > 0])}")
+        print(f"\tmin: {np.min(residual_map[fragment_mask > 0])}, {np.min(scaled_fragment_map[fragment_mask > 0])}")
+
+
+        correlation, intercept = np.polyfit(
+            residual_map[fragment_mask > 0],
+            scaled_fragment_map[fragment_mask > 0],
+            deg=1,
+        )
         print(f"Correlation is: {correlation}")
 
         sum_absolute_differances[b] = sum_absolute_differance
