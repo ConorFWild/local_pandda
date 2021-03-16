@@ -33,6 +33,7 @@ from local_pandda.database import *
 
 import os
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
+torch.backends.cudnn.benchmark = False
 # torch.cuda.set_device(0)
 
 #
