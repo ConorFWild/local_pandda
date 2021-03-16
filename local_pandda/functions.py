@@ -1748,11 +1748,11 @@ def get_backtransformed_map(
         min_pos_frac.z = 0.0
 
     if (dataset_centroid_frac.x // 1) != (max_pos_frac.x // 1):
-        max_pos_frac.x = 1.0
+        max_pos_frac.x = 1.0-0.000001
     if (dataset_centroid_frac.y // 1) != (max_pos_frac.y // 1):
-        max_pos_frac.y = 1.0
+        max_pos_frac.y = 1.0-0.000001
     if (dataset_centroid_frac.z // 1) != (max_pos_frac.z // 1):
-        max_pos_frac.z = 1.0
+        max_pos_frac.z = 1.0-0.000001
 
     print(f"min_pos_frac: {min_pos_frac}")
     print(f"max_pos_frac: {max_pos_frac}")
