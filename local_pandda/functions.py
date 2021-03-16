@@ -2442,6 +2442,9 @@ def analyse_dataset_gpu(
         filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
                                         filters_np.shape[3])
 
+        print(np.sum(data_np))
+        print(np.sum(filters_np))
+
         data = torch.tensor(data_np, dtype=torch.half).cuda()
         filters = torch.tensor(filters_np, dtype=torch.half).cuda()
         print(data.shape)
@@ -2477,6 +2480,7 @@ def analyse_dataset_gpu(
         del filters
         del output
         torch.cuda.empty_cache()
+        torch.cuda.synchronize()
 
         # get affinity maxima
         maxima: AffinityMaxima = AffinityMaxima(
