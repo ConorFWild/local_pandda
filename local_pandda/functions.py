@@ -22,8 +22,14 @@ from scipy import ndimage
 from scipy.signal import fftconvolve, oaconvolve
 from skimage.transform import rescale, resize, downscale_local_mean
 
+try:
+    import torch
+except Exception as e:
+    print(e)
+
 # Custom
 from local_pandda.constants import Constants
+
 
 
 #
@@ -1193,15 +1199,11 @@ def get_affinity_background_corrected_density(
         print(f"\tmax: {np.max(residual_map[fragment_mask > 0])}, {np.max(scaled_fragment_map[fragment_mask > 0])}")
         print(f"\tmin: {np.min(residual_map[fragment_mask > 0])}, {np.min(scaled_fragment_map[fragment_mask > 0])}")
 
-
-
-
         masked_residual_map = residual_map[fragment_mask > 0]
         masked_scaled_fragment_map = scaled_fragment_map[fragment_mask > 0]
 
         residual_map_quantile_low = np.quantile(masked_residual_map, 0.25)
         residual_map_quantile_high = np.quantile(masked_residual_map, 0.75)
-
 
         #
         # rescaled_masked_residual_map = (masked_residual_map - np.mean(masked_residual_map)) / np.std(masked_residual_map)
@@ -1212,8 +1214,10 @@ def get_affinity_background_corrected_density(
         # print(f"For b: {b}: rescaled sum absolute diff: {rescaled_sum_absolute_differance}")
 
         correlation, intercept = np.polyfit(
-            masked_residual_map[(masked_residual_map>residual_map_quantile_low)*(masked_residual_map<residual_map_quantile_high)],
-            masked_scaled_fragment_map[(masked_residual_map>residual_map_quantile_low)*(masked_residual_map<residual_map_quantile_high)],
+            masked_residual_map[
+                (masked_residual_map > residual_map_quantile_low) * (masked_residual_map < residual_map_quantile_high)],
+            masked_scaled_fragment_map[
+                (masked_residual_map > residual_map_quantile_low) * (masked_residual_map < residual_map_quantile_high)],
             deg=1,
         )
         print(f"Correlation is: {correlation}")
@@ -2237,3 +2241,278 @@ def analyse_residue(
     #
     # # Write the summary and graphs of the output
     # write_result_html(pandda_results)
+
+
+def analyse_dataset_fast(
+        dataset: Dataset,
+        residue_datasets: MutableMapping[str, Dataset],
+        marker: Marker,
+        alignments: MutableMapping[str, Alignment],
+        reference_dataset: Dataset,
+        linkage: np.ndarray,
+        dataset_clusters: np.ndarray,
+        dataset_index: int,
+        known_apos: List[str],
+        out_dir: Path,
+        params: Params,
+) -> Optional[DatasetAffinityResults]:
+    # Get a result object
+    dataset_results: DatasetAffinityResults = DatasetAffinityResults(
+        dataset.dtag,
+        marker,
+        dataset.structure_path,
+        dataset.reflections_path,
+        dataset.fragment_path,
+    )
+
+    # Get the fragment
+    dataset_fragment_structures: Optional[MutableMapping[str, gemmi.Structure]] = dataset.fragment_structures
+
+    # No need to analyse if no fragment present
+    if not dataset_fragment_structures:
+        return None
+
+    # Select the comparator datasets
+    comparator_datasets: Optional[MutableMapping[str, Dataset]] = get_comparator_datasets(
+        linkage,
+        dataset_clusters,
+        dataset_index,
+        get_dataset_apo_mask(residue_datasets, known_apos),
+        residue_datasets,
+        params.min_dataset_cluster_size,
+        params.min_dataset_cluster_size,
+    )
+
+    if params.debug:
+        print(f"\tComparator datasets are: {list(comparator_datasets.keys())}")
+
+    # Handle no comparators
+    if not comparator_datasets:
+        dataset_results: DatasetAffinityResults = get_not_enough_comparator_dataset_affinity_result(
+            dataset,
+            marker,
+        )
+        return dataset_results
+        # continue
+
+    # Get the truncated comparator datasets
+    comparator_truncated_datasets: MutableMapping[str, Dataset] = get_truncated_datasets(
+        comparator_datasets,
+        dataset,
+        params.structure_factors,
+    )
+    comparator_truncated_datasets[dataset.dtag] = dataset
+    print(len(comparator_truncated_datasets))
+
+    # Get the local density samples associated with the comparator datasets
+    comparator_sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
+        comparator_truncated_datasets,
+        marker,
+        alignments,
+        params.structure_factors,
+        params.sample_rate,
+        params.grid_size,
+        params.grid_spacing,
+    )
+    print(max([comparator_truncated_dataset.reflections.resolution_high() for comparator_truncated_dataset in
+               comparator_truncated_datasets.values()]))
+
+    # Get the sample associated with the dataset of interest
+    dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
+
+    if params.debug:
+        print(f"\tGot {len(comparator_sample_arrays)} comparater samples")
+
+    resolution: float = list(comparator_truncated_datasets.values())[0].reflections.resolution_high()
+    if params.debug:
+        print(f"Resolution is: {resolution}")
+
+    # Characterise the local distribution
+    sample_mean: np.ndarray = get_mean(comparator_sample_arrays)
+    sample_std: np.ndarray = get_std(comparator_sample_arrays)
+    sample_z: np.ndarray = get_z(dataset_sample, sample_mean, sample_std)
+    if params.debug:
+        print(f"\tGot mean: max {np.max(sample_mean)}, min: {np.min(sample_mean)}")
+        print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
+        print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
+
+    # Get the comparator affinity maps
+    downscaled_comparator_samples = {dtag: downscale_local_mean(comparator_sample, (2, 2, 2)) for
+                                     dtag, comparator_sample in
+                                     comparator_sample_arrays.items()}
+    downsampled_dataset_sample = downscale_local_mean(comparator_sample_arrays[dataset.dtag], (2, 2, 2))
+    downsampled_sample_mean = downscale_local_mean(sample_mean, (2, 2, 2))
+    downsampled_sample_std = downscale_local_mean(sample_std, (2, 2, 2))
+
+    downscaled_comparator_samples = {dtag: downscale_local_mean(comparator_sample, (2, 2, 2)) for
+                                     dtag, comparator_sample in comparator_sample_arrays.items()}
+    downsampled_dataset_sample = downscale_local_mean(comparator_sample_arrays[dataset.dtag], (2, 2, 2))
+    downsampled_sample_mean = downscale_local_mean(sample_mean, (2, 2, 2))
+    downsampled_sample_std = downscale_local_mean(sample_std, (2, 2, 2))
+
+    for fragment_id, fragment_structure in dataset_fragment_structures.items():
+        if params.debug:
+            print(f"\t\tProcessing fragment: {fragment_id}")
+        fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_maps(
+            fragment_structure,
+            resolution,
+            #         3.0,
+            params.num_fragment_pose_samples,
+            params.sample_rate,
+            params.grid_spacing,
+        )
+        downscaled_fragment_maps = {rotation_index: downscale_local_mean(fragment_map, (2, 2, 2)) for
+                                    rotation_index, fragment_map in fragment_maps.items()}
+
+        correlations = []
+        fragment_masks = {}
+        for rotation, fragment_map in fragment_maps.items():
+            arr = fragment_map.copy()
+            #         mean = np.mean(arr)
+            quant = np.quantile(fragment_map, 0.95)
+            #         mean = 0.7*np.max(fragment_map)
+            great_mask = arr > quant
+            less_mask = arr <= quant
+            arr[great_mask] = 1.0
+            arr[less_mask] = 0.0
+            fragment_masks[rotation] = arr
+            print(f"Num voxels = {np.sum(arr)}")
+
+        if params.debug:
+            print(f"\t\tGot {len(fragment_maps)} fragment maps")
+
+        stack = np.stack(([get_z(comparator_sample, downsampled_sample_mean, downsampled_sample_std) for
+                           comparator_dtag, comparator_sample in downscaled_comparator_samples.items()]), axis=0)
+
+        correlations = {}
+
+        # Get affinity maps for various orientations
+        fragment_affinity_z_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
+        #     for rotation_index, fragment_mask in fragment_masks.items():
+        event_mask_list = []
+        fragment_mask_list = []
+        for b in np.linspace(0, 0.90, 20):
+            event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
+            cutoff = 1.0
+            event_map[event_map < cutoff] = 0
+            event_map[event_map > cutoff] = 1
+
+            event_mask_list.append(event_map)
+
+            for rotation_index, fragment_map in fragment_maps.items():
+
+                fragment_mask = fragment_masks[rotation_index] / np.sum(fragment_masks[rotation_index])
+                fragment_mask_list.append(fragment_mask)
+
+
+                if params.debug:
+                    print(f"\t\t\tProcessing rotation: {rotation_index}")
+
+                event_mask_list = []
+                # fragment_mask_list = []
+
+        data_np = np.stack(event_mask_list, axis=0)
+        data_np = data_np.reshape(data_np.shape[0], 1, data_np.shape[1], data_np.shape[2], data_np.shape[3])
+        filters_np = np.stack(fragment_mask_list, axis=0)
+        filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2], filters_np.shape[3])
+
+        data = torch.tensor(data_np).cuda()
+        filters = torch.tensor(filters_np).cuda()
+
+        # samples (event maps), channels (1), x, y, z
+        # out_channels, in channels/groups (1), x, y, z
+        # samples, out_channels, x, y, z
+
+        output = torch.nn.functional.conv3d(data, filters)
+
+        print(torch.max(output).cpu())
+
+        # End loop over fragment builds
+
+    return dataset_results
+
+
+def analyse_residue_fast(
+        residue_datasets: MutableMapping[str, Dataset],
+        marker: Marker,
+        alignments: MutableMapping[str, Alignment],
+        reference_dataset: Dataset,
+        known_apos: List[str],
+        out_dir: Path,
+        params: Params,
+) -> ResidueAffinityResults:
+    if params.debug:
+        print(f"Found {len(residue_datasets)} residue datasets")
+
+    # Truncate the datasets to the same reflections
+    truncated_datasets: MutableMapping[str, Dataset] = get_truncated_datasets(
+        residue_datasets,
+        reference_dataset,
+        params.structure_factors,
+    )
+
+    # Truncated dataset apos
+    truncated_dataset_apo_mask: np.ndarray = get_dataset_apo_mask(truncated_datasets, known_apos)
+
+    # resolution
+    resolution: float = list(truncated_datasets.values())[0].reflections.resolution_high()
+    if params.debug:
+        print(f"Resolution is: {resolution}")
+
+    # Sample the datasets to ndarrays
+    if params.debug:
+        print(f"Getting sample arrays...")
+    sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
+        truncated_datasets,
+        marker,
+        alignments,
+        params.structure_factors,
+        params.sample_rate,
+        int(params.grid_size / 2),
+        params.grid_spacing * 2,
+        #     1.0,
+    )
+
+    # Get the distance matrix
+    distance_matrix: np.ndarray = get_distance_matrix(sample_arrays)
+    if params.debug:
+        print(f"First line of distance matrix: {distance_matrix[0, :]}")
+
+    # Get the distance matrix linkage
+    linkage: np.ndarray = get_linkage_from_correlation_matrix(distance_matrix)
+
+    # Cluster the available density
+    dataset_clusters: np.ndarray = cluster_strong_density(
+        linkage,
+        params.strong_density_cluster_cutoff,
+    )
+
+    # For every dataset, find the datasets of the closest known apo cluster
+    # If none can be found, make a note of it, and proceed to next dataset
+    residue_results: ResidueAffinityResults = {}
+    for dataset_index, dtag in enumerate(truncated_datasets):
+        if params.debug:
+            print(f"\tProcessing dataset: {dtag}")
+
+        dataset = residue_datasets[dtag]
+
+        dataset_results: DatasetAffinityResults = analyse_dataset_fast(
+            dataset,
+            residue_datasets,
+            marker,
+            alignments,
+            reference_dataset,
+            linkage,
+            dataset_clusters,
+            dataset_index,
+            known_apos,
+            out_dir,
+            params,
+        )
+
+        # Record the dataset results
+        residue_results[dtag] = dataset_results
+
+    # End loop over truncated datasets
+
+    return residue_results
