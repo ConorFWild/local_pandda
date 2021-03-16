@@ -1721,6 +1721,7 @@ def get_backtransformed_map(
     # dataset_centroid = gemmi.Position(dataset_centroid_vec[0], dataset_centroid_vec[1], dataset_centroid_vec[2])
     tr = transform.transform.vec.tolist()
     dataset_centroid = gemmi.Position(marker.x - tr[0], marker.y - tr[1], marker.z - tr[2])
+    print(f"Dataset centriod: {dataset_centroid}")
     # dataset_origin = gemmi.Position(dataset_centroid.x - (grid_size * grid_spacing),
     #                                 dataset_centroid.y - (grid_size * grid_spacing),
     #                                 dataset_centroid.z - (grid_size * grid_spacing))
