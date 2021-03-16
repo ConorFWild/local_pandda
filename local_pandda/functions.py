@@ -2445,8 +2445,8 @@ def analyse_dataset_gpu(
         print(np.sum(data_np))
         print(np.sum(filters_np))
 
-        data = torch.tensor(data_np, dtype=torch.half).cuda()
-        filters = torch.tensor(filters_np, dtype=torch.half).cuda()
+        data = torch.tensor(data_np, dtype=torch.float).cuda()
+        filters = torch.tensor(filters_np, dtype=torch.float).cuda()
         print(data.shape)
         print(filters.shape)
 
@@ -2476,11 +2476,11 @@ def analyse_dataset_gpu(
                                        max_index_fragment_relative_coord[2] + marker.z,
                                        ]
 
-        del data
-        del filters
-        del output
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
+        # del data
+        # del filters
+        # del output
+        # torch.cuda.empty_cache()
+        # torch.cuda.synchronize()
 
         # get affinity maxima
         maxima: AffinityMaxima = AffinityMaxima(
