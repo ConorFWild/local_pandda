@@ -33,6 +33,7 @@ from local_pandda.database import *
 
 import os
 os.environ['CUDA_LAUNCH_BLOCKING']='1'
+torch.cuda.set_device(1)
 
 #
 # def cell_to_python(unit_cell: gemmi.UnitCell, tmp_dir: Path = Path("./tmp")) -> PyCell:
