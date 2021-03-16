@@ -290,6 +290,19 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     return structure_copy
 
 
+def sample_fragment(rotation_index, fragment_structure, resolution, grid_spacing, sample_rate):
+    rotation = spsp.transform.Rotation.from_euler("xyz",
+                                                  [rotation_index[0],
+                                                   rotation_index[1],
+                                                   rotation_index[2]],
+                                                  degrees=True)
+    rotation_matrix: np.ndarray = rotation.as_matrix()
+    rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
+    fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing, sample_rate)
+
+    return fragment_map
+
+
 def get_fragment_maps(
         fragment_structure: gemmi.Structure,
         resolution: float,
@@ -299,14 +312,24 @@ def get_fragment_maps(
     sample_angles = np.linspace(0, 360, num=10, endpoint=False).tolist()
 
     fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
-    for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles):
-        # print([x, y, z])
-        rotation_index = (x, y, z)
-        rotation = spsp.transform.Rotation.from_euler("xyz", [x, y, z], degrees=True)
-        rotation_matrix: np.ndarray = rotation.as_matrix()
-        rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
-        fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing, sample_rate)
-        fragment_maps[rotation_index] = fragment_map
+
+    rotations = [(x, y, z) for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles)]
+    # print([x, y, z])
+    # rotation_index = (x, y, z)
+
+    fragment_samples = joblib.Parallel(
+        verbose=50,
+        n_jobs=-1,
+        # backend="multiprocessing",
+    )(
+        joblib.delayed(sample_fragment)(
+            rotation_index, fragment_structure, resolution, grid_spacing, sample_rate
+        )
+        for rotation_index
+        in rotations
+    )
+
+    fragment_maps = {rotation: fragment_sample for rotation, fragment_sample in zip(rotations, fragment_samples)}
 
     return fragment_maps
 
