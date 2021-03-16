@@ -2445,9 +2445,12 @@ def analyse_dataset_gpu(
         filters = torch.tensor(filters_np, dtype=torch.half).cuda()
 
         output = torch.nn.functional.conv3d(data, filters)
+        output_np = output.cpu()
 
-        max_correlation = torch.max(output).cpu()
-        max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
+        # max_correlation = torch.max(output).cpu()
+        # max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
+        max_correlation = np.max(output_np)
+        max_index = np.unravel_index(np.argmax(output_np), output_np.shape)
         max_bdc = bdcs[max_index[0]]
         max_rotation = list(fragment_maps.keys())[max_index[1]]
         max_index_fragment_map = fragment_maps[max_rotation]
