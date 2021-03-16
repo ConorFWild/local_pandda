@@ -1034,20 +1034,40 @@ def sample_datasets(
         grid_spacing: float,
 ) -> MutableMapping[str, np.ndarray]:
     samples: MutableMapping[str, np.ndarray] = {}
-    for dtag, dataset in truncated_datasets.items():
-        alignment: Alignment = alignments[dtag]
-        residue_transform: Transform = alignment[marker]
-
-        sample: np.ndarray = sample_dataset(
+    arrays = joblib.Parallel(
+        verbose=50,
+        n_jobs=-1,
+        # backend="multiprocessing",
+    )(
+        joblib.delayed(sample_dataset)(
             dataset,
-            residue_transform,
+            alignments[dtag][marker],
             marker,
             structure_factors,
             sample_rate,
             grid_size,
             grid_spacing,
         )
-        samples[dtag] = sample
+        for dtag, dataset
+        in truncated_datasets.items()
+    )
+    samples = {dtag: result for dtag, result in zip(truncated_datasets, arrays)}
+
+    #
+    # for dtag, dataset in truncated_datasets.items():
+    #     alignment: Alignment = alignments[dtag]
+    #     residue_transform: Transform = alignment[marker]
+    #
+    #     sample: np.ndarray = sample_dataset(
+    #         dataset,
+    #         residue_transform,
+    #         marker,
+    #         structure_factors,
+    #         sample_rate,
+    #         grid_size,
+    #         grid_spacing,
+    #     )
+    #     samples[dtag] = sample
 
     return samples
 
@@ -2395,8 +2415,8 @@ def analyse_dataset_gpu(
         filters = torch.tensor(filters_np, dtype=torch.half).cuda()
 
         output = torch.nn.functional.conv3d(data, filters)
-        max_correlation = torch.max(output)
-        max_index = np.unravel_index(torch.argmax(output), output.shape)
+        max_correlation = torch.max(output).cpu()
+        max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
         max_bdc = bdcs[max_index[0]]
         max_rotation = list(fragment_maps.keys())[max_index[1]]
         max_index_fragment_map = fragment_maps[max_rotation]
