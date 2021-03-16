@@ -153,6 +153,8 @@ class AffinityMaxima:
     index: Tuple[int, int, int]
     correlation: float
     rotation_index: Tuple[float, float, float]
+    position: Tuple[float, float, float]
+    bdc: float
     # centroid: Tuple[float, float, float]
 
 
@@ -202,9 +204,9 @@ class DatasetAffinityResults:
     comparators: List[Dataset] = field(default_factory=list)
 
 
-@dataclass()
-class ResidueAffinityResults(MutableMapping[str, DatasetResults]):
-    _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
+# @dataclass()
+# class ResidueAffinityResults(MutableMapping[str, DatasetResults]):
+#     _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
 
 
 @dataclass()
@@ -259,8 +261,9 @@ class DatasetAffinityResults:
     structure_path: Path
     reflections_path: Path
     fragment_path: Path
-    events: Dict[int, AffinityEvent] = field(default_factory=dict)
-    comparators: List[Dataset] = field(default_factory=list)
+    maxima: AffinityMaxima
+    # events: Dict[int, AffinityEvent] = field(default_factory=dict)
+    # comparators: List[Dataset] = field(default_factory=list)
 
 
 #
@@ -268,13 +271,14 @@ class DatasetAffinityResults:
 # class ResidueAffinityResults(MutableMapping[str, DatasetAffinityResults]):
 #     _dataset_results: Dict[str, DatasetAffinityResults] = field(default_factory=dict)
 
-ResidueAffinityResults = MutableMapping[str, DatasetAffinityResults]
+MarkerAffinityResults = MutableMapping[str, DatasetAffinityResults]
 
 # @dataclass()
 # class PanDDAAffinityResults(MutableMapping[ResidueID, ResidueAffinityResults]):
 #     _pandda_results: Dict[ResidueID, ResidueAffinityResults] = field(default_factory=dict)
 
-PanDDAAffinityResults = MutableMapping[ResidueID, ResidueAffinityResults]
+
+PanDDAAffinityResults = MutableMapping[Marker, MarkerAffinityResults]
 
 
 class Params:
@@ -300,10 +304,11 @@ class Params:
     # Fragment searching
     num_fragment_pose_samples: int = 10
     min_correlation: float = 0.1
-    pruning_threshold: float = 1.5
+    pruning_threshold: float = 5
 
     # output
     output_smoothed_mtzs: bool = True
+    database_file: str = "database.sqlite"
 
     def update(self, **kwargs):
         for key, value in kwargs.items():

@@ -29,7 +29,7 @@ except Exception as e:
 
 # Custom
 from local_pandda.constants import Constants
-
+from local_pandda.database import *
 
 
 #
@@ -575,7 +575,6 @@ def get_datasets(
     directories = list(data_dir.glob("*"))
 
     datasets_list: List[Optional[Dataset]] = joblib.Parallel(
-        n_jobs=20,
         verbose=50,
         # backend="multiprocessing",
     )(
@@ -944,7 +943,6 @@ def get_alignments(
         debug: bool = True,
 ) -> MutableMapping[str, Alignment]:
     alignment_list: List[Alignment] = joblib.Parallel(
-        n_jobs=20,
         verbose=50,
         # backend="multiprocessing",
     )(
@@ -1097,14 +1095,14 @@ def get_distance_matrix(samples: MutableMapping[str, np.ndarray]) -> np.ndarray:
     return correlation_matrix
 
 
-def get_z_clusters(z: np.ndarray, mean: np.ndarray) -> MutableMapping[int, Cluster]:
-    # Mask large z values
-    # Mask small Z values
-    # Mask intermediate ones
-    # Mask large mean values
-    # Mask (Large mean and not small z) and (large z)
-    # Cluster adjacent voxels on this mask with skimage.measure.label
-    return None
+# def get_z_clusters(z: np.ndarray, mean: np.ndarray) -> MutableMapping[int, Cluster]:
+#     # Mask large z values
+#     # Mask small Z values
+#     # Mask intermediate ones
+#     # Mask large mean values
+#     # Mask (Large mean and not small z) and (large z)
+#     # Cluster adjacent voxels on this mask with skimage.measure.label
+#     return None
 
 
 def get_event_map(
@@ -1271,12 +1269,12 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
     ccp4.write_ccp4_map(str(out_path))
 
 
-def get_event(dataset: Dataset, cluster: Cluster) -> Event:
-    return None
-
-
-def get_failed_event(dataset: Dataset) -> Event:
-    return None
+# def get_event(dataset: Dataset, cluster: Cluster) -> Event:
+#     return None
+#
+#
+# def get_failed_event(dataset: Dataset) -> Event:
+#     return None
 
 
 def get_reference(datasets: MutableMapping[str, Dataset], reference_dtag: Optional[str],
@@ -1583,7 +1581,6 @@ def smooth_datasets(
     #         print(f"\t\tSmoothinging factor: {smoothed_datasets[dtag].smoothing_factor}")
 
     datasets_list: List[Optional[Dataset]] = joblib.Parallel(
-        n_jobs=20,
         verbose=50,
         # backend="multiprocessing",
     )(
@@ -1604,7 +1601,7 @@ def get_event_map_path(out_dir_path: Path, dataset: Dataset, cluster_num: int, r
     return None
 
 
-def write_result_html(pandda_results: PanDDAResults) -> Path:
+def write_result_html(pandda_results: PanDDAResults) -> Optional[Path]:
     return None
 
 
@@ -1750,11 +1747,11 @@ def get_backtransformed_map(
         min_pos_frac.z = 0.0
 
     if (dataset_centroid_frac.x // 1) != (max_pos_frac.x // 1):
-        max_pos_frac.x = 1.0-0.000001
+        max_pos_frac.x = 1.0 - 0.000001
     if (dataset_centroid_frac.y // 1) != (max_pos_frac.y // 1):
-        max_pos_frac.y = 1.0-0.000001
+        max_pos_frac.y = 1.0 - 0.000001
     if (dataset_centroid_frac.z // 1) != (max_pos_frac.z // 1):
-        max_pos_frac.z = 1.0-0.000001
+        max_pos_frac.z = 1.0 - 0.000001
 
     print(f"min_pos_frac: {min_pos_frac}")
     print(f"max_pos_frac: {max_pos_frac}")
@@ -2160,7 +2157,7 @@ def analyse_residue(
         known_apos: List[str],
         out_dir: Path,
         params: Params,
-) -> ResidueAffinityResults:
+) -> MarkerAffinityResults:
     if params.debug:
         print(f"Found {len(residue_datasets)} residue datasets")
 
@@ -2209,7 +2206,7 @@ def analyse_residue(
 
     # For every dataset, find the datasets of the closest known apo cluster
     # If none can be found, make a note of it, and proceed to next dataset
-    residue_results: ResidueAffinityResults = {}
+    residue_results: MarkerAffinityResults = {}
     for dataset_index, dtag in enumerate(truncated_datasets):
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
@@ -2245,7 +2242,7 @@ def analyse_residue(
     # write_result_html(pandda_results)
 
 
-def analyse_dataset_fast(
+def analyse_dataset_gpu(
         dataset: Dataset,
         residue_datasets: MutableMapping[str, Dataset],
         marker: Marker,
@@ -2258,15 +2255,6 @@ def analyse_dataset_fast(
         out_dir: Path,
         params: Params,
 ) -> Optional[DatasetAffinityResults]:
-    # Get a result object
-    dataset_results: DatasetAffinityResults = DatasetAffinityResults(
-        dataset.dtag,
-        marker,
-        dataset.structure_path,
-        dataset.reflections_path,
-        dataset.fragment_path,
-    )
-
     # Get the fragment
     dataset_fragment_structures: Optional[MutableMapping[str, gemmi.Structure]] = dataset.fragment_structures
 
@@ -2339,19 +2327,6 @@ def analyse_dataset_fast(
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
     # Get the comparator affinity maps
-    downscaled_comparator_samples = {dtag: downscale_local_mean(comparator_sample, (2, 2, 2)) for
-                                     dtag, comparator_sample in
-                                     comparator_sample_arrays.items()}
-    downsampled_dataset_sample = downscale_local_mean(comparator_sample_arrays[dataset.dtag], (2, 2, 2))
-    downsampled_sample_mean = downscale_local_mean(sample_mean, (2, 2, 2))
-    downsampled_sample_std = downscale_local_mean(sample_std, (2, 2, 2))
-
-    downscaled_comparator_samples = {dtag: downscale_local_mean(comparator_sample, (2, 2, 2)) for
-                                     dtag, comparator_sample in comparator_sample_arrays.items()}
-    downsampled_dataset_sample = downscale_local_mean(comparator_sample_arrays[dataset.dtag], (2, 2, 2))
-    downsampled_sample_mean = downscale_local_mean(sample_mean, (2, 2, 2))
-    downsampled_sample_std = downscale_local_mean(sample_std, (2, 2, 2))
-
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
         if params.debug:
             print(f"\t\tProcessing fragment: {fragment_id}")
@@ -2363,16 +2338,11 @@ def analyse_dataset_fast(
             params.sample_rate,
             params.grid_spacing,
         )
-        downscaled_fragment_maps = {rotation_index: downscale_local_mean(fragment_map, (2, 2, 2)) for
-                                    rotation_index, fragment_map in fragment_maps.items()}
 
-        correlations = []
         fragment_masks = {}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
-            #         mean = np.mean(arr)
             quant = np.quantile(fragment_map, 0.95)
-            #         mean = 0.7*np.max(fragment_map)
             great_mask = arr > quant
             less_mask = arr <= quant
             arr[great_mask] = 1.0
@@ -2383,17 +2353,12 @@ def analyse_dataset_fast(
         if params.debug:
             print(f"\t\tGot {len(fragment_maps)} fragment maps")
 
-        stack = np.stack(([get_z(comparator_sample, downsampled_sample_mean, downsampled_sample_std) for
-                           comparator_dtag, comparator_sample in downscaled_comparator_samples.items()]), axis=0)
-
         correlations = {}
 
         # Get affinity maps for various orientations
-        fragment_affinity_z_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
-        #     for rotation_index, fragment_mask in fragment_masks.items():
         event_mask_list = []
-        fragment_mask_list = []
-        for b in np.linspace(0, 0.90, 20):
+        bdcs = np.linspace(0, 0.90, 10)
+        for b in bdcs:
             event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
             cutoff = 1.0
             event_map[event_map < cutoff] = 0
@@ -2401,40 +2366,70 @@ def analyse_dataset_fast(
 
             event_mask_list.append(event_map)
 
-            for rotation_index, fragment_map in fragment_maps.items():
+        fragment_mask_list = []
+        for rotation_index, fragment_map in fragment_maps.items():
 
-                fragment_mask = fragment_masks[rotation_index] / np.sum(fragment_masks[rotation_index])
-                fragment_mask_list.append(fragment_mask)
+            fragment_mask = fragment_masks[rotation_index] / np.sum(fragment_masks[rotation_index])
+            fragment_mask_list.append(fragment_mask)
 
-
-                if params.debug:
-                    print(f"\t\t\tProcessing rotation: {rotation_index}")
-
-                event_mask_list = []
-                # fragment_mask_list = []
+            if params.debug:
+                print(f"\t\t\tProcessing rotation: {rotation_index}")
 
         data_np = np.stack(event_mask_list, axis=0)
         data_np = data_np.reshape(data_np.shape[0], 1, data_np.shape[1], data_np.shape[2], data_np.shape[3])
         filters_np = np.stack(fragment_mask_list, axis=0)
-        filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2], filters_np.shape[3])
+        filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
+                                        filters_np.shape[3])
 
-        data = torch.tensor(data_np).cuda()
-        filters = torch.tensor(filters_np).cuda()
-
-        # samples (event maps), channels (1), x, y, z
-        # out_channels, in channels/groups (1), x, y, z
-        # samples, out_channels, x, y, z
+        data = torch.tensor(data_np, dtype=torch.half).cuda()
+        filters = torch.tensor(filters_np, dtype=torch.half).cuda()
 
         output = torch.nn.functional.conv3d(data, filters)
+        max_correlation = torch.max(output)
+        max_index = np.unravel_index(torch.argmax(output), output.shape)
+        max_bdc = bdcs[max_index[0]]
+        max_rotation = list(fragment_maps.keys())[max_index[1]]
+        max_index_fragment_map = fragment_maps[max_rotation]
+        max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+        max_index_fragment_map_shape = max_index_fragment_map.shape
+        max_index_fragment_coord = [max_index_mask_coord[0] + (max_index_fragment_map_shape[0] / 2),
+                                    max_index_mask_coord[1] + (max_index_fragment_map_shape[1] / 2),
+                                    max_index_mask_coord[2] + (max_index_fragment_map_shape[2] / 2),
+                                    ]
+        max_index_fragment_relative_coord = [max_index_fragment_coord[0] - (params.grid_size / 2),
+                                             max_index_fragment_coord[1] - (params.grid_size / 2),
+                                             max_index_fragment_coord[2] - (params.grid_size / 2),
+                                             ]
+        max_index_fragment_position = [max_index_fragment_relative_coord[0] + marker.x,
+                                       max_index_fragment_relative_coord[1] + marker.y,
+                                       max_index_fragment_relative_coord[2] + marker.z,
+                                       ]
 
-        print(torch.max(output).cpu())
+        # get affinity maxima
+        maxima: AffinityMaxima = AffinityMaxima(
+            index=max_index,
+            correlation=max_correlation,
+            rotation_index=max_rotation,
+            position=max_index_fragment_position,
+            bdc=max_bdc,
+        )
 
-        # End loop over fragment builds
+    # End loop over fragment builds
+
+    # Get a result object
+    dataset_results: DatasetAffinityResults = DatasetAffinityResults(
+        dataset.dtag,
+        marker,
+        dataset.structure_path,
+        dataset.reflections_path,
+        dataset.fragment_path,
+        maxima,
+    )
 
     return dataset_results
 
 
-def analyse_residue_fast(
+def analyse_residue_gpu(
         residue_datasets: MutableMapping[str, Dataset],
         marker: Marker,
         alignments: MutableMapping[str, Alignment],
@@ -2442,7 +2437,7 @@ def analyse_residue_fast(
         known_apos: List[str],
         out_dir: Path,
         params: Params,
-) -> ResidueAffinityResults:
+) -> MarkerAffinityResults:
     if params.debug:
         print(f"Found {len(residue_datasets)} residue datasets")
 
@@ -2472,7 +2467,6 @@ def analyse_residue_fast(
         params.sample_rate,
         int(params.grid_size / 2),
         params.grid_spacing * 2,
-        #     1.0,
     )
 
     # Get the distance matrix
@@ -2491,14 +2485,14 @@ def analyse_residue_fast(
 
     # For every dataset, find the datasets of the closest known apo cluster
     # If none can be found, make a note of it, and proceed to next dataset
-    residue_results: ResidueAffinityResults = {}
+    residue_results: MarkerAffinityResults = {}
     for dataset_index, dtag in enumerate(truncated_datasets):
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_fast(
+        dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
             dataset,
             residue_datasets,
             marker,
@@ -2518,3 +2512,68 @@ def analyse_residue_fast(
     # End loop over truncated datasets
 
     return residue_results
+
+
+def analyse_gpu_hits(pandda_results: PanDDAAffinityResults):
+    ...
+
+
+def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAAffinityResults, database_path: Path):
+    database = Database(
+        database_path,
+        True,
+    )
+
+    dataset_record_ids = {}
+    for dtag, dataset in datasets.items():
+        reflections_record = ReflectionsRecord(
+
+        )
+        database.session.add(reflections_record)
+
+        smiles_record = SmilesRecord()
+        database.session.add(smiles_record)
+
+        model_record = ModelRecord()
+        database.session.add(model_record)
+
+        dataset_record = DatasetRecord(
+            dtag=dtag,
+            reflections=reflections_record,
+            smiles=smiles_record,
+            model=model_record,
+        )
+
+        dataset_record_ids[dtag] = dataset_record.id
+        database.session.add(dataset_record)
+
+    # Add the marker results
+    for marker, marker_result in results.items():
+
+        marker_record = MarkerRecord(
+            position_x=marker.x,
+            position_y=marker.y,
+            position_z=marker.z,
+        )
+        database.session.add(marker_record)
+
+        for dtag, dataset_results in marker_result.items():
+            maxima = dataset_results.maxima
+            maxima_rotation = maxima.rotation_index
+            maxima_position = maxima.position
+
+            maxima_record = MaximaRecord(
+                bdc=maxima.bdc,
+                correlation=maxima.correlation,
+                rotation_x=maxima_rotation[0],
+                rotation_y=maxima_rotation[1],
+                rotation_z=maxima_rotation[2],
+                position_x=maxima_position[0],
+                position_y=maxima_position[1],
+                position_z=maxima_position[2],
+                dataset=database.session.query(DatasetRecord).filter(DatasetRecord.dtag == dtag).first(),
+                marker=marker_record,
+            )
+            database.session.add(maxima_record)
+
+    database.session.commit()
