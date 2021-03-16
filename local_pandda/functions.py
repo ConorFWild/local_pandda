@@ -31,6 +31,8 @@ except Exception as e:
 from local_pandda.constants import Constants
 from local_pandda.database import *
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING']='1'
 
 #
 # def cell_to_python(unit_cell: gemmi.UnitCell, tmp_dir: Path = Path("./tmp")) -> PyCell:
