@@ -1693,6 +1693,7 @@ def get_backtransformed_map(
                                                grid_size * grid_spacing,
                                                grid_size * grid_spacing,
                                                90, 90, 90)
+    print(f"Corrected density unit cell: {unit_cell}")
     corrected_density_grid.set_unit_cell(unit_cell)
     corrected_density_grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
 
@@ -1786,7 +1787,7 @@ def get_backtransformed_map(
     print(f"Max wrapped coord: {max_wrapped_coord}")
 
     r = gemmi.Transform()
-    r.mat.fromlist(transform.transform.mat.tolist())
+    r.mat.fromlist(transform.transform.inverse().mat.tolist())
     r.vec.fromlist([0.0, 0.0, 0.0])
 
     # Get indexes of grid points around moving residue
