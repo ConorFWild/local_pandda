@@ -290,7 +290,9 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     return structure_copy
 
 
-def sample_fragment(rotation_index, fragment_structure, resolution, grid_spacing, sample_rate):
+def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate):
+    
+    fragment_structure = path_to_structure(path)
     rotation = spsp.transform.Rotation.from_euler("xyz",
                                                   [rotation_index[0],
                                                    rotation_index[1],
@@ -317,13 +319,15 @@ def get_fragment_maps(
     # print([x, y, z])
     # rotation_index = (x, y, z)
 
+    path = structure_to_path(fragment_structure)
+
     fragment_samples = joblib.Parallel(
         verbose=50,
         n_jobs=-1,
         # backend="multiprocessing",
     )(
         joblib.delayed(sample_fragment)(
-            rotation_index, fragment_structure, resolution, grid_spacing, sample_rate
+            rotation_index, path, resolution, grid_spacing, sample_rate
         )
         for rotation_index
         in rotations
@@ -2438,6 +2442,7 @@ def analyse_dataset_gpu(
         filters = torch.tensor(filters_np, dtype=torch.half).cuda()
 
         output = torch.nn.functional.conv3d(data, filters)
+
         max_correlation = torch.max(output).cpu()
         max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
         max_bdc = bdcs[max_index[0]]

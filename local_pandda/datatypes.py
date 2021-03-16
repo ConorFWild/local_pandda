@@ -63,6 +63,12 @@ class StructureFactors:
     phi: str
 
 
+# class StructureWrapper:
+#     structure: gemmi.Structure
+#
+#     def __getstate__(self):
+#
+
 class Dataset:
 
     def __init__(self,
