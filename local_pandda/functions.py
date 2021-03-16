@@ -2446,11 +2446,12 @@ def analyse_dataset_gpu(
 
         output = torch.nn.functional.conv3d(data, filters)
         output_cpu = output.cpu()
+        output_np = output_cpu.numpy()
 
-        max_correlation = torch.max(output_cpu)
-        max_index = np.unravel_index(torch.argmax(output_cpu), output_cpu.shape)
-        # max_correlation = np.max(output_np)
-        # max_index = np.unravel_index(np.argmax(output_np), output_np.shape)
+        # max_correlation = torch.max(output_cpu)
+        # max_index = np.unravel_index(torch.argmax(output_cpu), output_cpu.shape)
+        max_correlation = np.max(output_np)
+        max_index = np.unravel_index(np.argmax(output_np), output_np.shape)
         max_bdc = bdcs[max_index[0]]
         max_rotation = list(fragment_maps.keys())[max_index[1]]
         max_index_fragment_map = fragment_maps[max_rotation]
