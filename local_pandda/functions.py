@@ -319,7 +319,7 @@ def get_fragment_maps(
     # print([x, y, z])
     # rotation_index = (x, y, z)
 
-    path = structure_to_path(fragment_structure)
+    # path = structure_to_path(fragment_structure)
 
     fragment_samples = joblib.Parallel(
         verbose=50,
@@ -327,7 +327,7 @@ def get_fragment_maps(
         # backend="multiprocessing",
     )(
         joblib.delayed(sample_fragment)(
-            rotation_index, path, resolution, grid_spacing, sample_rate
+            rotation_index, structure_to_path(fragment_structure), resolution, grid_spacing, sample_rate
         )
         for rotation_index
         in rotations
