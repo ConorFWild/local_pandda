@@ -576,6 +576,7 @@ def get_datasets(
 
     datasets_list: List[Optional[Dataset]] = joblib.Parallel(
         verbose=50,
+        n_jobs=-1,
         # backend="multiprocessing",
     )(
         joblib.delayed(
@@ -944,6 +945,7 @@ def get_alignments(
 ) -> MutableMapping[str, Alignment]:
     alignment_list: List[Alignment] = joblib.Parallel(
         verbose=50,
+        n_jobs=-1,
         # backend="multiprocessing",
     )(
         joblib.delayed(get_alignment)(
@@ -1582,6 +1584,7 @@ def smooth_datasets(
 
     datasets_list: List[Optional[Dataset]] = joblib.Parallel(
         verbose=50,
+        n_jobs=-1,
         # backend="multiprocessing",
     )(
         joblib.delayed(smooth)(
@@ -2339,6 +2342,10 @@ def analyse_dataset_gpu(
             params.grid_spacing,
         )
 
+        max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
+        max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
+        max_z = max([fragment_map.shape[2] for fragment_map in fragment_maps.values()])
+
         fragment_masks = {}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
@@ -2349,6 +2356,9 @@ def analyse_dataset_gpu(
             arr[less_mask] = 0.0
             fragment_masks[rotation] = arr
             print(f"Num voxels = {np.sum(arr)}")
+            fragment_mask = np.zeros((max_x, max_y, max_z,))
+            fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
+            fragment_masks[rotation] = fragment_mask
 
         if params.debug:
             print(f"\t\tGot {len(fragment_maps)} fragment maps")
