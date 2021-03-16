@@ -291,7 +291,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
 
 
 def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate):
-    
+
     fragment_structure = path_to_structure(path)
     rotation = spsp.transform.Rotation.from_euler("xyz",
                                                   [rotation_index[0],
@@ -2462,6 +2462,10 @@ def analyse_dataset_gpu(
                                        max_index_fragment_relative_coord[1] + marker.y,
                                        max_index_fragment_relative_coord[2] + marker.z,
                                        ]
+
+        del data
+        del filters
+        del output
 
         # get affinity maxima
         maxima: AffinityMaxima = AffinityMaxima(
