@@ -2466,7 +2466,9 @@ def analyse_dataset_gpu(
         print(f"event_maps_np: {event_maps_np.shape}")
 
         fragment_maps_np = np.stack(fragment_mask_list, axis=0)
-        fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0], 1, fragment_maps_np.shape[1],
+        fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
+                                                    1,
+                                                    fragment_maps_np.shape[1],
                                                     fragment_maps_np.shape[2],
                                                     fragment_maps_np.shape[3])
         print(f"fragment_maps_np: {fragment_maps_np.shape}")
@@ -2541,22 +2543,25 @@ def analyse_dataset_gpu(
         conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(torch.square(rho_o), masks) * rho_o_mu
         print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape}")
 
-        rho_o_mu_squared = size * rho_o_mu
+        rho_o_mu_squared = size * torch.square(rho_o_mu)
         print(f"rho_o_mu_squared: {rho_o_mu_squared.shape}")
 
         denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
         print(f"denominator_rho_o: {denominator_rho_o.shape}")
 
-        rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
+        rho_c_squared = np.sum(np.square(reference_map_masked_values))
+        # rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
         print(f"rho_c_squared: {rho_c_squared.shape}")
 
-        conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
+        conv_rho_c_rho_c_mu = reference_map_masked_values * np.mean(np.mean(reference_map_masked_values))
+        # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
         print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}")
 
-        rho_c_mu_squared = size * torch.square()
+        rho_c_mu_squared = np.sum(np.square(np.mean(reference_map_masked_values)))
+        # rho_c_mu_squared = size * torch.square(rho_c_mu)
         print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}")
 
-        denominator_rho_c = rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared  # Scalar
+        denominator_rho_c = torch.Tensor(rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared, dtype=torch.float)  # Scalar
         print(f"denominator_rho_c: {denominator_rho_c.shape}")
 
         denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
