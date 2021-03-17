@@ -2552,13 +2552,13 @@ def analyse_dataset_gpu(
 
             # Denominator
             # # # o
-            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding) / size
+            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
             print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
 
             conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
             print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
 
-            rho_o_mu_squared = torch.square(rho_o_mu)
+            rho_o_mu_squared = torch.square(rho_o_mu) * size
             print(f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
 
             denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
@@ -2573,7 +2573,7 @@ def analyse_dataset_gpu(
             # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
             print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}; {np.max(conv_rho_c_rho_c_mu)} {np.min(conv_rho_c_rho_c_mu)}")
 
-            rho_c_mu_squared = np.sum(np.square(np.mean(reference_map_masked_values)))
+            rho_c_mu_squared = size*np.square(np.mean(reference_map_masked_values))
             # rho_c_mu_squared = size * torch.square(rho_c_mu)
             print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {np.max(rho_c_mu_squared)} {np.min(rho_c_mu_squared)}")
 
