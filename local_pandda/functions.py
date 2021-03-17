@@ -2399,6 +2399,9 @@ def analyse_dataset_gpu(
         max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
         max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
         max_z = max([fragment_map.shape[2] for fragment_map in fragment_maps.values()])
+        if max_x % 2 == 0: max_x = max_x + 1
+        if max_y % 2 == 0: max_y = max_y + 1
+        if max_z % 2 == 0: max_z = max_z + 1
 
         fragment_masks = {}
         fragment_masks_list = []
