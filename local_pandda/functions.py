@@ -2492,6 +2492,7 @@ def analyse_dataset_gpu(
             position=max_index_fragment_position,
             bdc=max_bdc,
         )
+    print(maxima)
 
     # End loop over fragment builds
 
