@@ -2405,6 +2405,7 @@ def analyse_dataset_gpu(
 
         fragment_masks = {}
         fragment_masks_list = []
+        fragment_maps_list = []
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
             # quant = np.quantile(fragment_map, 0.95)
@@ -2416,17 +2417,30 @@ def analyse_dataset_gpu(
             print(f"Num voxels = {np.sum(arr)}")
 
             arr_mask = fragment_map > 0.1 * np.max(fragment_map)
-            arr[~arr_mask] = 0
+
+            arr[~arr_mask] = 0.0
+            fragment_mask_arr = np.zeros(fragment_map.shape)
+            fragment_mask_arr[arr_mask] = 1.0
+
+            # arr[arr_mask] = 1.0
+
             # mask_std = np.std(arr[arr_mask])
             # mask_mean = np.mean(arr[arr_mask])
             # arr = arr / mask_std
             # arr[arr_mask] = arr[arr_mask] - mask_mean
             # arr = arr / np.sum(np.square(arr[arr_mask]))
 
+            fragment_map = np.zeros((max_x, max_y, max_z,))
             fragment_mask = np.zeros((max_x, max_y, max_z,))
-            fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
-            fragment_masks[rotation] = fragment_mask
+
+            fragment_map[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
+            fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = fragment_mask_arr[:, :, :]
+
+            fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
+
+            fragment_masks[rotation] = fragment_mask
+
 
         if params.debug:
             print(f"\t\tGot {len(fragment_maps)} fragment maps")
@@ -2469,7 +2483,7 @@ def analyse_dataset_gpu(
                                                   event_maps_np.shape[3])
             print(f"event_maps_np: {event_maps_np.shape}")
 
-            fragment_maps_np = np.stack(fragment_mask_list, axis=0)
+            fragment_maps_np = np.stack(fragment_maps_list, axis=0)
             fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
                                                         1,
                                                         fragment_maps_np.shape[1],
@@ -2517,7 +2531,6 @@ def analyse_dataset_gpu(
 
             reference_map_sum = np.sum(reference_map_masked_values)
             print(f"reference_map_sum: {reference_map_sum}")
-
 
             # Tensors
             rho_o = torch.tensor(event_maps_np, dtype=torch.float).cuda()
