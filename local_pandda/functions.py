@@ -2459,7 +2459,7 @@ def analyse_dataset_gpu(
         # filters_np = np.stack(fragment_mask_list, axis=0)
         # filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
         #                                 filters_np.shape[3])
-
+        rsccs = {}
         for b_index in range(len(event_map_list)):
             event_maps_np = np.stack([event_map_list[b_index]], axis=0)
             event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
@@ -2500,9 +2500,9 @@ def analyse_dataset_gpu(
             reference_mask = fragment_masks_np[0, 0, :, :, :]
             print(f"reference_mask: {reference_mask.shape}")
 
-            padding = (abs(reference_fragment.shape[0] - sample_mean.shape[0]),
-                       abs(reference_fragment.shape[1] - sample_mean.shape[1]),
-                       abs(reference_fragment.shape[2] - sample_mean.shape[2]),
+            padding = (int(reference_fragment.shape[0]/2),
+                       int(reference_fragment.shape[0]/2),
+                       int(reference_fragment.shape[0]/2),
                        )
             print(f"Padding: {padding}")
 
@@ -2580,7 +2580,9 @@ def analyse_dataset_gpu(
             max_correlation = torch.max(rscc).cpu()
             print(f"max_correlation: {max_correlation}")
 
-        max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
+            max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
+
+            rsccs[bdcs[b_index]] = (max_correlation, max_index)
 
         # max_correlation = torch.max(output).cpu()
         # max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
