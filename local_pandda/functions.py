@@ -2575,7 +2575,7 @@ def analyse_dataset_gpu(
 
             rho_c_mu_squared = size*np.square(np.mean(reference_map_masked_values))
             # rho_c_mu_squared = size * torch.square(rho_c_mu)
-            print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {np.max(rho_c_mu_squared)} {np.min(rho_c_mu_squared)}")
+            print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {torch.max(rho_c_mu_squared)} {torch.min(rho_c_mu_squared)}")
 
             denominator_rho_c = torch.tensor(rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared, dtype=torch.float).cuda()  # Scalar
             print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
