@@ -2557,22 +2557,22 @@ def analyse_dataset_gpu(
             print(f"rho_o_mu_squared: {rho_o_mu_squared.shape}")
 
             denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
-            print(f"denominator_rho_o: {denominator_rho_o.shape}")
+            print(f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
 
             rho_c_squared = np.sum(np.square(reference_map_masked_values))
             # rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
-            print(f"rho_c_squared: {rho_c_squared.shape}")
+            print(f"rho_c_squared: {rho_c_squared.shape}; {rho_c_squared}")
 
             conv_rho_c_rho_c_mu = np.sum(reference_map_masked_values * np.mean(np.mean(reference_map_masked_values)))
             # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
-            print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}")
+            print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}; {conv_rho_c_rho_c_mu}")
 
             rho_c_mu_squared = np.sum(np.square(np.mean(reference_map_masked_values)))
             # rho_c_mu_squared = size * torch.square(rho_c_mu)
-            print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}")
+            print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {rho_c_mu_squared}")
 
             denominator_rho_c = torch.tensor(rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared, dtype=torch.float).cuda()  # Scalar
-            print(f"denominator_rho_c: {denominator_rho_c.shape}")
+            print(f"denominator_rho_c: {denominator_rho_c.shape}; {denominator_rho_c}")
 
             denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
             print(f"denominator: {denominator.shape}")
