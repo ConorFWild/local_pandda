@@ -2460,16 +2460,16 @@ def analyse_dataset_gpu(
 
             event_map_list.append(event_map)
 
-        fragment_mask_list = []
-        for rotation_index, fragment_mask in fragment_masks.items():
-
-            # fragment_mask = fragment_masks[rotation_index] / np.std(fragment_masks[rotation_index][fragment_masks[rotation_index] > 0.1*np.max(fragment_masks[rotation_index])])
-
-            # fragment_mask = fragment_map
-            fragment_mask_list.append(fragment_mask)
-
-            if params.debug:
-                print(f"\t\t\tProcessing rotation: {rotation_index}")
+        # fragment_mask_list = []
+        # for rotation_index, fragment_mask in fragment_masks.items():
+        #
+        #     # fragment_mask = fragment_masks[rotation_index] / np.std(fragment_masks[rotation_index][fragment_masks[rotation_index] > 0.1*np.max(fragment_masks[rotation_index])])
+        #
+        #     # fragment_mask = fragment_map
+        #     fragment_mask_list.append(fragment_mask)
+        #
+        #     if params.debug:
+        #         print(f"\t\t\tProcessing rotation: {rotation_index}")
 
         # data_np = np.stack(event_mask_list, axis=0)
         # data_np = data_np.reshape(data_np.shape[0], 1, data_np.shape[1], data_np.shape[2], data_np.shape[3])
