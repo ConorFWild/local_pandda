@@ -2553,7 +2553,7 @@ def analyse_dataset_gpu(
         # rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
         print(f"rho_c_squared: {rho_c_squared.shape}")
 
-        conv_rho_c_rho_c_mu = reference_map_masked_values * np.mean(np.mean(reference_map_masked_values))
+        conv_rho_c_rho_c_mu = np.sum(reference_map_masked_values * np.mean(np.mean(reference_map_masked_values)))
         # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
         print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}")
 
