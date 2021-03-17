@@ -2401,6 +2401,7 @@ def analyse_dataset_gpu(
         max_z = max([fragment_map.shape[2] for fragment_map in fragment_maps.values()])
 
         fragment_masks = {}
+        fragment_masks_list = []
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
             # quant = np.quantile(fragment_map, 0.95)
@@ -2413,15 +2414,16 @@ def analyse_dataset_gpu(
 
             arr_mask = fragment_map > 0.1 * np.max(fragment_map)
             arr[~arr_mask] = 0
-            mask_std = np.std(arr[arr_mask])
-            mask_mean = np.mean(arr[arr_mask])
-            arr = arr / mask_std
-            arr[arr_mask] = arr[arr_mask] - mask_mean
-            arr = arr / np.sum(np.square(arr[arr_mask]))
+            # mask_std = np.std(arr[arr_mask])
+            # mask_mean = np.mean(arr[arr_mask])
+            # arr = arr / mask_std
+            # arr[arr_mask] = arr[arr_mask] - mask_mean
+            # arr = arr / np.sum(np.square(arr[arr_mask]))
 
             fragment_mask = np.zeros((max_x, max_y, max_z,))
             fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
             fragment_masks[rotation] = fragment_mask
+            fragment_masks_list.append(fragment_mask)
 
         if params.debug:
             print(f"\t\tGot {len(fragment_maps)} fragment maps")
@@ -2429,7 +2431,7 @@ def analyse_dataset_gpu(
         correlations = {}
 
         # Get affinity maps for various orientations
-        event_mask_list = []
+        event_map_list = []
         bdcs = np.linspace(0, 0.90, 10)
         for b in bdcs:
             event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
@@ -2437,9 +2439,9 @@ def analyse_dataset_gpu(
             # event_map[event_map < cutoff] = 0
             # event_map[event_map > cutoff] = 1
             # event_map = event_map / np.std(event_map)
-            event_map[event_map<0] = 0
+            # event_map[event_map<0] = 0
 
-            event_mask_list.append(event_map)
+            event_map_list.append(event_map)
 
         fragment_mask_list = []
         for rotation_index, fragment_mask in fragment_masks.items():
@@ -2452,26 +2454,124 @@ def analyse_dataset_gpu(
             if params.debug:
                 print(f"\t\t\tProcessing rotation: {rotation_index}")
 
-        data_np = np.stack(event_mask_list, axis=0)
-        data_np = data_np.reshape(data_np.shape[0], 1, data_np.shape[1], data_np.shape[2], data_np.shape[3])
-        filters_np = np.stack(fragment_mask_list, axis=0)
-        filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
-                                        filters_np.shape[3])
+        # data_np = np.stack(event_mask_list, axis=0)
+        # data_np = data_np.reshape(data_np.shape[0], 1, data_np.shape[1], data_np.shape[2], data_np.shape[3])
+        # filters_np = np.stack(fragment_mask_list, axis=0)
+        # filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
+        #                                 filters_np.shape[3])
 
-        print(np.sum(data_np))
-        print(np.sum(filters_np))
+        event_maps_np = np.stack(event_map_list, axis=0)
+        event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
+                                              event_maps_np.shape[3])
+        print(f"event_maps_np: {event_maps_np.shape}")
 
-        data = torch.tensor(data_np, dtype=torch.float).cuda()
-        filters = torch.tensor(filters_np, dtype=torch.float).cuda()
-        print(data.shape)
-        print(filters.shape)
+        fragment_maps_np = np.stack(fragment_mask_list, axis=0)
+        fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0], 1, fragment_maps_np.shape[1],
+                                                    fragment_maps_np.shape[2],
+                                                    fragment_maps_np.shape[3])
+        print(f"fragment_maps_np: {fragment_maps_np.shape}")
 
-        output = torch.nn.functional.conv3d(data, filters)
+        fragment_masks_np = np.stack(fragment_masks_list, axis=0)
+        fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+                                                      1,
+                                                      fragment_masks_np.shape[1],
+                                                      fragment_masks_np.shape[2],
+                                                      fragment_masks_np.shape[2])
+        print(f"fragment_masks_np: {fragment_masks_np.shape}")
+
+        # print(np.sum(data_np))
+        # print(np.sum(filters_np))
+
+        # data = torch.tensor(data_np, dtype=torch.float).cuda()
+        # filters = torch.tensor(filters_np, dtype=torch.float).cuda()
+        # print(data.shape)
+        # print(filters.shape)
+
+        # output = torch.nn.functional.conv3d(data, filters)
         # output_cpu = output.cpu()
         # output_np = output_cpu.numpy()
 
-        max_correlation = torch.max(output).cpu()
-        max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
+        reference_fragment = fragment_maps_np[0, 0, :, :, :]
+        print(f"reference_fragment: {reference_fragment.shape}")
+
+        reference_mask = fragment_masks_np[0, 0, :, :, :]
+        print(f"reference_mask: {reference_mask.shape}")
+
+        reference_map_masked_values = reference_fragment[reference_mask > 0]
+        print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
+
+        rho_o = torch.tensor(event_maps_np, dtype=torch.float).cuda()
+        print(f"rho_o: {rho_o.shape}")
+
+        rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
+        print(f"rho_c: {rho_c.shape}")
+
+        masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
+        print(f"masks: {masks.shape}")
+
+        rho_o_mu = torch.nn.functional.conv3d(rho_o, masks)
+        print(f"rho_o_mu: {rho_o_mu.shape}")
+
+        rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
+        print(f"rho_c_mu: {rho_c_mu.shape}")
+
+        size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+        print(f"size: {size}")
+
+        # Nominator
+        conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c)
+        print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape}")
+
+        conv_rho_o_mask = torch.nn.functional.conv3d(rho_o, rho_c)
+        print(f"conv_rho_o_mask: {conv_rho_o_mask.shape}")
+
+        conv_rho_o_mu_rho_c = torch.nn.functional.conv3d(rho_o, rho_c)
+        print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape}")
+
+        conv_rho_o_mu_rho_c_mu = torch.nn.functional.conv3d(rho_o, rho_c)
+        print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape}")
+
+        nominator = conv_rho_o_rho_c + conv_rho_o_mu_rho_c_mu - conv_rho_o_mask + conv_rho_o_mu_rho_c
+        print(f"nominator: {nominator.shape}")
+
+        # Denominator
+        rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks)
+        print(f"rho_o_squared: {rho_o_squared.shape}")
+
+        conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(torch.square(rho_o), masks) * rho_o_mu
+        print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape}")
+
+        rho_o_mu_squared = size * rho_o_mu
+        print(f"rho_o_mu_squared: {rho_o_mu_squared.shape}")
+
+        denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
+        print(f"denominator_rho_o: {denominator_rho_o.shape}")
+
+        rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
+        print(f"rho_c_squared: {rho_c_squared.shape}")
+
+        conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
+        print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}")
+
+        rho_c_mu_squared = size * torch.square()
+        print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}")
+
+        denominator_rho_c = rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared  # Scalar
+        print(f"denominator_rho_c: {denominator_rho_c.shape}")
+
+        denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
+        print(f"denominator: {denominator.shape}")
+
+        rscc = nominator / denominator
+        print(f"RSCC: {rscc.shape}")
+
+        max_correlation = torch.max(rscc).cpu()
+        print(f"max_correlation: {max_correlation}")
+
+        max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
+
+        # max_correlation = torch.max(output).cpu()
+        # max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
         # max_correlation_series = output[:,max_index[1],max_index[2],max_index[3], max_index[4]].cpu()
         # max_correlation = torch.max(output_cpu)
         # max_index = np.unravel_index(torch.argmax(output_cpu), output_cpu.shape)
