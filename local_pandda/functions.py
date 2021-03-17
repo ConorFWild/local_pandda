@@ -30,6 +30,7 @@ except Exception as e:
 # Custom
 from local_pandda.constants import Constants
 from local_pandda.database import *
+from local_pandda.ncc import NCC
 
 import os
 
@@ -2423,16 +2424,27 @@ def analyse_dataset_gpu(
         bdcs = np.linspace(0, 0.90, 10)
         for b in bdcs:
             event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
-            cutoff = 1.0
-            event_map[event_map < cutoff] = 0
-            event_map[event_map > cutoff] = 1
+            # cutoff = 1.0
+            # event_map[event_map < cutoff] = 0
+            # event_map[event_map > cutoff] = 1
+            # event_map = event_map / np.std(event_map)
+            event_map[event_map<0] = 0
 
             event_mask_list.append(event_map)
 
         fragment_mask_list = []
         for rotation_index, fragment_map in fragment_maps.items():
 
-            fragment_mask = fragment_masks[rotation_index] / np.sum(fragment_masks[rotation_index])
+            # fragment_mask = fragment_masks[rotation_index] / np.std(fragment_masks[rotation_index][fragment_masks[rotation_index] > 0.1*np.max(fragment_masks[rotation_index])])
+            mask = fragment_map > 0.1*np.max(fragment_map)
+            fragment_mask = fragment_map
+            fragment_mask[~mask] = 0
+            mask_std = np.std(fragment_map[mask])
+            mask_mean = np.mean(fragment_map[mask])
+            fragment_mask = fragment_mask / mask_std
+            fragment_mask[mask] = fragment_mask[mask] - mask_mean
+            fragment_mask = fragment_mask / np.sum(np.square(fragment_mask))
+            # fragment_mask = fragment_map
             fragment_mask_list.append(fragment_mask)
 
             if params.debug:
@@ -2458,6 +2470,7 @@ def analyse_dataset_gpu(
 
         max_correlation = torch.max(output).cpu()
         max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
+        # max_correlation_series = output[:,max_index[1],max_index[2],max_index[3], max_index[4]].cpu()
         # max_correlation = torch.max(output_cpu)
         # max_index = np.unravel_index(torch.argmax(output_cpu), output_cpu.shape)
         # max_correlation = np.max(output_np)
@@ -2495,24 +2508,24 @@ def analyse_dataset_gpu(
             bdc=max_bdc,
         )
 
-        event_map: gemmi.FloatGrid = get_backtransformed_map(
-            (dataset_sample - maxima.bdc*sample_mean) / (1-maxima.bdc),
-            reference_dataset,
-            dataset,
-            alignments[dataset.dtag][marker],
-            marker,
-            params.grid_size,
-            params.grid_spacing,
-            params.structure_factors,
-            params.sample_rate,
-        )
-
-        write_event_map(
-            event_map,
-            out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
-            marker,
-            dataset,
-        )
+        # event_map: gemmi.FloatGrid = get_backtransformed_map(
+        #     (dataset_sample - maxima.bdc*sample_mean) / (1-maxima.bdc),
+        #     reference_dataset,
+        #     dataset,
+        #     alignments[dataset.dtag][marker],
+        #     marker,
+        #     params.grid_size,
+        #     params.grid_spacing,
+        #     params.structure_factors,
+        #     params.sample_rate,
+        # )
+        #
+        # write_event_map(
+        #     event_map,
+        #     out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
+        #     marker,
+        #     dataset,
+        # )
     print(maxima)
 
     # End loop over fragment builds
