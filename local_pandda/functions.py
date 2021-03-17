@@ -2403,13 +2403,22 @@ def analyse_dataset_gpu(
         fragment_masks = {}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
-            quant = np.quantile(fragment_map, 0.95)
-            great_mask = arr > quant
-            less_mask = arr <= quant
-            arr[great_mask] = 1.0
-            arr[less_mask] = 0.0
-            fragment_masks[rotation] = arr
+            # quant = np.quantile(fragment_map, 0.95)
+            # great_mask = arr > quant
+            # less_mask = arr <= quant
+            # arr[great_mask] = 1.0
+            # arr[less_mask] = 0.0
+            # fragment_masks[rotation] = arr
             print(f"Num voxels = {np.sum(arr)}")
+
+            arr_mask = fragment_map > 0.1 * np.max(fragment_map)
+            arr[~arr_mask] = 0
+            mask_std = np.std(arr[arr_mask])
+            mask_mean = np.mean(arr[arr_mask])
+            arr = arr / mask_std
+            arr[arr_mask] = arr[arr_mask] - mask_mean
+            arr = arr / np.sum(np.square(arr[arr_mask]))
+
             fragment_mask = np.zeros((max_x, max_y, max_z,))
             fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
             fragment_masks[rotation] = fragment_mask
@@ -2433,17 +2442,10 @@ def analyse_dataset_gpu(
             event_mask_list.append(event_map)
 
         fragment_mask_list = []
-        for rotation_index, fragment_map in fragment_maps.items():
+        for rotation_index, fragment_mask in fragment_masks.items():
 
             # fragment_mask = fragment_masks[rotation_index] / np.std(fragment_masks[rotation_index][fragment_masks[rotation_index] > 0.1*np.max(fragment_masks[rotation_index])])
-            mask = fragment_map > 0.1*np.max(fragment_map)
-            fragment_mask = fragment_map
-            fragment_mask[~mask] = 0
-            mask_std = np.std(fragment_map[mask])
-            mask_mean = np.mean(fragment_map[mask])
-            fragment_mask = fragment_mask / mask_std
-            fragment_mask[mask] = fragment_mask[mask] - mask_mean
-            fragment_mask = fragment_mask / np.sum(np.square(fragment_mask))
+
             # fragment_mask = fragment_map
             fragment_mask_list.append(fragment_mask)
 
