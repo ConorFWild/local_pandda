@@ -2500,9 +2500,9 @@ def analyse_dataset_gpu(
             reference_mask = fragment_masks_np[0, 0, :, :, :]
             print(f"reference_mask: {reference_mask.shape}")
 
-            padding = (int((reference_fragment.shape[0]-1)/2),
-                       int((reference_fragment.shape[1]-1)/2),
-                       int((reference_fragment.shape[2]-1)/2),
+            padding = (int((reference_fragment.shape[0])/2),
+                       int((reference_fragment.shape[1])/2),
+                       int((reference_fragment.shape[2])/2),
                        )
             print(f"Padding: {padding}")
 
