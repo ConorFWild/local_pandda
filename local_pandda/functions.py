@@ -2499,6 +2499,12 @@ def analyse_dataset_gpu(
         reference_mask = fragment_masks_np[0, 0, :, :, :]
         print(f"reference_mask: {reference_mask.shape}")
 
+        padding = (sample_mean.shape[0]-reference_fragment.shape[0],
+                   sample_mean.shape[1] - reference_fragment.shape[1],
+                   sample_mean.shape[2]-reference_fragment.shape[2],
+                   )
+        print(f"Padding: {padding}")
+
         reference_map_masked_values = reference_fragment[reference_mask > 0]
         print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
 
@@ -2511,7 +2517,7 @@ def analyse_dataset_gpu(
         masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
         print(f"masks: {masks.shape}")
 
-        rho_o_mu = torch.nn.functional.conv3d(rho_o, masks)
+        rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)
         print(f"rho_o_mu: {rho_o_mu.shape}")
 
         rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
@@ -2521,11 +2527,11 @@ def analyse_dataset_gpu(
         print(f"size: {size}")
 
         # Nominator
-        conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c)
+        conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
         print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape}")
 
         conv_rho_o_rho_c_mu = rho_o*size*rho_c_mu
-        print(f"conv_rho_o_mask: {conv_rho_o_rho_c_mu.shape}")
+        print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape}")
 
         conv_rho_o_mu_rho_c = rho_o_mu*torch.sum(rho_c)
         print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape}")
