@@ -2586,7 +2586,7 @@ def analyse_dataset_gpu(
             rscc = nominator / denominator
             print(f"RSCC: {rscc.shape}")
 
-            torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
+            rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
 
             max_correlation = torch.max(rscc).cpu()
             print(f"max_correlation: {max_correlation}")
