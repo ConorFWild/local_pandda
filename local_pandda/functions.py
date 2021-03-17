@@ -2433,8 +2433,8 @@ def analyse_dataset_gpu(
             fragment_map = np.zeros((max_x, max_y, max_z,))
             fragment_mask = np.zeros((max_x, max_y, max_z,))
 
-            fragment_map[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = arr[:, :, :]
-            fragment_mask[:fragment_map.shape[0], :fragment_map.shape[1], :fragment_map.shape[2]] = fragment_mask_arr[:, :, :]
+            fragment_map[:arr.shape[0], :arr.arr[1], :arr.shape[2]] = arr[:, :, :]
+            fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
 
             fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
