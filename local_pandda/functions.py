@@ -2515,6 +2515,9 @@ def analyse_dataset_gpu(
             reference_map_masked_values = reference_fragment[reference_mask > 0]
             print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
 
+            reference_map_sum = np.sum(reference_map_masked_values)
+            print(f"reference_map_sum: {reference_map_sum}")
+
 
             # Tensors
             rho_o = torch.tensor(event_maps_np, dtype=torch.float).cuda()
@@ -2541,13 +2544,13 @@ def analyse_dataset_gpu(
             conv_rho_o_rho_c_mu = rho_o*size*rho_c_mu
             print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
 
-            conv_rho_o_mu_rho_c = rho_o_mu*torch.sum(rho_c)
+            conv_rho_o_mu_rho_c = rho_o_mu*reference_map_sum
             print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
 
             conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
             print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
 
-            nominator = conv_rho_o_rho_c + conv_rho_o_mu_rho_c_mu - conv_rho_o_rho_c_mu + conv_rho_o_mu_rho_c
+            nominator = conv_rho_o_rho_c - conv_rho_o_mu_rho_c_mu - conv_rho_o_rho_c_mu + conv_rho_o_mu_rho_c
             print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)}")
 
             # Denominator
