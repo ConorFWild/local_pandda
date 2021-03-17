@@ -2547,10 +2547,10 @@ def analyse_dataset_gpu(
             print(f"nominator: {nominator.shape}")
 
             # Denominator
-            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks)
+            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
             print(f"rho_o_squared: {rho_o_squared.shape}")
 
-            conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(torch.square(rho_o), masks) * rho_o_mu
+            conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding) * rho_o_mu
             print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape}")
 
             rho_o_mu_squared = size * torch.square(rho_o_mu)
