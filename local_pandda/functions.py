@@ -2581,7 +2581,7 @@ def analyse_dataset_gpu(
             print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
 
             denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
-            print(f"denominator: {denominator.shape}")
+            print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)}")
 
             rscc = nominator / denominator
             print(f"RSCC: {rscc.shape}")
