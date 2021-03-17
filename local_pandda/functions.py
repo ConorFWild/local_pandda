@@ -32,8 +32,11 @@ from local_pandda.constants import Constants
 from local_pandda.database import *
 
 import os
-os.environ['CUDA_LAUNCH_BLOCKING']='1'
+
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 torch.backends.cudnn.benchmark = False
+
+
 # torch.cuda.set_device(0)
 
 #
@@ -295,7 +298,6 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
 
 
 def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate):
-
     fragment_structure = path_to_structure(path)
     rotation = spsp.transform.Rotation.from_euler("xyz",
                                                   [rotation_index[0],
@@ -2491,6 +2493,25 @@ def analyse_dataset_gpu(
             rotation_index=max_rotation,
             position=max_index_fragment_position,
             bdc=max_bdc,
+        )
+
+        event_map: gemmi.FloatGrid = get_backtransformed_map(
+            (dataset_sample - maxima.bdc*sample_mean) / (1-maxima.bdc),
+            reference_dataset,
+            dataset,
+            alignments[dataset.dtag][marker],
+            marker,
+            params.grid_size,
+            params.grid_spacing,
+            params.structure_factors,
+            params.sample_rate,
+        )
+
+        write_event_map(
+            event_map,
+            out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
+            marker,
+            dataset,
         )
     print(maxima)
 
