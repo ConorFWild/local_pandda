@@ -2561,7 +2561,7 @@ def analyse_dataset_gpu(
         # rho_c_mu_squared = size * torch.square(rho_c_mu)
         print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}")
 
-        denominator_rho_c = torch.Tensor(rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared, dtype=torch.float)  # Scalar
+        denominator_rho_c = torch.tensor(rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared, dtype=torch.float).cuda()  # Scalar
         print(f"denominator_rho_c: {denominator_rho_c.shape}")
 
         denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
