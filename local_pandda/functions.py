@@ -2554,7 +2554,7 @@ def analyse_dataset_gpu(
             conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
             print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
 
-            conv_rho_o_rho_c_mu = rho_o*size*rho_c_mu
+            conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)*rho_c_mu
             print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
 
             conv_rho_o_mu_rho_c = rho_o_mu*reference_map_sum
@@ -2563,7 +2563,7 @@ def analyse_dataset_gpu(
             conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
             print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
 
-            nominator = conv_rho_o_rho_c  - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
+            nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
             print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0,0,32,32,32]}")
 
             # Denominator
