@@ -2600,10 +2600,10 @@ def analyse_dataset_gpu(
             print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
 
             denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
-            print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)}")
+            print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0,0,32,32,32]}")
 
             rscc = nominator / denominator
-            print(f"RSCC: {rscc.shape} {nominator[0,0,32,32,32]}")
+            print(f"RSCC: {rscc.shape} {rscc[0,0,32,32,32]}")
 
             rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
 
