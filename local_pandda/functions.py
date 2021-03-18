@@ -2477,142 +2477,142 @@ def analyse_dataset_gpu(
         # filters_np = filters_np.reshape(filters_np.shape[0], 1, filters_np.shape[1], filters_np.shape[2],
         #                                 filters_np.shape[3])
         rsccs = {}
-        for b_index in range(len(event_map_list)):
-            event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
-                                                  event_maps_np.shape[3])
-            print(f"event_maps_np: {event_maps_np.shape}")
+        # for b_index in range(len(event_map_list)):
+        event_maps_np = np.stack([event_map_list], axis=0)
+        event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
+                                              event_maps_np.shape[3])
+        print(f"event_maps_np: {event_maps_np.shape}")
 
-            fragment_maps_np = np.stack(fragment_maps_list, axis=0)
-            fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
-                                                        1,
-                                                        fragment_maps_np.shape[1],
-                                                        fragment_maps_np.shape[2],
-                                                        fragment_maps_np.shape[3])
-            print(f"fragment_maps_np: {fragment_maps_np.shape}")
+        fragment_maps_np = np.stack(fragment_maps_list, axis=0)
+        fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
+                                                    1,
+                                                    fragment_maps_np.shape[1],
+                                                    fragment_maps_np.shape[2],
+                                                    fragment_maps_np.shape[3])
+        print(f"fragment_maps_np: {fragment_maps_np.shape}")
 
-            fragment_masks_np = np.stack(fragment_masks_list, axis=0)
-            fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
-                                                          1,
-                                                          fragment_masks_np.shape[1],
-                                                          fragment_masks_np.shape[2],
-                                                          fragment_masks_np.shape[3])
-            print(f"fragment_masks_np: {fragment_masks_np.shape}")
+        fragment_masks_np = np.stack(fragment_masks_list, axis=0)
+        fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+                                                      1,
+                                                      fragment_masks_np.shape[1],
+                                                      fragment_masks_np.shape[2],
+                                                      fragment_masks_np.shape[3])
+        print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
-            # print(np.sum(data_np))
-            # print(np.sum(filters_np))
+        # print(np.sum(data_np))
+        # print(np.sum(filters_np))
 
-            # data = torch.tensor(data_np, dtype=torch.float).cuda()
-            # filters = torch.tensor(filters_np, dtype=torch.float).cuda()
-            # print(data.shape)
-            # print(filters.shape)
+        # data = torch.tensor(data_np, dtype=torch.float).cuda()
+        # filters = torch.tensor(filters_np, dtype=torch.float).cuda()
+        # print(data.shape)
+        # print(filters.shape)
 
-            # output = torch.nn.functional.conv3d(data, filters)
-            # output_cpu = output.cpu()
-            # output_np = output_cpu.numpy()
+        # output = torch.nn.functional.conv3d(data, filters)
+        # output_cpu = output.cpu()
+        # output_np = output_cpu.numpy()
 
-            reference_fragment = fragment_maps_np[0, 0, :, :, :]
-            print(f"reference_fragment: {reference_fragment.shape}")
+        reference_fragment = fragment_maps_np[0, 0, :, :, :]
+        print(f"reference_fragment: {reference_fragment.shape}")
 
-            reference_mask = fragment_masks_np[0, 0, :, :, :]
-            print(f"reference_mask: {reference_mask.shape}")
+        reference_mask = fragment_masks_np[0, 0, :, :, :]
+        print(f"reference_mask: {reference_mask.shape}")
 
-            padding = (int((reference_fragment.shape[0])/2),
-                       int((reference_fragment.shape[1])/2),
-                       int((reference_fragment.shape[2])/2),
-                       )
-            print(f"Padding: {padding}")
+        padding = (int((reference_fragment.shape[0])/2),
+                   int((reference_fragment.shape[1])/2),
+                   int((reference_fragment.shape[2])/2),
+                   )
+        print(f"Padding: {padding}")
 
-            size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
-            print(f"size: {size}")
+        size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+        print(f"size: {size}")
 
-            reference_map_masked_values = reference_fragment[reference_mask > 0]
-            print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
+        reference_map_masked_values = reference_fragment[reference_mask > 0]
+        print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
 
-            reference_map_sum = np.sum(reference_map_masked_values)
-            print(f"reference_map_sum: {reference_map_sum}")
+        reference_map_sum = np.sum(reference_map_masked_values)
+        print(f"reference_map_sum: {reference_map_sum}")
 
-            # Tensors
-            rho_o = torch.tensor(event_maps_np, dtype=torch.float).cuda()
-            print(f"rho_o: {rho_o.shape}")
+        # Tensors
+        rho_o = torch.tensor(event_maps_np, dtype=torch.float).cuda()
+        print(f"rho_o: {rho_o.shape}")
 
-            rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
-            print(f"rho_c: {rho_c.shape}")
+        rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
+        print(f"rho_c: {rho_c.shape}")
 
-            masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
-            print(f"masks: {masks.shape}")
+        masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
+        print(f"masks: {masks.shape}")
 
-            # Means
-            rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
-            print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
+        # Means
+        rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
+        print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
 
-            rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
-            print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
+        rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
+        print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
 
 
-            # Nominator
-            conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
-            print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
+        # Nominator
+        conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
+        print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
 
-            conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)*rho_c_mu
-            print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
+        conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)*rho_c_mu
+        print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
 
-            conv_rho_o_mu_rho_c = rho_o_mu*reference_map_sum
-            print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
+        conv_rho_o_mu_rho_c = rho_o_mu*reference_map_sum
+        print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
 
-            conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
-            print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
+        conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
+        print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
 
-            nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
-            print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0,0,32,32,32]}")
+        nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
+        print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0,0,32,32,32]}")
 
-            # Denominator
-            # # # o
-            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
-            print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
+        # Denominator
+        # # # o
+        rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
+        print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
 
-            conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
-            print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
+        conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
+        print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
 
-            rho_o_mu_squared = torch.square(rho_o_mu) * size
-            print(f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
+        rho_o_mu_squared = torch.square(rho_o_mu) * size
+        print(f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
 
-            denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
-            print(f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
+        denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
+        print(f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
 
-            # # # c
-            # rho_c_squared = np.sum(np.square(reference_map_masked_values))
-            # # rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
-            # print(f"rho_c_squared: {rho_c_squared.shape}; {rho_c_squared}")
-            #
-            # conv_rho_c_rho_c_mu = np.sum(reference_map_masked_values * np.mean(reference_map_masked_values))
-            # # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
-            # print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}; {np.max(conv_rho_c_rho_c_mu)} {np.min(conv_rho_c_rho_c_mu)}")
-            #
-            # rho_c_mu_squared = size*np.square(np.mean(reference_map_masked_values))
-            # # rho_c_mu_squared = size * torch.square(rho_c_mu)
-            # print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {torch.max(rho_c_mu_squared)} {torch.min(rho_c_mu_squared)}")
-            #
-            # denominator_rho_c = rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared  # Scalar
-            #
-            denominator_rho_c = torch.tensor(np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
-                                             dtype=torch.float).cuda()
-            print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
+        # # # c
+        # rho_c_squared = np.sum(np.square(reference_map_masked_values))
+        # # rho_c_squared = torch.sum(torch.square(rho_c[0, 0, :, :, :]))
+        # print(f"rho_c_squared: {rho_c_squared.shape}; {rho_c_squared}")
+        #
+        # conv_rho_c_rho_c_mu = np.sum(reference_map_masked_values * np.mean(reference_map_masked_values))
+        # # conv_rho_c_rho_c_mu = torch.sum(rho_c) * rho_c_mu
+        # print(f"conv_rho_c_rho_c_mu: {conv_rho_c_rho_c_mu.shape}; {np.max(conv_rho_c_rho_c_mu)} {np.min(conv_rho_c_rho_c_mu)}")
+        #
+        # rho_c_mu_squared = size*np.square(np.mean(reference_map_masked_values))
+        # # rho_c_mu_squared = size * torch.square(rho_c_mu)
+        # print(f"rho_c_mu_squared: {rho_c_mu_squared.shape}; {torch.max(rho_c_mu_squared)} {torch.min(rho_c_mu_squared)}")
+        #
+        # denominator_rho_c = rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared  # Scalar
+        #
+        denominator_rho_c = torch.tensor(np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
+                                         dtype=torch.float).cuda()
+        print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
 
-            denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
-            print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0,0,32,32,32]}")
+        denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
+        print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0,0,32,32,32]}")
 
-            rscc = nominator / denominator
-            print(f"RSCC: {rscc.shape} {rscc[0,0,32,32,32]}")
+        rscc = nominator / denominator
+        print(f"RSCC: {rscc.shape} {rscc[0,0,32,32,32]}")
 
-            rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
+        rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
 
-            max_correlation = torch.max(rscc).cpu()
-            print(f"max_correlation: {max_correlation}")
+        max_correlation = torch.max(rscc).cpu()
+        print(f"max_correlation: {max_correlation}")
 
-            max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
+        max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
 
-            rsccs[bdcs[b_index]] = (max_correlation, max_index)
+        # rsccs[bdcs[b_index]] = (max_correlation, max_index)
 
         # max_correlation = torch.max(output).cpu()
         # max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
