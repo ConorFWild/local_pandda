@@ -2651,11 +2651,11 @@ def analyse_dataset_gpu(
                                              ]
 
         max_index_fragment_relative_position = gemmi.Position(
-            [
+
                 max_index_fragment_relative_coord[0] * params.grid_spacing,
                 max_index_fragment_relative_coord[1] * params.grid_spacing,
                 max_index_fragment_relative_coord[2] * params.grid_spacing,
-            ])
+            )
         transform = alignments[dataset.dtag][marker].transform
         inverse_transform = transform.inverse()
         rotation_tr = gemmi.Transform()
