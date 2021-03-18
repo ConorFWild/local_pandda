@@ -2824,7 +2824,7 @@ def analyse_residue_gpu(
         #     return residue_results
 
         if dtag != "HAO1A-x0604":
-            return residue_results
+            continue
 
         dataset = residue_datasets[dtag]
 
