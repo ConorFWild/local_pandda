@@ -2317,7 +2317,20 @@ def analyse_dataset_gpu(
 
     # No need to analyse if no fragment present
     if not dataset_fragment_structures:
-        return None
+        return DatasetAffinityResults(
+            dtag=dataset.dtag,
+            marker=marker,
+            structure_path=dataset.structure_path,
+            reflections_path=dataset.reflections_path,
+            fragment_path=dataset.fragment_path,
+            maxima=AffinityMaxima(
+                (0, 0, 0),
+                0.0,
+                (0.0, 0.0, 0.0),
+                (0.0, 0.0, 0.0),
+                0.0,
+            )
+        )
 
     # Select the comparator datasets
     comparator_datasets: Optional[MutableMapping[str, Dataset]] = get_comparator_datasets(
@@ -2339,7 +2352,20 @@ def analyse_dataset_gpu(
             dataset,
             marker,
         )
-        return dataset_results
+        return DatasetAffinityResults(
+            dtag=dataset.dtag,
+            marker=marker,
+            structure_path=dataset.structure_path,
+            reflections_path=dataset.reflections_path,
+            fragment_path=dataset.fragment_path,
+            maxima=AffinityMaxima(
+                (0, 0, 0),
+                0.0,
+                (0.0, 0.0, 0.0),
+                (0.0, 0.0, 0.0),
+                0.0,
+            )
+        )
         # continue
 
     # Get the truncated comparator datasets
@@ -2652,10 +2678,10 @@ def analyse_dataset_gpu(
 
         max_index_fragment_relative_position = gemmi.Position(
 
-                max_index_fragment_relative_coord[0] * params.grid_spacing,
-                max_index_fragment_relative_coord[1] * params.grid_spacing,
-                max_index_fragment_relative_coord[2] * params.grid_spacing,
-            )
+            max_index_fragment_relative_coord[0] * params.grid_spacing,
+            max_index_fragment_relative_coord[1] * params.grid_spacing,
+            max_index_fragment_relative_coord[2] * params.grid_spacing,
+        )
 
         transform = alignments[dataset.dtag][marker].transform
         inverse_transform = transform.inverse()
