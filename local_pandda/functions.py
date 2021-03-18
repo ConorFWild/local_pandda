@@ -2428,13 +2428,14 @@ def analyse_dataset_gpu(
         if max_y % 2 == 0: max_y = max_y + 1
         if max_z % 2 == 0: max_z = max_z + 1
 
+
         fragment_masks = {}
         fragment_masks_list = []
         fragment_maps_list = []
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
-            arr_mask = fragment_map > 0.1 * np.max(fragment_map)
+            arr_mask = fragment_map > 0.5 * np.max(fragment_map)
 
             arr[~arr_mask] = 0.0
             fragment_mask_arr = np.zeros(fragment_map.shape)
