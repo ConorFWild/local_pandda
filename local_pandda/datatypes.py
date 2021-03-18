@@ -161,6 +161,7 @@ class AffinityMaxima:
     rotation_index: Tuple[float, float, float]
     position: Tuple[float, float, float]
     bdc: float
+    mean_map_correlation: float
     # centroid: Tuple[float, float, float]
 
 
