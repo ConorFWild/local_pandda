@@ -2750,6 +2750,9 @@ def analyse_residue_gpu(
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
 
+        if dtag != "HAO1A-x0604":
+            continue
+
         dataset = residue_datasets[dtag]
 
         dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
