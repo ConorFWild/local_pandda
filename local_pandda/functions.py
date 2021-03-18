@@ -2414,7 +2414,7 @@ def analyse_dataset_gpu(
             # arr[great_mask] = 1.0
             # arr[less_mask] = 0.0
             # fragment_masks[rotation] = arr
-            print(f"Num voxels = {np.sum(arr)}")
+            # print(f"Num voxels = {np.sum(arr)}")
 
             arr_mask = fragment_map > 0.1 * np.max(fragment_map)
 
