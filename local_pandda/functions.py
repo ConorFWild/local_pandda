@@ -2496,7 +2496,7 @@ def analyse_dataset_gpu(
                                                           1,
                                                           fragment_masks_np.shape[1],
                                                           fragment_masks_np.shape[2],
-                                                          fragment_masks_np.shape[2])
+                                                          fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
             # print(np.sum(data_np))
@@ -2563,7 +2563,7 @@ def analyse_dataset_gpu(
             conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
             print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
 
-            nominator = conv_rho_o_rho_c - conv_rho_o_mu_rho_c_mu - conv_rho_o_rho_c_mu + conv_rho_o_mu_rho_c
+            nominator = conv_rho_o_rho_c  - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
             print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)}")
 
             # Denominator
