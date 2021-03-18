@@ -2622,7 +2622,7 @@ def analyse_dataset_gpu(
         # max_index = np.unravel_index(torch.argmax(output_cpu), output_cpu.shape)
         # max_correlation = np.max(output_np)
         # max_index = np.unravel_index(np.argmax(output_np), output_np.shape)
-        max_rscc_bdc = max(rsccs, key=lambda x: x[0])
+        max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
         max_rscc_correlation_index = rsccs[max_rscc_bdc]
         max_correlation = max_rscc_correlation_index[0]
         max_index = max_rscc_correlation_index[1]
