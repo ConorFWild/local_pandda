@@ -162,6 +162,7 @@ class AffinityMaxima:
     position: Tuple[float, float, float]
     bdc: float
     mean_map_correlation: float
+    mean_map_max_correlation: float
     # centroid: Tuple[float, float, float]
 
 

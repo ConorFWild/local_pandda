@@ -128,6 +128,8 @@ class MaximaRecord(base):
     position_x = Column(Float)
     position_y = Column(Float)
     position_z = Column(Float)
+    mean_map_correlation = Column(Float)
+    mean_map_max_correlation = Column(Float)
 
     # Foriegn keys
     dataset_id = Column(Integer, ForeignKey(DatasetRecord.id))

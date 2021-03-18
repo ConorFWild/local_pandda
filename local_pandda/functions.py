@@ -2329,6 +2329,7 @@ def analyse_dataset_gpu(
                 (0.0, 0.0, 0.0),
                 (0.0, 0.0, 0.0),
                 0.0,
+                0.0,
                 0.0
             )
         )
@@ -2360,6 +2361,7 @@ def analyse_dataset_gpu(
                 0.0,
                 (0.0, 0.0, 0.0),
                 (0.0, 0.0, 0.0),
+                0.0,
                 0.0,
                 0.0
             )
@@ -2579,6 +2581,8 @@ def analyse_dataset_gpu(
 
         mean_map_rscc = torch.nan_to_num(mean_map_rscc, nan=0.0, posinf=0.0, neginf=0.0, )
 
+        mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
+
         rsccs = {}
         for b_index in range(len(event_map_list)):
             event_maps_np = np.stack([event_map_list[b_index]], axis=0)
@@ -2715,7 +2719,8 @@ def analyse_dataset_gpu(
             rotation_index=max_rotation,
             position=max_index_fragment_position_dataset_frame,
             bdc=max_bdc,
-            mean_map_correlation=max_mean_map_correlation
+            mean_map_correlation=max_mean_map_correlation,
+            mean_map_max_correlation=mean_map_max_correlation,
         )
 
         if max_correlation > params.min_correlation:
@@ -2901,6 +2906,8 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAAffinit
                 position_z=maxima_position[2],
                 dataset=database.session.query(DatasetRecord).filter(DatasetRecord.dtag == dtag).first(),
                 marker=marker_record,
+                mean_map_correlation=maxima.mean_map_correlation,
+                mean_map_max_correlation=maxima.mean_map_max_correlation,
             )
             database.session.add(maxima_record)
 
