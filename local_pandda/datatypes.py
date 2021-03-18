@@ -309,7 +309,7 @@ class Params:
 
     # Fragment searching
     num_fragment_pose_samples: int = 10
-    min_correlation: float = 0.1
+    min_correlation: float = 0.625
     pruning_threshold: float = 5
 
     # output

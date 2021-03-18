@@ -2441,7 +2441,6 @@ def analyse_dataset_gpu(
 
             fragment_masks[rotation] = fragment_mask
 
-
         if params.debug:
             print(f"\t\tGot {len(fragment_maps)} fragment maps")
 
@@ -2479,7 +2478,8 @@ def analyse_dataset_gpu(
         rsccs = {}
         for b_index in range(len(event_map_list)):
             event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
+            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1],
+                                                  event_maps_np.shape[2],
                                                   event_maps_np.shape[3])
             print(f"event_maps_np: {event_maps_np.shape}")
 
@@ -2517,9 +2517,9 @@ def analyse_dataset_gpu(
             reference_mask = fragment_masks_np[0, 0, :, :, :]
             print(f"reference_mask: {reference_mask.shape}")
 
-            padding = (int((reference_fragment.shape[0])/2),
-                       int((reference_fragment.shape[1])/2),
-                       int((reference_fragment.shape[2])/2),
+            padding = (int((reference_fragment.shape[0]) / 2),
+                       int((reference_fragment.shape[1]) / 2),
+                       int((reference_fragment.shape[2]) / 2),
                        )
             print(f"Padding: {padding}")
 
@@ -2549,22 +2549,26 @@ def analyse_dataset_gpu(
             rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
             print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
 
-
             # Nominator
             conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
-            print(f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
+            print(
+                f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
 
-            conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)*rho_c_mu
-            print(f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
+            conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_c_mu
+            print(
+                f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
 
-            conv_rho_o_mu_rho_c = rho_o_mu*reference_map_sum
-            print(f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
+            conv_rho_o_mu_rho_c = rho_o_mu * reference_map_sum
+            print(
+                f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
 
             conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
-            print(f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
+            print(
+                f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
 
             nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
-            print(f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0,0,32,32,32]}")
+            print(
+                f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0, 0, 32, 32, 32]}")
 
             # Denominator
             # # # o
@@ -2572,13 +2576,16 @@ def analyse_dataset_gpu(
             print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
 
             conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
-            print(f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
+            print(
+                f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
 
             rho_o_mu_squared = torch.square(rho_o_mu) * size
-            print(f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
+            print(
+                f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
 
             denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
-            print(f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
+            print(
+                f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
 
             # # # c
             # rho_c_squared = np.sum(np.square(reference_map_masked_values))
@@ -2595,17 +2602,20 @@ def analyse_dataset_gpu(
             #
             # denominator_rho_c = rho_c_squared - 2 * conv_rho_c_rho_c_mu + rho_c_mu_squared  # Scalar
             #
-            denominator_rho_c = torch.tensor(np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
-                                             dtype=torch.float).cuda()
-            print(f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
+            denominator_rho_c = torch.tensor(
+                np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
+                dtype=torch.float).cuda()
+            print(
+                f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
 
             denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
-            print(f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0,0,32,32,32]}")
+            print(
+                f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0, 0, 32, 32, 32]}")
 
             rscc = nominator / denominator
-            print(f"RSCC: {rscc.shape} {rscc[0,0,32,32,32]}")
+            print(f"RSCC: {rscc.shape} {rscc[0, 0, 32, 32, 32]}")
 
-            rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0,)
+            rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0, )
 
             max_correlation = torch.max(rscc).cpu()
             print(f"max_correlation: {max_correlation}")
@@ -2613,7 +2623,6 @@ def analyse_dataset_gpu(
             max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
 
             rsccs[bdcs[b_index]] = (max_correlation, max_index)
-
 
         # max_correlation = torch.max(output).cpu()
         # max_index = np.unravel_index(torch.argmax(output).cpu(), output.shape)
@@ -2640,44 +2649,54 @@ def analyse_dataset_gpu(
                                              max_index_fragment_coord[1] - (params.grid_size / 2),
                                              max_index_fragment_coord[2] - (params.grid_size / 2),
                                              ]
-        max_index_fragment_position = [max_index_fragment_relative_coord[0] + marker.x,
-                                       max_index_fragment_relative_coord[1] + marker.y,
-                                       max_index_fragment_relative_coord[2] + marker.z,
-                                       ]
 
-        # del data
-        # del filters
-        # del output
-        # torch.cuda.empty_cache()
-        # torch.cuda.synchronize()
+        max_index_fragment_relative_position = gemmi.Position(
+            [
+                max_index_fragment_relative_coord[0] * params.grid_spacing,
+                max_index_fragment_relative_coord[1] * params.grid_spacing,
+                max_index_fragment_relative_coord[2] * params.grid_spacing,
+            ])
+        transform = alignments[dataset.dtag][marker].transform
+        inverse_transform = transform.inverse()
+        rotation_tr = gemmi.Transform()
+        rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
+
+        max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
+
+        max_index_fragment_position_dataset_frame = [
+            max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
+            max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.x),
+            max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.x),
+        ]
 
         # get affinity maxima
         maxima: AffinityMaxima = AffinityMaxima(
             index=max_index,
             correlation=max_correlation,
             rotation_index=max_rotation,
-            position=max_index_fragment_position,
+            position=max_index_fragment_position_dataset_frame,
             bdc=max_bdc,
         )
 
-        # event_map: gemmi.FloatGrid = get_backtransformed_map(
-        #     (dataset_sample - maxima.bdc*sample_mean) / (1-maxima.bdc),
-        #     reference_dataset,
-        #     dataset,
-        #     alignments[dataset.dtag][marker],
-        #     marker,
-        #     params.grid_size,
-        #     params.grid_spacing,
-        #     params.structure_factors,
-        #     params.sample_rate,
-        # )
-        #
-        # write_event_map(
-        #     event_map,
-        #     out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
-        #     marker,
-        #     dataset,
-        # )
+        if max_correlation > params.min_correlation:
+            event_map: gemmi.FloatGrid = get_backtransformed_map(
+                (dataset_sample - maxima.bdc * sample_mean) / (1 - maxima.bdc),
+                reference_dataset,
+                dataset,
+                alignments[dataset.dtag][marker],
+                marker,
+                params.grid_size,
+                params.grid_spacing,
+                params.structure_factors,
+                params.sample_rate,
+            )
+
+            write_event_map(
+                event_map,
+                out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
+                marker,
+                dataset,
+            )
     print(maxima)
 
     # End loop over fragment builds
@@ -2756,8 +2775,8 @@ def analyse_residue_gpu(
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
 
-        # if dtag != "HAO1A-x0604":
-        #     continue
+        if dtag == "HAO1A-x0173":
+            return residue_results
 
         dataset = residue_datasets[dtag]
 
