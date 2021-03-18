@@ -2435,7 +2435,7 @@ def analyse_dataset_gpu(
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
-            arr_mask = fragment_map > 0.5 * np.max(fragment_map)
+            arr_mask = fragment_map > 0.2 * np.max(fragment_map)
 
             arr[~arr_mask] = 0.0
             fragment_mask_arr = np.zeros(fragment_map.shape)
