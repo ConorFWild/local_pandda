@@ -2478,7 +2478,7 @@ def analyse_dataset_gpu(
         #                                 filters_np.shape[3])
         rsccs = {}
         # for b_index in range(len(event_map_list)):
-        event_maps_np = np.stack([event_map_list], axis=0)
+        event_maps_np = np.stack(event_map_list, axis=0)
         event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1], event_maps_np.shape[2],
                                               event_maps_np.shape[3])
         print(f"event_maps_np: {event_maps_np.shape}")
