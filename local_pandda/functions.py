@@ -400,7 +400,7 @@ def get_comparator_datasets(
     sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
     resolution_cutoff = max(datasets[target_dtag].reflections.resolution_high(),
-                            sorted_resolution_dtags[min(len(sorted_resolution_dtags), num_datasets)]
+                            datasets[sorted_resolution_dtags[min(len(sorted_resolution_dtags), num_datasets)]].reflections.resolution_high()
                             )
     sorted_resolution_dtags_cutoff = [dtag for dtag in sorted_resolution_dtags if datasets[dtag].reflections.resolution_high() < resolution_cutoff]
 
