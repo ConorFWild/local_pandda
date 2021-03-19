@@ -2686,7 +2686,7 @@ def analyse_dataset_gpu(
             max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
             print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
 
-            mean_map_correlation = mean_map_rscc[0,0,max_index[2], max_index[3], max_index[4]].cpu()
+            mean_map_correlation = mean_map_rscc[0,max_index[1],max_index[2], max_index[3], max_index[4]].cpu()
 
             rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation)
 
