@@ -395,6 +395,7 @@ def get_comparator_datasets(
     # Sort by resolution
     closest_cluster_dtag_resolutions = {dtag: datasets[dtag].reflections.resolution_high()
                                         for dtag in closest_cluster_dtag_array}
+    print(f"Got {len(closest_cluster_dtag_resolutions)} comparatprs")
     sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
     highest_resolution_dtags = sorted_resolution_dtags[:min(len(sorted_resolution_dtags), num_datasets)]
