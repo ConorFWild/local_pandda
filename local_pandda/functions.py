@@ -404,6 +404,9 @@ def get_comparator_datasets(
                                                               for dtag
                                                               in highest_resolution_dtags
                                                               }
+    print(closest_cluster_datasets)
+
+    exit()
 
     return closest_cluster_datasets
 
