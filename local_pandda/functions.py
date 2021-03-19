@@ -2340,6 +2340,7 @@ def analyse_dataset_gpu(
                 (0.0, 0.0, 0.0),
                 0.0,
                 0.0,
+                0.0,
                 0.0
             )
         )
@@ -2372,6 +2373,7 @@ def analyse_dataset_gpu(
                 0.0,
                 (0.0, 0.0, 0.0),
                 (0.0, 0.0, 0.0),
+                0.0,
                 0.0,
                 0.0,
                 0.0
@@ -2682,6 +2684,8 @@ def analyse_dataset_gpu(
 
             delta_rscc = rscc - mean_map_rscc
 
+            delta_rscc[rscc<params.min_correlation] = 0
+
             max_delta_correlation = torch.max(delta_rscc).cpu()
             print(f"max_delta_correlation: {max_delta_correlation}")
 
@@ -2702,6 +2706,7 @@ def analyse_dataset_gpu(
         max_correlation = max_rscc_correlation_index[0]
         max_index = max_rscc_correlation_index[1]
         max_mean_map_correlation = max_rscc_correlation_index[2]
+        max_delta_correlation = max_rscc_correlation_index[3]
 
         max_bdc = max_rscc_bdc
         max_rotation = list(fragment_maps.keys())[max_index[1]]
@@ -2755,7 +2760,9 @@ def analyse_dataset_gpu(
             bdc=max_bdc,
             mean_map_correlation=max_mean_map_correlation,
             mean_map_max_correlation=mean_map_max_correlation,
+            max_delta_correlation=max_delta_correlation,
         )
+        print(maxima)
 
         if max_correlation > params.min_correlation:
             event_map: gemmi.FloatGrid = get_backtransformed_map(
@@ -2776,7 +2783,6 @@ def analyse_dataset_gpu(
                 marker,
                 dataset,
             )
-    print(maxima)
 
     # End loop over fragment builds
 
@@ -2854,8 +2860,8 @@ def analyse_residue_gpu(
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
 
-        if dtag != "HAO1A-x0381":
-            continue
+        # if dtag != "HAO1A-x0381":
+        #     continue
 
         # if dtag != "HAO1A-x0604":
         #     continue
