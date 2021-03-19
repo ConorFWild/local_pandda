@@ -307,7 +307,7 @@ class Params:
 
     # Dataset clusterings
     strong_density_cluster_cutoff: float = 0.6
-    min_dataset_cluster_size: int = 30
+    min_dataset_cluster_size: int = 60
 
     # Fragment searching
     num_fragment_pose_samples: int = 10

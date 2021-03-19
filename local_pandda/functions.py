@@ -357,6 +357,7 @@ def get_comparator_datasets(
         linkage: np.ndarray,
         dataset_clusters: np.ndarray,
         dataset_index: int,
+        target_dtag: str,
         apo_mask: np.ndarray,
         datasets: MutableMapping[str, Dataset],
         min_cluster_size: int,
@@ -398,14 +399,18 @@ def get_comparator_datasets(
     print(f"Got {len(closest_cluster_dtag_resolutions)} comparatprs")
     sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
-    highest_resolution_dtags = sorted_resolution_dtags[:min(len(sorted_resolution_dtags), num_datasets)]
+    resolution_cutoff = max(datasets[target_dtag].reflections.resolution_high(),
+                            sorted_resolution_dtags[min(len(sorted_resolution_dtags), num_datasets)]
+                            )
+    sorted_resolution_dtags_cutoff = [dtag for dtag in sorted_resolution_dtags if datasets[dtag].reflections.resolution_high() < resolution_cutoff]
+
+    highest_resolution_dtags = sorted_resolution_dtags_cutoff[-min(len(sorted_resolution_dtags), num_datasets):]
 
     closest_cluster_datasets: MutableMapping[str, Dataset] = {dtag: datasets[dtag]
                                                               for dtag
                                                               in highest_resolution_dtags
                                                               }
     print(closest_cluster_datasets)
-
 
     return closest_cluster_datasets
 
@@ -2342,6 +2347,7 @@ def analyse_dataset_gpu(
         linkage,
         dataset_clusters,
         dataset_index,
+        dataset.dtag,
         get_dataset_apo_mask(residue_datasets, known_apos),
         residue_datasets,
         params.min_dataset_cluster_size,
