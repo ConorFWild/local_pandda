@@ -100,7 +100,7 @@ def run_pandda(data_dir: str,
         if params.debug:
             print(f"Processing residue: {marker}")
 
-        if marker.resid.insertion != "81":
+        if marker.resid.insertion != "205":
             continue
 
         marker_results: MarkerAffinityResults = analyse_residue_gpu(

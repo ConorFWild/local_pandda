@@ -406,7 +406,6 @@ def get_comparator_datasets(
                                                               }
     print(closest_cluster_datasets)
 
-    exit()
 
     return closest_cluster_datasets
 
