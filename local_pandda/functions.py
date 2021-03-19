@@ -2440,9 +2440,9 @@ def analyse_dataset_gpu(
         if max_y % 2 == 0: max_y = max_y + 1
         if max_z % 2 == 0: max_z = max_z + 1
 
-        fragment_masks = {}
         fragment_masks_list = []
         fragment_maps_list = []
+        fragment_masks ={}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
@@ -2470,8 +2470,8 @@ def analyse_dataset_gpu(
         event_map_list = []
         bdcs = np.linspace(0, 0.90, 10)
         for b in bdcs:
-            # event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
-            event_map = (dataset_sample - sample_mean) / (1 - b)
+            event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
+            # event_map = (dataset_sample - sample_mean) / (1 - b)
 
             event_map_list.append(event_map)
 
@@ -2684,6 +2684,7 @@ def analyse_dataset_gpu(
             print(f"max_correlation: {max_correlation}")
 
             max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
+            print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
 
             mean_map_correlation = mean_map_rscc[0,0,max_index[2], max_index[3], max_index[4]].cpu()
 
@@ -2700,16 +2701,16 @@ def analyse_dataset_gpu(
         max_index_fragment_map = fragment_maps[max_rotation]
         max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
         max_index_fragment_map_shape = max_index_fragment_map.shape
-        max_index_fragment_coord = [max_index_mask_coord[0] + (max_index_fragment_map_shape[0] / 2),
-                                    max_index_mask_coord[1] + (max_index_fragment_map_shape[1] / 2),
-                                    max_index_mask_coord[2] + (max_index_fragment_map_shape[2] / 2),
+        max_index_fragment_coord = [max_index_mask_coord[0] - (max_index_fragment_map_shape[0] / 2),
+                                    max_index_mask_coord[1] - (max_index_fragment_map_shape[1] / 2),
+                                    max_index_mask_coord[2] - (max_index_fragment_map_shape[2] / 2),
                                     ]
         print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
 
-        max_index_fragment_relative_coord = [max_index_fragment_coord[0] - (params.grid_size / 2),
-                                             max_index_fragment_coord[1] - (params.grid_size / 2),
-                                             max_index_fragment_coord[2] - (params.grid_size / 2),
+        max_index_fragment_relative_coord = [max_index_fragment_coord[0] + (fragment_maps[max_rotation].shape[0] / 2),
+                                             max_index_fragment_coord[1] + (fragment_maps[max_rotation].shape[1] / 2),
+                                             max_index_fragment_coord[2] + (fragment_maps[max_rotation].shape[2] / 2),
                                              ]
         print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
 
