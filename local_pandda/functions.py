@@ -2680,15 +2680,21 @@ def analyse_dataset_gpu(
 
             rscc = torch.nan_to_num(rscc, nan=0.0, posinf=0.0, neginf=0.0, )
 
-            max_correlation = torch.max(rscc).cpu()
+            delta_rscc = rscc - mean_map_rscc
+
+            max_delta_correlation = torch.max(delta_rscc).cpu()
+            print(f"max_delta_correlation: {max_delta_correlation}")
+
+            max_index = np.unravel_index(torch.argmax(delta_rscc).cpu(), delta_rscc.shape)
+
+            max_correlation = rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
             print(f"max_correlation: {max_correlation}")
 
-            max_index = np.unravel_index(torch.argmax(rscc).cpu(), rscc.shape)
-            print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
+            # print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
 
             mean_map_correlation = mean_map_rscc[0,max_index[1],max_index[2], max_index[3], max_index[4]].cpu()
 
-            rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation)
+            rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation, max_delta_correlation)
 
         max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
         max_rscc_correlation_index = rsccs[max_rscc_bdc]
