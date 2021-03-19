@@ -2854,11 +2854,11 @@ def analyse_residue_gpu(
         if params.debug:
             print(f"\tProcessing dataset: {dtag}")
 
-        # if dtag == "HAO1A-x0173":
-        #     return residue_results
+        if dtag != "HAO1A-x0173":
+            return residue_results
 
-        if dtag != "HAO1A-x0604":
-            continue
+        # if dtag != "HAO1A-x0604":
+        #     continue
 
         dataset = residue_datasets[dtag]
 
