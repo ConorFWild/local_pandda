@@ -2048,6 +2048,7 @@ def analyse_dataset(
 
     # Get the sample associated with the dataset of interest
     dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
+    del comparator_sample_arrays[dataset.dtag]
 
     if params.debug:
         print(f"\tGot {len(comparator_sample_arrays)} comparater samples")
@@ -2401,6 +2402,7 @@ def analyse_dataset_gpu(
 
     # Get the sample associated with the dataset of interest
     dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
+    del comparator_sample_arrays[dataset.dtag]
 
     if params.debug:
         print(f"\tGot {len(comparator_sample_arrays)} comparater samples")
