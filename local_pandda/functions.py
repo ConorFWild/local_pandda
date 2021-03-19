@@ -402,13 +402,14 @@ def get_comparator_datasets(
     resolution_cutoff = max(datasets[target_dtag].reflections.resolution_high(),
                             datasets[sorted_resolution_dtags[min(len(sorted_resolution_dtags), num_datasets)]].reflections.resolution_high()
                             )
-    sorted_resolution_dtags_cutoff = [dtag for dtag in sorted_resolution_dtags if datasets[dtag].reflections.resolution_high() < resolution_cutoff]
+    # sorted_resolution_dtags_cutoff = [dtag for dtag in sorted_resolution_dtags if datasets[dtag].reflections.resolution_high() < resolution_cutoff]
 
-    highest_resolution_dtags = sorted_resolution_dtags_cutoff[-min(len(sorted_resolution_dtags), num_datasets):]
+    # highest_resolution_dtags = sorted_resolution_dtags_cutoff[-min(len(sorted_resolution_dtags), num_datasets):]
 
     closest_cluster_datasets: MutableMapping[str, Dataset] = {dtag: datasets[dtag]
                                                               for dtag
-                                                              in highest_resolution_dtags
+                                                              in closest_cluster_dtag_array
+                                                              if datasets[dtag].reflections.resolution_high() < resolution_cutoff
                                                               }
     print(closest_cluster_datasets)
 
