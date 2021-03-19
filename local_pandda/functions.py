@@ -2586,6 +2586,8 @@ def analyse_dataset_gpu(
         mean_map_rscc = torch.nan_to_num(mean_map_rscc, nan=0.0, posinf=0.0, neginf=0.0, )
 
         mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
+        print(f"mean_map_max_correlation: {mean_map_max_correlation}")
+
 
         rsccs = {}
         for b_index in range(len(event_map_list)):
