@@ -2701,16 +2701,16 @@ def analyse_dataset_gpu(
         max_index_fragment_map = fragment_maps[max_rotation]
         max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
         max_index_fragment_map_shape = max_index_fragment_map.shape
-        max_index_fragment_coord = [max_index_mask_coord[0] - (max_index_fragment_map_shape[0] / 2),
-                                    max_index_mask_coord[1] - (max_index_fragment_map_shape[1] / 2),
-                                    max_index_mask_coord[2] - (max_index_fragment_map_shape[2] / 2),
+        max_index_fragment_coord = [max_index_mask_coord[0] - (max_x / 2)+ (fragment_maps[max_rotation].shape[0] / 2),
+                                    max_index_mask_coord[1] - (max_y / 2)+ (fragment_maps[max_rotation].shape[1] / 2),
+                                    max_index_mask_coord[2] - (max_z / 2)+ (fragment_maps[max_rotation].shape[2] / 2),
                                     ]
         print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
 
-        max_index_fragment_relative_coord = [max_index_fragment_coord[0] + (fragment_maps[max_rotation].shape[0] / 2),
-                                             max_index_fragment_coord[1] + (fragment_maps[max_rotation].shape[1] / 2),
-                                             max_index_fragment_coord[2] + (fragment_maps[max_rotation].shape[2] / 2),
+        max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size/2,
+                                             max_index_fragment_coord[1] - params.grid_size/2,
+                                             max_index_fragment_coord[2] - params.grid_size/2,
                                              ]
         print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
 
