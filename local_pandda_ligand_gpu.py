@@ -69,7 +69,7 @@ def run_pandda(data_dir: str,
         print_dataset_summary(datasets)
 
     if not known_apos:
-        known_apos = [dataset.dtag for dtag, dataset in datasets.items() if dataset.fragment_path]
+        known_apos = [dataset.dtag for dtag, dataset in datasets.items() if not dataset.fragment_path]
         if params.debug:
             print(f"Got {len(known_apos)} known apos")
 
@@ -77,6 +77,7 @@ def run_pandda(data_dir: str,
     reference_dataset: Dataset = get_reference(datasets, reference_dtag, known_apos)
     if params.debug:
         print(f"Reference dataset for alignment is: {reference_dataset.dtag}")
+
 
     # B factor smooth the datasets
     smoothed_datasets: MutableMapping[str, Dataset] = smooth_datasets(

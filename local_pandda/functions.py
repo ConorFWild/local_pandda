@@ -2431,14 +2431,13 @@ def analyse_dataset_gpu(
         if max_y % 2 == 0: max_y = max_y + 1
         if max_z % 2 == 0: max_z = max_z + 1
 
-
         fragment_masks = {}
         fragment_masks_list = []
         fragment_maps_list = []
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
-            arr_mask = fragment_map > 0.2 * np.max(fragment_map)
+            arr_mask = fragment_map > 0.1 * np.max(fragment_map)
 
             arr[~arr_mask] = 0.0
             fragment_mask_arr = np.zeros(fragment_map.shape)
@@ -2466,7 +2465,6 @@ def analyse_dataset_gpu(
             event_map_list.append(event_map)
 
         # Fragment maps
-
         fragment_maps_np = np.stack(fragment_maps_list, axis=0)
         fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
                                                     1,
@@ -2592,7 +2590,9 @@ def analyse_dataset_gpu(
         rsccs = {}
         for b_index in range(len(event_map_list)):
             event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0], 1, event_maps_np.shape[1],
+            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
+                                                  1,
+                                                  event_maps_np.shape[1],
                                                   event_maps_np.shape[2],
                                                   event_maps_np.shape[3])
             print(f"event_maps_np: {event_maps_np.shape}")
@@ -2693,10 +2693,15 @@ def analyse_dataset_gpu(
                                     max_index_mask_coord[1] + (max_index_fragment_map_shape[1] / 2),
                                     max_index_mask_coord[2] + (max_index_fragment_map_shape[2] / 2),
                                     ]
+        print(f"max_index_fragment_coord: {max_index_fragment_coord}")
+
+
         max_index_fragment_relative_coord = [max_index_fragment_coord[0] - (params.grid_size / 2),
                                              max_index_fragment_coord[1] - (params.grid_size / 2),
                                              max_index_fragment_coord[2] - (params.grid_size / 2),
                                              ]
+        print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
+
 
         max_index_fragment_relative_position = gemmi.Position(
 
@@ -2704,6 +2709,8 @@ def analyse_dataset_gpu(
             max_index_fragment_relative_coord[1] * params.grid_spacing,
             max_index_fragment_relative_coord[2] * params.grid_spacing,
         )
+        print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
+
 
         transform = alignments[dataset.dtag][marker].transform
         inverse_transform = transform.inverse()
@@ -2711,12 +2718,14 @@ def analyse_dataset_gpu(
         rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
 
         max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
+        print(f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
 
         max_index_fragment_position_dataset_frame = [
             max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
             max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.x),
             max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.x),
         ]
+        print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
 
         # get affinity maxima
         maxima: AffinityMaxima = AffinityMaxima(
