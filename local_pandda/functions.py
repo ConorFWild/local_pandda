@@ -2470,7 +2470,9 @@ def analyse_dataset_gpu(
         event_map_list = []
         bdcs = np.linspace(0, 0.90, 10)
         for b in bdcs:
-            event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
+            # event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
+            event_map = (dataset_sample - sample_mean) / (1 - b)
+
             event_map_list.append(event_map)
 
         # Fragment maps
