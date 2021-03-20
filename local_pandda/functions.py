@@ -401,7 +401,8 @@ def get_comparator_datasets(
     sorted_resolution_dtags = sorted(closest_cluster_dtag_resolutions,
                                      key=lambda dtag: closest_cluster_dtag_resolutions[dtag])
     resolution_cutoff = max(datasets[target_dtag].reflections.resolution_high(),
-                            datasets[sorted_resolution_dtags[min(len(sorted_resolution_dtags), num_datasets)]].reflections.resolution_high()
+                            datasets[sorted_resolution_dtags[
+                                min(len(sorted_resolution_dtags), num_datasets)]].reflections.resolution_high()
                             )
     # sorted_resolution_dtags_cutoff = [dtag for dtag in sorted_resolution_dtags if datasets[dtag].reflections.resolution_high() < resolution_cutoff]
 
@@ -410,7 +411,8 @@ def get_comparator_datasets(
     closest_cluster_datasets: MutableMapping[str, Dataset] = {dtag: datasets[dtag]
                                                               for dtag
                                                               in closest_cluster_dtag_array
-                                                              if datasets[dtag].reflections.resolution_high() < resolution_cutoff
+                                                              if datasets[
+                                                                  dtag].reflections.resolution_high() < resolution_cutoff
                                                               }
     print(closest_cluster_datasets)
 
@@ -2405,14 +2407,13 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     delta_rscc = rscc - mean_map_rscc
 
-    rscc_mask = (rscc < min_correlation)
+    rscc_mask = (rscc > min_correlation)
 
     # delta_rscc[rscc_mask] = 0
 
-    rscc_mask_float = rscc_mask.float()
+    # rscc_mask_float = rscc_mask.float()
 
-    delta_rscc = delta_rscc * rscc_mask_float
-
+    delta_rscc.mul_(rscc_mask)
 
     max_delta_correlation = torch.max(delta_rscc).cpu()
     print(f"max_delta_correlation: {max_delta_correlation}")
@@ -2589,7 +2590,7 @@ def analyse_dataset_gpu(
 
         fragment_masks_list = []
         fragment_maps_list = []
-        fragment_masks ={}
+        fragment_masks = {}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
@@ -2682,7 +2683,6 @@ def analyse_dataset_gpu(
             masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
             print(f"masks: {masks.shape}")
 
-
             # Means
             rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
             print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
@@ -2747,10 +2747,8 @@ def analyse_dataset_gpu(
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
             print(f"mean_map_max_correlation: {mean_map_max_correlation}")
 
-
             rsccs = {}
             for b_index in range(len(event_map_list)):
-
                 event_maps_np = np.stack([event_map_list[b_index]], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
@@ -2759,7 +2757,8 @@ def analyse_dataset_gpu(
                                                       event_maps_np.shape[3])
                 print(f"event_maps_np: {event_maps_np.shape}")
 
-                rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, params.min_correlation)
+                rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
+                                                           mean_map_rscc, params.min_correlation)
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -2785,19 +2784,18 @@ def analyse_dataset_gpu(
             max_index_fragment_map = fragment_maps[max_rotation]
             max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
             max_index_fragment_map_shape = max_index_fragment_map.shape
-            max_index_fragment_coord = [max_index_mask_coord[0] - (max_x / 2)+ (fragment_maps[max_rotation].shape[0] / 2),
-                                        max_index_mask_coord[1] - (max_y / 2)+ (fragment_maps[max_rotation].shape[1] / 2),
-                                        max_index_mask_coord[2] - (max_z / 2)+ (fragment_maps[max_rotation].shape[2] / 2),
-                                        ]
+            max_index_fragment_coord = [
+                max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
+                max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
+                max_index_mask_coord[2] - (max_z / 2) + (fragment_maps[max_rotation].shape[2] / 2),
+                ]
             print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
-
-            max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size/2,
-                                                 max_index_fragment_coord[1] - params.grid_size/2,
-                                                 max_index_fragment_coord[2] - params.grid_size/2,
+            max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size / 2,
+                                                 max_index_fragment_coord[1] - params.grid_size / 2,
+                                                 max_index_fragment_coord[2] - params.grid_size / 2,
                                                  ]
             print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
-
 
             max_index_fragment_relative_position = gemmi.Position(
 
@@ -2807,14 +2805,14 @@ def analyse_dataset_gpu(
             )
             print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
 
-
             transform = alignments[dataset.dtag][marker].transform
             inverse_transform = transform.inverse()
             rotation_tr = gemmi.Transform()
             rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
 
             max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
-            print(f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
+            print(
+                f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
 
             max_index_fragment_position_dataset_frame = [
                 max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
