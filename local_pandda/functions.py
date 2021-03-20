@@ -2746,6 +2746,31 @@ def analyse_dataset_gpu(
 
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
             print(f"mean_map_max_correlation: {mean_map_max_correlation}")
+            del rho_o
+            del rho_c
+            del masks
+            del rho_o_mu
+            del rho_c_mu
+
+            del conv_rho_o_rho_c
+            del conv_rho_o_rho_c_mu
+            del conv_rho_o_mu_rho_c
+            del conv_rho_o_mu_rho_c_mu
+
+            del nominator
+
+            del rho_o_squared
+            del conv_rho_o_rho_o_mu
+            del rho_o_mu_squared
+
+            del denominator_rho_o
+            del denominator_rho_c
+            del denominator
+
+            gc.collect()
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
