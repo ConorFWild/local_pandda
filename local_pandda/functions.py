@@ -6,6 +6,7 @@ import re
 import itertools
 import dataclasses
 import math
+import gc
 
 # 3rd party
 import numpy as np
@@ -2700,6 +2701,7 @@ def analyse_dataset_gpu(
 
             rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation, max_delta_correlation)
 
+            gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
 
