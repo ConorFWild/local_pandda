@@ -2700,6 +2700,8 @@ def analyse_dataset_gpu(
 
             rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation, max_delta_correlation)
 
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
 
         max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
         max_rscc_correlation_index = rsccs[max_rscc_bdc]
