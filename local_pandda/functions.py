@@ -2614,243 +2614,245 @@ def analyse_dataset_gpu(
 
             event_map_list.append(event_map)
 
-        # Fragment maps
-        fragment_maps_np = np.stack(fragment_maps_list, axis=0)
-        fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
-                                                    1,
-                                                    fragment_maps_np.shape[1],
-                                                    fragment_maps_np.shape[2],
-                                                    fragment_maps_np.shape[3])
-        print(f"fragment_maps_np: {fragment_maps_np.shape}")
+        with torch.no_grad():
 
-        fragment_masks_np = np.stack(fragment_masks_list, axis=0)
-        fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+            # Fragment maps
+            fragment_maps_np = np.stack(fragment_maps_list, axis=0)
+            fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
+                                                        1,
+                                                        fragment_maps_np.shape[1],
+                                                        fragment_maps_np.shape[2],
+                                                        fragment_maps_np.shape[3])
+            print(f"fragment_maps_np: {fragment_maps_np.shape}")
+
+            fragment_masks_np = np.stack(fragment_masks_list, axis=0)
+            fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+                                                          1,
+                                                          fragment_masks_np.shape[1],
+                                                          fragment_masks_np.shape[2],
+                                                          fragment_masks_np.shape[3])
+            print(f"fragment_masks_np: {fragment_masks_np.shape}")
+
+            reference_fragment = fragment_maps_np[0, 0, :, :, :]
+            print(f"reference_fragment: {reference_fragment.shape}")
+
+            reference_mask = fragment_masks_np[0, 0, :, :, :]
+            print(f"reference_mask: {reference_mask.shape}")
+
+            padding = (int((reference_fragment.shape[0]) / 2),
+                       int((reference_fragment.shape[1]) / 2),
+                       int((reference_fragment.shape[2]) / 2),
+                       )
+            print(f"Padding: {padding}")
+
+            size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+            print(f"size: {size}")
+
+            reference_map_masked_values = reference_fragment[reference_mask > 0]
+            print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
+
+            reference_map_sum = np.sum(reference_map_masked_values)
+            print(f"reference_map_sum: {reference_map_sum}")
+
+            # Get mean map RSCC
+            mean_map_np = np.stack([sample_mean], axis=0)
+            mean_map_np = mean_map_np.reshape(
+                1,
+                1,
+                mean_map_np.shape[1],
+                mean_map_np.shape[2],
+                mean_map_np.shape[3])
+            print(f"mean_map_np: {mean_map_np.shape}")
+
+            # Tensors
+            rho_o = torch.tensor(mean_map_np, dtype=torch.float).cuda()
+            print(f"rho_o: {rho_o.shape}")
+
+            rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
+            print(f"rho_c: {rho_c.shape}")
+
+            masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
+            print(f"masks: {masks.shape}")
+
+
+            # Means
+            rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
+            print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
+
+            rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
+            print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
+
+            # Nominator
+            conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
+            print(
+                f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
+
+            conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_c_mu
+            print(
+                f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
+
+            conv_rho_o_mu_rho_c = rho_o_mu * reference_map_sum
+            print(
+                f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
+
+            conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
+            print(
+                f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
+
+            nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
+            print(
+                f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0, 0, 32, 32, 32]}")
+
+            # Denominator
+            # # # o
+            rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
+            print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
+
+            conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
+            print(
+                f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
+
+            rho_o_mu_squared = torch.square(rho_o_mu) * size
+            print(
+                f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
+
+            denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
+            print(
+                f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
+
+            # # # c
+            denominator_rho_c = torch.tensor(
+                np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
+                dtype=torch.float).cuda()
+            print(
+                f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
+
+            denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
+            print(
+                f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0, 0, 32, 32, 32]}")
+
+            mean_map_rscc = nominator / denominator
+            print(f"mean_map_rscc: {mean_map_rscc.shape} {mean_map_rscc[0, 0, 32, 32, 32]}")
+
+            mean_map_rscc = torch.nan_to_num(mean_map_rscc, nan=0.0, posinf=0.0, neginf=0.0, )
+
+            mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
+            print(f"mean_map_max_correlation: {mean_map_max_correlation}")
+
+
+            rsccs = {}
+            for b_index in range(len(event_map_list)):
+
+                event_maps_np = np.stack([event_map_list[b_index]], axis=0)
+                event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
-                                                      fragment_masks_np.shape[1],
-                                                      fragment_masks_np.shape[2],
-                                                      fragment_masks_np.shape[3])
-        print(f"fragment_masks_np: {fragment_masks_np.shape}")
+                                                      event_maps_np.shape[1],
+                                                      event_maps_np.shape[2],
+                                                      event_maps_np.shape[3])
+                print(f"event_maps_np: {event_maps_np.shape}")
 
-        reference_fragment = fragment_maps_np[0, 0, :, :, :]
-        print(f"reference_fragment: {reference_fragment.shape}")
+                rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, params.min_correlation)
 
-        reference_mask = fragment_masks_np[0, 0, :, :, :]
-        print(f"reference_mask: {reference_mask.shape}")
+                gc.collect()
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                torch.cuda.ipc_collect()
 
-        padding = (int((reference_fragment.shape[0]) / 2),
-                   int((reference_fragment.shape[1]) / 2),
-                   int((reference_fragment.shape[2]) / 2),
-                   )
-        print(f"Padding: {padding}")
+            for obj in gc.get_objects():
+                try:
+                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                        print(type(obj), obj.size())
+                except:
+                    pass
 
-        size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
-        print(f"size: {size}")
+            max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
+            max_rscc_correlation_index = rsccs[max_rscc_bdc]
+            max_correlation = max_rscc_correlation_index[0]
+            max_index = max_rscc_correlation_index[1]
+            max_mean_map_correlation = max_rscc_correlation_index[2]
+            max_delta_correlation = max_rscc_correlation_index[3]
 
-        reference_map_masked_values = reference_fragment[reference_mask > 0]
-        print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
-
-        reference_map_sum = np.sum(reference_map_masked_values)
-        print(f"reference_map_sum: {reference_map_sum}")
-
-        # Get mean map RSCC
-        mean_map_np = np.stack([sample_mean], axis=0)
-        mean_map_np = mean_map_np.reshape(
-            1,
-            1,
-            mean_map_np.shape[1],
-            mean_map_np.shape[2],
-            mean_map_np.shape[3])
-        print(f"mean_map_np: {mean_map_np.shape}")
-
-        # Tensors
-        rho_o = torch.tensor(mean_map_np, dtype=torch.float).cuda()
-        print(f"rho_o: {rho_o.shape}")
-
-        rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
-        print(f"rho_c: {rho_c.shape}")
-
-        masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
-        print(f"masks: {masks.shape}")
+            max_bdc = max_rscc_bdc
+            max_rotation = list(fragment_maps.keys())[max_index[1]]
+            max_index_fragment_map = fragment_maps[max_rotation]
+            max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+            max_index_fragment_map_shape = max_index_fragment_map.shape
+            max_index_fragment_coord = [max_index_mask_coord[0] - (max_x / 2)+ (fragment_maps[max_rotation].shape[0] / 2),
+                                        max_index_mask_coord[1] - (max_y / 2)+ (fragment_maps[max_rotation].shape[1] / 2),
+                                        max_index_mask_coord[2] - (max_z / 2)+ (fragment_maps[max_rotation].shape[2] / 2),
+                                        ]
+            print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
 
-        # Means
-        rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
-        print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
-
-        rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
-        print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
-
-        # Nominator
-        conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
-        print(
-            f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
-
-        conv_rho_o_rho_c_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_c_mu
-        print(
-            f"conv_rho_o_rho_c_mu: {conv_rho_o_rho_c_mu.shape} {torch.max(conv_rho_o_rho_c_mu)} {torch.min(conv_rho_o_rho_c_mu)}")
-
-        conv_rho_o_mu_rho_c = rho_o_mu * reference_map_sum
-        print(
-            f"conv_rho_o_mu_rho_c: {conv_rho_o_mu_rho_c.shape} {torch.max(conv_rho_o_mu_rho_c)} {torch.min(conv_rho_o_mu_rho_c)}")
-
-        conv_rho_o_mu_rho_c_mu = rho_o_mu * rho_c_mu * size
-        print(
-            f"conv_rho_o_mu_rho_c_mu: {conv_rho_o_mu_rho_c_mu.shape} {torch.max(conv_rho_o_mu_rho_c_mu)} {torch.min(conv_rho_o_mu_rho_c_mu)}")
-
-        nominator = conv_rho_o_rho_c - conv_rho_o_rho_c_mu - conv_rho_o_mu_rho_c + conv_rho_o_mu_rho_c_mu
-        print(
-            f"nominator: {nominator.shape} {torch.max(nominator)} {torch.min(nominator)} {nominator[0, 0, 32, 32, 32]}")
-
-        # Denominator
-        # # # o
-        rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
-        print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
-
-        conv_rho_o_rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding) * rho_o_mu
-        print(
-            f"conv_rho_o_rho_o_mu: {conv_rho_o_rho_o_mu.shape} {torch.max(conv_rho_o_rho_o_mu)} {torch.min(conv_rho_o_rho_o_mu)}")
-
-        rho_o_mu_squared = torch.square(rho_o_mu) * size
-        print(
-            f"rho_o_mu_squared: {rho_o_mu_squared.shape} {torch.max(rho_o_mu_squared)} {torch.min(rho_o_mu_squared)}")
-
-        denominator_rho_o = rho_o_squared - 2 * conv_rho_o_rho_o_mu + rho_o_mu_squared
-        print(
-            f"denominator_rho_o: {denominator_rho_o.shape} {torch.max(denominator_rho_o)} {torch.min(denominator_rho_o)}")
-
-        # # # c
-        denominator_rho_c = torch.tensor(
-            np.sum(np.square(reference_map_masked_values - np.mean(reference_map_masked_values))),
-            dtype=torch.float).cuda()
-        print(
-            f"denominator_rho_c: {denominator_rho_c.shape}; {torch.max(denominator_rho_c)} {torch.min(denominator_rho_c)}")
-
-        denominator = torch.sqrt(denominator_rho_c) * torch.sqrt(denominator_rho_o)
-        print(
-            f"denominator: {denominator.shape} {torch.max(denominator)} {torch.min(denominator)} {denominator[0, 0, 32, 32, 32]}")
-
-        mean_map_rscc = nominator / denominator
-        print(f"mean_map_rscc: {mean_map_rscc.shape} {mean_map_rscc[0, 0, 32, 32, 32]}")
-
-        mean_map_rscc = torch.nan_to_num(mean_map_rscc, nan=0.0, posinf=0.0, neginf=0.0, )
-
-        mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
-        print(f"mean_map_max_correlation: {mean_map_max_correlation}")
+            max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size/2,
+                                                 max_index_fragment_coord[1] - params.grid_size/2,
+                                                 max_index_fragment_coord[2] - params.grid_size/2,
+                                                 ]
+            print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
 
 
-        rsccs = {}
-        for b_index in range(len(event_map_list)):
+            max_index_fragment_relative_position = gemmi.Position(
 
-            event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-            event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
-                                                  1,
-                                                  event_maps_np.shape[1],
-                                                  event_maps_np.shape[2],
-                                                  event_maps_np.shape[3])
-            print(f"event_maps_np: {event_maps_np.shape}")
-
-            rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, params.min_correlation)
-
-            gc.collect()
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            torch.cuda.ipc_collect()
-
-        for obj in gc.get_objects():
-            try:
-                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                    print(type(obj), obj.size())
-            except:
-                pass
-
-        max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
-        max_rscc_correlation_index = rsccs[max_rscc_bdc]
-        max_correlation = max_rscc_correlation_index[0]
-        max_index = max_rscc_correlation_index[1]
-        max_mean_map_correlation = max_rscc_correlation_index[2]
-        max_delta_correlation = max_rscc_correlation_index[3]
-
-        max_bdc = max_rscc_bdc
-        max_rotation = list(fragment_maps.keys())[max_index[1]]
-        max_index_fragment_map = fragment_maps[max_rotation]
-        max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
-        max_index_fragment_map_shape = max_index_fragment_map.shape
-        max_index_fragment_coord = [max_index_mask_coord[0] - (max_x / 2)+ (fragment_maps[max_rotation].shape[0] / 2),
-                                    max_index_mask_coord[1] - (max_y / 2)+ (fragment_maps[max_rotation].shape[1] / 2),
-                                    max_index_mask_coord[2] - (max_z / 2)+ (fragment_maps[max_rotation].shape[2] / 2),
-                                    ]
-        print(f"max_index_fragment_coord: {max_index_fragment_coord}")
-
-
-        max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size/2,
-                                             max_index_fragment_coord[1] - params.grid_size/2,
-                                             max_index_fragment_coord[2] - params.grid_size/2,
-                                             ]
-        print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
-
-
-        max_index_fragment_relative_position = gemmi.Position(
-
-            max_index_fragment_relative_coord[0] * params.grid_spacing,
-            max_index_fragment_relative_coord[1] * params.grid_spacing,
-            max_index_fragment_relative_coord[2] * params.grid_spacing,
-        )
-        print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
-
-
-        transform = alignments[dataset.dtag][marker].transform
-        inverse_transform = transform.inverse()
-        rotation_tr = gemmi.Transform()
-        rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
-
-        max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
-        print(f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
-
-        max_index_fragment_position_dataset_frame = [
-            max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
-            max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.x),
-            max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.x),
-        ]
-        print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
-
-        # get affinity maxima
-        maxima: AffinityMaxima = AffinityMaxima(
-            index=max_index,
-            correlation=max_correlation,
-            rotation_index=max_rotation,
-            position=max_index_fragment_position_dataset_frame,
-            bdc=max_bdc,
-            mean_map_correlation=max_mean_map_correlation,
-            mean_map_max_correlation=mean_map_max_correlation,
-            max_delta_correlation=max_delta_correlation,
-        )
-        print(maxima)
-
-        if max_correlation > params.min_correlation:
-            event_map: gemmi.FloatGrid = get_backtransformed_map(
-                (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                reference_dataset,
-                dataset,
-                alignments[dataset.dtag][marker],
-                marker,
-                params.grid_size,
-                params.grid_spacing,
-                params.structure_factors,
-                params.sample_rate,
+                max_index_fragment_relative_coord[0] * params.grid_spacing,
+                max_index_fragment_relative_coord[1] * params.grid_spacing,
+                max_index_fragment_relative_coord[2] * params.grid_spacing,
             )
+            print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
 
-            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                          None,
-                                          )
 
-            write_event_map(
-                event_map,
-                out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
-                dataset_event_marker,
-                dataset,
+            transform = alignments[dataset.dtag][marker].transform
+            inverse_transform = transform.inverse()
+            rotation_tr = gemmi.Transform()
+            rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
+
+            max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
+            print(f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
+
+            max_index_fragment_position_dataset_frame = [
+                max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
+                max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.x),
+                max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.x),
+            ]
+            print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
+
+            # get affinity maxima
+            maxima: AffinityMaxima = AffinityMaxima(
+                index=max_index,
+                correlation=max_correlation,
+                rotation_index=max_rotation,
+                position=max_index_fragment_position_dataset_frame,
+                bdc=max_bdc,
+                mean_map_correlation=max_mean_map_correlation,
+                mean_map_max_correlation=mean_map_max_correlation,
+                max_delta_correlation=max_delta_correlation,
             )
+            print(maxima)
+
+            if max_correlation > params.min_correlation:
+                event_map: gemmi.FloatGrid = get_backtransformed_map(
+                    (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                    reference_dataset,
+                    dataset,
+                    alignments[dataset.dtag][marker],
+                    marker,
+                    params.grid_size,
+                    params.grid_spacing,
+                    params.structure_factors,
+                    params.sample_rate,
+                )
+
+                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                              None,
+                                              )
+
+                write_event_map(
+                    event_map,
+                    out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
+                    dataset_event_marker,
+                    dataset,
+                )
 
     # End loop over fragment builds
 
