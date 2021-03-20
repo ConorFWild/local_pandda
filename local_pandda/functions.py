@@ -2407,7 +2407,9 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     rscc_mask = rscc < min_correlation
 
-    delta_rscc[rscc_mask] = 0
+    # delta_rscc[rscc_mask] = 0
+
+    delta_rscc.mul_(rscc_mask)
 
     max_delta_correlation = torch.max(delta_rscc).cpu()
     print(f"max_delta_correlation: {max_delta_correlation}")
