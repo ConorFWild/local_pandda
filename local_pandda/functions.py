@@ -2786,6 +2786,7 @@ def analyse_dataset_gpu(
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
+            mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
