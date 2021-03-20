@@ -2447,8 +2447,10 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     gc.collect()
     torch.cuda.empty_cache()
     torch.cuda.synchronize()
+    torch.cuda.ipc_collect()
 
     return max_correlation, max_index, mean_map_correlation, max_delta_correlation
+
 
 def analyse_dataset_gpu(
         dataset: Dataset,
