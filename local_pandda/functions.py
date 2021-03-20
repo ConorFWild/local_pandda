@@ -2419,7 +2419,6 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     mean_map_correlation = mean_map_rscc[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
 
-
     del rho_o
     del rho_c
     del masks
@@ -2443,11 +2442,6 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     del rscc
     del delta_rscc
-
-    gc.collect()
-    torch.cuda.empty_cache()
-    torch.cuda.synchronize()
-    torch.cuda.ipc_collect()
 
     return max_correlation, max_index, mean_map_correlation, max_delta_correlation
 
@@ -2757,6 +2751,17 @@ def analyse_dataset_gpu(
 
             rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, params.min_correlation)
 
+            gc.collect()
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+            torch.cuda.ipc_collect()
+
+        for obj in gc.get_objects():
+            try:
+                if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                    print(type(obj), obj.size())
+            except:
+                pass
 
         max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
         max_rscc_correlation_index = rsccs[max_rscc_bdc]
