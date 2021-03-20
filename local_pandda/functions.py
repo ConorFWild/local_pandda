@@ -2701,6 +2701,31 @@ def analyse_dataset_gpu(
 
             rsccs[bdcs[b_index]] = (max_correlation, max_index, mean_map_correlation, max_delta_correlation)
 
+            del rho_o
+            del rho_c
+            del masks
+            del rho_o_mu
+            del rho_c_mu
+
+            del conv_rho_o_rho_c
+            del conv_rho_o_rho_c_mu
+            del conv_rho_o_mu_rho_c
+            del conv_rho_o_mu_rho_c_mu
+
+            del nominator
+
+            del rho_o_squared
+            del conv_rho_o_rho_o_mu
+            del rho_o_mu_squared
+
+            del denominator_rho_o
+            del denominator_rho_c
+            del denominator
+
+            del rscc
+            del delta_rscc
+
+
             gc.collect()
             torch.cuda.empty_cache()
             torch.cuda.synchronize()
