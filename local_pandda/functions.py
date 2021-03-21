@@ -2452,7 +2452,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     del delta_rscc
     del rscc_mask
 
-    return max_correlation, max_index, mean_map_correlation, max_delta_correlation
+    return max_correlation.item(), max_index.tolist(), mean_map_correlation.item(), max_delta_correlation.item()
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -2786,7 +2786,7 @@ def analyse_dataset_gpu(
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
-            mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
+            mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
