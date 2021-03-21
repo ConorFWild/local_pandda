@@ -2813,7 +2813,6 @@ def analyse_dataset_gpu(
                 except:
                     pass
 
-
             max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
             max_rscc_correlation_index = rsccs[max_rscc_bdc]
             max_correlation = max_rscc_correlation_index[0]
