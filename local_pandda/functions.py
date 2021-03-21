@@ -2452,7 +2452,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     del delta_rscc
     del rscc_mask
 
-    return max_correlation.item(), max_index.tolist(), mean_map_correlation.item(), max_delta_correlation.item()
+    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
