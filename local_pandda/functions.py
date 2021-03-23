@@ -2446,7 +2446,7 @@ def analyse_residue(
     # write_result_html(pandda_results)
 
 
-def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, min_correlation):
+def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, min_correlation, max_mean_map_correlation):
     reference_fragment = fragment_maps_np[0, 0, :, :, :]
     print(f"reference_fragment: {reference_fragment.shape}")
 
@@ -2541,13 +2541,17 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     delta_rscc = rscc - mean_map_rscc
 
-    # rscc_mask = (rscc > min_correlation)
+    rscc_mask = (rscc > min_correlation)
+
+    mean_map_rscc_mask = (mean_map_rscc < max_mean_map_correlation)
 
     # delta_rscc[rscc_mask] = 0
 
     # rscc_mask_float = rscc_mask.float()
 
-    # delta_rscc.mul_(rscc_mask)
+    delta_rscc.mul_(rscc_mask)
+
+    delta_rscc.mul_(mean_map_rscc_mask)
 
     max_delta_correlation = torch.max(delta_rscc).cpu()
     print(f"max_delta_correlation: {max_delta_correlation}")
@@ -2936,7 +2940,7 @@ def analyse_dataset_gpu(
                 print(f"event_maps_np: {event_maps_np.shape}")
 
                 rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
-                                                           mean_map_rscc, params.min_correlation)
+                                                           mean_map_rscc, 0.5, 0.4)
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -3017,6 +3021,33 @@ def analyse_dataset_gpu(
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
                 # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
                 max_array[0,:,:,:],
+                reference_dataset,
+                dataset,
+                alignments[dataset.dtag][marker],
+                marker,
+                params.grid_size,
+                params.grid_spacing,
+                params.structure_factors,
+                params.sample_rate,
+            )
+
+            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                          None,
+                                          )
+
+            write_event_map(
+                event_map,
+                out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
+                dataset_event_marker,
+                dataset,
+                resolution,
+            )
+
+            event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                torch.max(mean_map_rscc, 1)[0].cpu().numpy()[0,:,:,:],
                 reference_dataset,
                 dataset,
                 alignments[dataset.dtag][marker],
