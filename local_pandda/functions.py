@@ -2955,7 +2955,7 @@ def analyse_dataset_gpu(
             max_index = max_rscc_correlation_index[1]
             max_mean_map_correlation = max_rscc_correlation_index[2]
             max_delta_correlation = max_rscc_correlation_index[3]
-            max_array = max_rscc_correlation_index[3]
+            max_array = max_rscc_correlation_index[4]
 
             max_bdc = max_rscc_bdc
             max_rotation = list(fragment_maps.keys())[max_index[1]]
