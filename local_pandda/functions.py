@@ -3015,7 +3015,7 @@ def analyse_dataset_gpu(
             # if max_correlation > params.min_correlation:
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
                 # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                max_array,
+                max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
                 alignments[dataset.dtag][marker],
