@@ -2016,12 +2016,7 @@ def get_backtransformed_map_mtz(
     print(f"Num non-zero indexes: {len(indexes)}")
 
     fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
-    wrapped_centroid_frac = gemmi.Fractional(
-        fractional_centroid.x % 1,
-        fractional_centroid.y % 1,
-        fractional_centroid.z % 1,
-    )
-    wrapped_centroid_orth = grid.unit_cell.orthogonalize(wrapped_centroid_frac)
+    centroid_orth = grid.unit_cell.orthogonalize(fractional_centroid)
 
     # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
     for index in indexes:
@@ -2029,9 +2024,9 @@ def get_backtransformed_map_mtz(
         index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
         # Get the position relative to the box centroid
         index_relative_position: gemmi.Position = gemmi.Position(
-            index_position.x - wrapped_centroid_orth.x,
-            index_position.y - wrapped_centroid_orth.y,
-            index_position.z - wrapped_centroid_orth.z,
+            index_position.x - centroid_orth.x,
+            index_position.y - centroid_orth.y,
+            index_position.z - centroid_orth.z,
         )
 
         # Rotate it translate it to reference frame
