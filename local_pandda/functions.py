@@ -2909,7 +2909,7 @@ def analyse_dataset_gpu(
 
                 write_event_map(
                     event_map,
-                    out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
+                    out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.mtz",
                     dataset_event_marker,
                     dataset,
                     resolution,
