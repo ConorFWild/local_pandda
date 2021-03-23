@@ -3019,8 +3019,8 @@ def analyse_dataset_gpu(
 
             # if max_correlation > params.min_correlation:
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                max_array[0,:,:,:],
+                (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                # max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
                 alignments[dataset.dtag][marker],
@@ -3045,32 +3045,32 @@ def analyse_dataset_gpu(
                 resolution,
             )
 
-            event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                torch.max(mean_map_rscc, 1)[0].cpu().numpy()[0,:,:,:],
-                reference_dataset,
-                dataset,
-                alignments[dataset.dtag][marker],
-                marker,
-                params.grid_size,
-                params.grid_spacing,
-                params.structure_factors,
-                params.sample_rate,
-            )
-
-            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                          None,
-                                          )
-
-            write_event_map(
-                event_map,
-                out_dir / f"{dataset.dtag}_mean_rscc.mtz",
-                dataset_event_marker,
-                dataset,
-                resolution,
-            )
+            # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+            #     (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+            #     torch.max(mean_map_rscc, 1)[0].cpu().numpy()[0,:,:,:],
+            #     reference_dataset,
+            #     dataset,
+            #     alignments[dataset.dtag][marker],
+            #     marker,
+            #     params.grid_size,
+            #     params.grid_spacing,
+            #     params.structure_factors,
+            #     params.sample_rate,
+            # )
+            #
+            # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+            #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+            #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+            #                               None,
+            #                               )
+            #
+            # write_event_map(
+            #     event_map,
+            #     out_dir / f"{dataset.dtag}_mean_rscc.mtz",
+            #     dataset_event_marker,
+            #     dataset,
+            #     resolution,
+            # )
 
     # End loop over fragment builds
 
@@ -3151,8 +3151,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        if dtag != "HAO1A-x0604":
-            continue
+        # if dtag != "HAO1A-x0604":
+        #     continue
 
         dataset = residue_datasets[dtag]
 
