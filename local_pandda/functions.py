@@ -1300,7 +1300,7 @@ def get_affinity_background_corrected_density(
     return bcd, bcd_map
 
 
-def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, dataset: Dataset):
+def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, dataset: Dataset, resolution: float):
     st: gemmi.Structure = gemmi.Structure()
     model: gemmi.Model = gemmi.Model(f"{1}")
     chain: gemmi.Chain = gemmi.Chain(f"{1}")
@@ -1321,20 +1321,33 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
     chain.add_residue(residue)
     model.add_chain(chain)
     st.add_model(model)
+    #
+    # box = st.calculate_fractional_box(margin=32)
+    #
+    # ccp4 = gemmi.Ccp4Map()
+    # ccp4.grid = event_map
+    # ccp4.setup()
+    # ccp4.update_ccp4_header(2, True)
+    #
+    # ccp4.set_extent(box)
+    #
+    # ccp4.setup()
+    # ccp4.update_ccp4_header(2, True)
+    #
+    # ccp4.write_ccp4_map(str(out_path))
 
-    box = st.calculate_fractional_box(margin=32)
+    sf = gemmi.transform_map_to_f_phi(event_map, half_l=True)
+    data = sf.prepare_asu_data(dmin=resolution)
 
-    ccp4 = gemmi.Ccp4Map()
-    ccp4.grid = event_map
-    ccp4.setup()
-    ccp4.update_ccp4_header(2, True)
+    mtz = gemmi.Mtz(with_base=True)
+    mtz.spacegroup = sf.spacegroup
+    mtz.set_cell_for_all(sf.unit_cell)
+    mtz.add_dataset('unknown')
+    mtz.add_column('FWT', 'F')
+    mtz.add_column('PHWT', 'P')
+    mtz.set_data(data)
+    mtz.write_to_file(str(out_path))
 
-    ccp4.set_extent(box)
-
-    ccp4.setup()
-    ccp4.update_ccp4_header(2, True)
-
-    ccp4.write_ccp4_map(str(out_path))
 
 
 # def get_event(dataset: Dataset, cluster: Cluster) -> Event:
@@ -2899,6 +2912,7 @@ def analyse_dataset_gpu(
                     out_dir / f"{dataset.dtag}_{marker.x}_{marker.y}_{marker.z}_{fragment_id}.ccp4",
                     dataset_event_marker,
                     dataset,
+                    resolution,
                 )
 
     # End loop over fragment builds
