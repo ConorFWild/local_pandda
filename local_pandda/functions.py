@@ -1785,6 +1785,7 @@ def get_backtransformed_map(
         structure_factors.phi,
         sample_rate=sample_rate,
     )
+    grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
     grid.fill(0)
 
     # reference to moving
