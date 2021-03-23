@@ -85,9 +85,9 @@ def run_pandda(data_dir: str,
         reference_dataset,
         params.structure_factors,
     )
-    if params.output_smoothed_mtzs:
-        for dtag, smoothed_dataset in smoothed_datasets.items():
-            save_mtz(smoothed_dataset.reflections, out_dir / f"{smoothed_dataset.dtag}_smoothed.mtz")
+    # if params.output_smoothed_mtzs:
+    #     for dtag, smoothed_dataset in smoothed_datasets.items():
+    #         save_mtz(smoothed_dataset.reflections, out_dir / f"{smoothed_dataset.dtag}_smoothed.mtz")
 
     # Get the markers to sample around
     markers: List[Marker] = get_markers(reference_dataset, markers)
