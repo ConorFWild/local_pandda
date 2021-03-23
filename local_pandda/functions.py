@@ -1986,7 +1986,6 @@ def get_backtransformed_map_mtz(
     print(f"max_pos_frac: {max_pos_frac}")
     print(f"dataset_centroid_frac: {dataset_centroid_frac}")
 
-
     print(f"min_pos_frac: {min_pos_frac}")
     print(f"max_pos_frac: {max_pos_frac}")
 
