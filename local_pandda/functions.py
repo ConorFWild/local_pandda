@@ -2561,6 +2561,8 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     mean_map_correlation = mean_map_rscc[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
 
+    max_array = torch.max(delta_rscc, 1)
+
     del rho_o
     del rho_c
     del masks
@@ -2586,7 +2588,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     del delta_rscc
     # del rscc_mask
 
-    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()
+    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item(), max_array
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -2953,6 +2955,7 @@ def analyse_dataset_gpu(
             max_index = max_rscc_correlation_index[1]
             max_mean_map_correlation = max_rscc_correlation_index[2]
             max_delta_correlation = max_rscc_correlation_index[3]
+            max_array = max_rscc_correlation_index[3]
 
             max_bdc = max_rscc_bdc
             max_rotation = list(fragment_maps.keys())[max_index[1]]
@@ -3011,7 +3014,8 @@ def analyse_dataset_gpu(
 
             # if max_correlation > params.min_correlation:
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                # (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                max_array,
                 reference_dataset,
                 dataset,
                 alignments[dataset.dtag][marker],
