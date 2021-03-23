@@ -2561,7 +2561,8 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     mean_map_correlation = mean_map_rscc[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
 
-    max_array = torch.max(delta_rscc, 1)
+    max_array = torch.max(delta_rscc, 1).cpu().numpy()
+    print(f"max_array shape: {max_array.shape}")
 
     del rho_o
     del rho_c
