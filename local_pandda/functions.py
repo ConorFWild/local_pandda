@@ -3066,7 +3066,7 @@ def analyse_dataset_gpu(
 
             write_event_map(
                 event_map,
-                out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
+                out_dir / f"{dataset.dtag}_mean_rscc.mtz",
                 dataset_event_marker,
                 dataset,
                 resolution,
