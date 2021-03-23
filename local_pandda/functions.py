@@ -1336,7 +1336,7 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
     #
     # ccp4.write_ccp4_map(str(out_path))
 
-    sf = gemmi.transform_map_to_f_phi(event_map, half_l=True)
+    sf = gemmi.transform_map_to_f_phi(event_map)
     data = sf.prepare_asu_data(dmin=resolution)
 
     mtz = gemmi.Mtz(with_base=True)
