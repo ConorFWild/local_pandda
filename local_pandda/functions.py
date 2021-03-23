@@ -1928,6 +1928,132 @@ def get_backtransformed_map(
     return grid
 
 
+def get_backtransformed_map_mtz(
+        corrected_density: np.ndarray,
+        reference_dataset: Dataset,
+        dataset: Dataset,
+        transform: Transform,
+        marker: Marker,
+        grid_size: int,
+        grid_spacing: float,
+        structure_factors: StructureFactors,
+        sample_rate: float,
+) -> gemmi.FloatGrid:
+    # Embed corrected density in grid at origin
+    corrected_density_grid: gemmi.FloatGrid = gemmi.FloatGrid(*corrected_density.shape)
+    unit_cell: gemmi.UnitCell = gemmi.UnitCell(grid_size * grid_spacing,
+                                               grid_size * grid_spacing,
+                                               grid_size * grid_spacing,
+                                               90, 90, 90)
+    print(f"Corrected density unit cell: {unit_cell}")
+    corrected_density_grid.set_unit_cell(unit_cell)
+    corrected_density_grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
+
+    for index, value in np.ndenumerate(corrected_density):
+        corrected_density_grid.set_value(index[0], index[1], index[2], value)
+
+    # FFT
+    grid: gemmi.FloatGrid = dataset.reflections.transform_f_phi_to_map(
+        structure_factors.f,
+        structure_factors.phi,
+        sample_rate=sample_rate,
+    )
+    grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
+    grid.fill(0)
+
+    # reference to moving
+
+    # mask
+    mask: gemmi.Int8Grid = gemmi.Int8Grid(grid.nu, grid.nv, grid.nw)
+    mask.set_unit_cell(grid.unit_cell)
+    mask.spacegroup = gemmi.find_spacegroup_by_name('P 1')
+
+    tr = transform.transform.vec.tolist()
+    dataset_centroid = gemmi.Position(marker.x - tr[0], marker.y - tr[1], marker.z - tr[2])
+    print(f"Dataset centriod: {dataset_centroid}")
+
+    dataset_centroid_np = np.array([dataset_centroid.x, dataset_centroid.y, dataset_centroid.z])
+    box_min = dataset_centroid_np - ((grid_size * grid_spacing) / 2)
+    print(f"Box min: {box_min}")
+    box_max = dataset_centroid_np + ((grid_size * grid_spacing) / 2)
+    print(f"Box max: {box_max}")
+    min_pos = gemmi.Position(*box_min)
+    max_pos = gemmi.Position(*box_max)
+    min_pos_frac = grid.unit_cell.fractionalize(min_pos)
+    max_pos_frac = grid.unit_cell.fractionalize(max_pos)
+    dataset_centroid_frac = grid.unit_cell.fractionalize(dataset_centroid)
+    print(f"min_pos_frac: {min_pos_frac}")
+    print(f"max_pos_frac: {max_pos_frac}")
+    print(f"dataset_centroid_frac: {dataset_centroid_frac}")
+
+
+    print(f"min_pos_frac: {min_pos_frac}")
+    print(f"max_pos_frac: {max_pos_frac}")
+
+    min_wrapped_coord = np.array([min_pos_frac.x * grid.nu,
+                                  min_pos_frac.y * grid.nv,
+                                  min_pos_frac.z * grid.nw,
+                                  ])
+    print(f"Min wrapped coord: {min_wrapped_coord}")
+
+    max_wrapped_coord = np.array([max_pos_frac.x * grid.nu,
+                                  max_pos_frac.y * grid.nv,
+                                  max_pos_frac.z * grid.nw,
+                                  ])
+    print(f"Max wrapped coord: {max_wrapped_coord}")
+
+    r = gemmi.Transform()
+    r.mat.fromlist(transform.transform.inverse().mat.tolist())
+    r.vec.fromlist([0.0, 0.0, 0.0])
+
+    # Get indexes of grid points around moving residue
+    indexes = list(
+        itertools.product(
+            [x for x in range(int(min_wrapped_coord[0]), int(max_wrapped_coord[0]))],
+            [y for y in range(int(min_wrapped_coord[1]), int(max_wrapped_coord[1]))],
+            [z for z in range(int(min_wrapped_coord[2]), int(max_wrapped_coord[2]))],
+        )
+    )
+    print(f"Num non-zero indexes: {len(indexes)}")
+
+    fractional_centroid = grid.unit_cell.fractionalize(dataset_centroid)
+    wrapped_centroid_frac = gemmi.Fractional(
+        fractional_centroid.x % 1,
+        fractional_centroid.y % 1,
+        fractional_centroid.z % 1,
+    )
+    wrapped_centroid_orth = grid.unit_cell.orthogonalize(wrapped_centroid_frac)
+
+    # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
+    for index in indexes:
+        # Get the 3d position of the point to sample on the
+        index_position: gemmi.Position = grid.point_to_position(grid.get_point(index[0], index[1], index[2]))
+        # Get the position relative to the box centroid
+        index_relative_position: gemmi.Position = gemmi.Position(
+            index_position.x - wrapped_centroid_orth.x,
+            index_position.y - wrapped_centroid_orth.y,
+            index_position.z - wrapped_centroid_orth.z,
+        )
+
+        # Rotate it translate it to reference frame
+        transformed_vec: gemmi.Vec3 = r.apply(index_relative_position)
+
+        transformed_position: gemmi.Position = gemmi.Position(transformed_vec.x,
+                                                              transformed_vec.y,
+                                                              transformed_vec.z,
+                                                              )
+        transformed_sample_position = gemmi.Position(
+            transformed_position.x + (grid_size * grid_spacing) / 2,
+            transformed_position.y + (grid_size * grid_spacing) / 2,
+            transformed_position.z + (grid_size * grid_spacing) / 2,
+        )
+
+        interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
+        grid.set_value(index[0], index[1], index[2], interpolated_value)
+
+    return grid
+
+
 def get_affinity_event_map_path(
         out_dir,
         dataset,
@@ -2890,7 +3016,7 @@ def analyse_dataset_gpu(
             print(maxima)
 
             if max_correlation > params.min_correlation:
-                event_map: gemmi.FloatGrid = get_backtransformed_map(
+                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
                     (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
                     reference_dataset,
                     dataset,
