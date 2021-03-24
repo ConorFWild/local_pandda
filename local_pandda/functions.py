@@ -2981,7 +2981,6 @@ def analyse_dataset_gpu(
             print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
 
             max_index_fragment_relative_position = gemmi.Position(
-
                 max_index_fragment_relative_coord[0] * params.grid_spacing,
                 max_index_fragment_relative_coord[1] * params.grid_spacing,
                 max_index_fragment_relative_coord[2] * params.grid_spacing,
