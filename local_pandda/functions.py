@@ -3000,8 +3000,8 @@ def analyse_dataset_gpu(
 
             max_index_fragment_position_dataset_frame = [
                 max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
-                max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.x),
-                max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.x),
+                max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.y),
+                max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.z),
             ]
             print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
 
