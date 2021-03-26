@@ -35,6 +35,7 @@ from local_pandda.ncc import NCC
 
 import os
 
+
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 # torch.backends.cudnn.benchmark = False
 
@@ -1349,7 +1350,6 @@ def write_event_map(event_map: gemmi.FloatGrid, out_path: Path, marker: Marker, 
     mtz.write_to_file(str(out_path))
 
 
-
 # def get_event(dataset: Dataset, cluster: Cluster) -> Event:
 #     return None
 #
@@ -2446,7 +2446,8 @@ def analyse_residue(
     # write_result_html(pandda_results)
 
 
-def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, min_correlation, max_mean_map_correlation):
+def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, min_correlation,
+                        max_mean_map_correlation):
     reference_fragment = fragment_maps_np[0, 0, :, :, :]
     print(f"reference_fragment: {reference_fragment.shape}")
 
@@ -2593,7 +2594,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     del delta_rscc
     # del rscc_mask
 
-    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()#, max_array
+    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()  # , max_array
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -2738,6 +2739,7 @@ def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
     torch.cuda.ipc_collect()
 
     return mean_map_rscc
+
 
 def analyse_dataset_gpu(
         dataset: Dataset,
@@ -2971,7 +2973,7 @@ def analyse_dataset_gpu(
                 max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
                 max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
                 max_index_mask_coord[2] - (max_z / 2) + (fragment_maps[max_rotation].shape[2] / 2),
-                ]
+            ]
             print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
             max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size / 2,
@@ -3152,6 +3154,9 @@ def analyse_residue_gpu(
 
         # if dtag != "HAO1A-x0604":
         #     continue
+
+        if dtag != "HAO1A-x0964":
+            continue
 
         dataset = residue_datasets[dtag]
 
