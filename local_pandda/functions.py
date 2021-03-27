@@ -252,6 +252,8 @@ def get_fragment_map(
     grid.interpolate_values(arr, tr)
     print(arr.shape)
 
+    arr = (arr / np.max(arr)) * 3
+
     return arr
 
 
