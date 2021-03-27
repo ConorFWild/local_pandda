@@ -3133,12 +3133,12 @@ def analyse_dataset_gpu(
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
             fragment_masks_low_np = np.stack(fragment_masks_low_list, axis=0)
-            fragment_masks_low_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+            fragment_masks_low_np = fragment_masks_np.reshape(fragment_masks_low_np.shape[0],
                                                           1,
-                                                          fragment_masks_np.shape[1],
-                                                          fragment_masks_np.shape[2],
-                                                          fragment_masks_np.shape[3])
-            print(f"fragment_masks_np: {fragment_masks_np.shape}")
+                                                          fragment_masks_low_np.shape[1],
+                                                          fragment_masks_low_np.shape[2],
+                                                          fragment_masks_low_np.shape[3])
+            print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
 
             # mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             # mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
