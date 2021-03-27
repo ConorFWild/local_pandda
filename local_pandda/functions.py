@@ -3008,8 +3008,14 @@ def analyse_dataset_gpu(
 
             # mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             # mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
-
-            reference_map = fragment_search_rmsd_gpu(sample_mean, fragment_maps_np, fragment_masks_np, )
+            mean_map_np = np.stack([sample_mean], axis=0)
+            mean_map_np = mean_map_np.reshape(
+                1,
+                1,
+                mean_map_np.shape[1],
+                mean_map_np.shape[2],
+                mean_map_np.shape[3])
+            reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
             mean_map_max_correlation = torch.max(reference_map).cpu().item()
 
             # rsccs = {}
