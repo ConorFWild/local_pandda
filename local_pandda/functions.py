@@ -2670,6 +2670,12 @@ def fragment_search_mask_gpu(xmap_np, fragment_masks_np, cutoff):
     size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
     print(f"size: {size}")
 
+    padding = (int((reference_mask.shape[0]) / 2),
+               int((reference_mask.shape[1]) / 2),
+               int((reference_mask.shape[2]) / 2),
+               )
+    print(f"Padding: {padding}")
+
     # Tensors
     rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
     print(f"rho_o: {rho_o.shape}")
@@ -3030,7 +3036,6 @@ def analyse_dataset_gpu(
             fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
             fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
 
-
             fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
 
@@ -3079,6 +3084,7 @@ def analyse_dataset_gpu(
             # reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
             # mean_map_max_correlation = torch.max(reference_map).cpu().item()
             reference_map = fragment_search_mask_gpu(mean_map_np, fragment_masks_np, 1.5)
+            mean_map_max_correlation = torch.max(reference_map).cpu().item()
 
 
             # rsccs = {}
