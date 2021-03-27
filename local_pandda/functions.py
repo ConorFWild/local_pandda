@@ -3034,7 +3034,7 @@ def analyse_dataset_gpu(
 
                 target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
 
-                rmsds[[bdcs[b_index]]] = peak_search(reference_map, target_map)
+                rmsds[bdcs[b_index]] = peak_search(reference_map, target_map)
 
                 gc.collect()
                 torch.cuda.empty_cache()
