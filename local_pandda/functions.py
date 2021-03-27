@@ -2597,6 +2597,84 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()  # , max_array
 
 
+def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
+    reference_fragment = fragment_maps_np[0, 0, :, :, :]
+    print(f"reference_fragment: {reference_fragment.shape}")
+
+    reference_mask = fragment_masks_np[0, 0, :, :, :]
+    print(f"reference_mask: {reference_mask.shape}")
+
+    padding = (int((reference_fragment.shape[0]) / 2),
+               int((reference_fragment.shape[1]) / 2),
+               int((reference_fragment.shape[2]) / 2),
+               )
+    print(f"Padding: {padding}")
+
+    size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+    print(f"size: {size}")
+
+    reference_map_masked_values = reference_fragment[reference_mask > 0]
+    print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
+
+    reference_map_sum = np.sum(reference_map_masked_values)
+    print(f"reference_map_sum: {reference_map_sum}")
+
+    reference_map_squared_masked_values = np.square(reference_map_masked_values)
+    print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values.shape}")
+
+    reference_map_squared_sum = np.sum(reference_map_squared_masked_values)
+    print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values}")
+
+    # Tensors
+    rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
+    print(f"rho_o: {rho_o.shape}")
+
+    rho_c = torch.tensor(fragment_maps_np, dtype=torch.float).cuda()
+    print(f"rho_c: {rho_c.shape}")
+
+    masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
+    print(f"masks: {masks.shape}")
+
+    # Convolutions
+    conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
+    print(
+        f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
+
+    rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
+    print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
+
+    rmsd = rho_o_squared + reference_map_squared_sum - 2 * conv_rho_o_rho_c
+    print(f"RSCC: {rmsd.shape} {rmsd[0, 0, 32, 32, 32]}")
+
+    rmsd = torch.nan_to_num(rmsd, nan=0.0, posinf=0.0, neginf=0.0, )
+
+    del rho_o
+    del rho_c
+    del masks
+
+    del conv_rho_o_rho_c
+
+    del rho_o_squared
+
+    return rmsd
+
+
+def peak_search(reference_map, target_map):
+    delta_map = target_map - reference_map
+
+    max_delta = torch.max(delta_map).cpu()
+    print(f"max_delta: {max_delta}")
+
+    max_index = np.unravel_index(torch.argmax(delta_map).cpu(), delta_map.shape)
+
+    max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
+    print(f"max_map_val: {max_map_val}")
+
+    reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
+
+    return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
+
+
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
     # Get mean map RSCC
     mean_map_np = np.stack([sample_mean], axis=0)
@@ -2928,10 +3006,14 @@ def analyse_dataset_gpu(
                                                           fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
-            mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
-            mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
+            # mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
+            # mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
-            rsccs = {}
+            reference_map = fragment_search_rmsd_gpu(sample_mean, fragment_maps_np, fragment_masks_np, )
+            mean_map_max_correlation = torch.max(reference_map).cpu().item()
+
+            # rsccs = {}
+            rmsds = {}
             for b_index in range(len(event_map_list)):
                 event_maps_np = np.stack([event_map_list[b_index]], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
@@ -2941,8 +3023,12 @@ def analyse_dataset_gpu(
                                                       event_maps_np.shape[3])
                 print(f"event_maps_np: {event_maps_np.shape}")
 
-                rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
-                                                           mean_map_rscc, 0.5, 0.4)
+                # rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
+                #                                            mean_map_rscc, 0.5, 0.4)
+
+                target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
+
+                rmsds[[bdcs[b_index]]] = peak_search(reference_map, target_map)
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -2956,13 +3042,20 @@ def analyse_dataset_gpu(
                 except:
                     pass
 
-            max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
-            max_rscc_correlation_index = rsccs[max_rscc_bdc]
+            # max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
+            # max_rscc_correlation_index = rsccs[max_rscc_bdc]
+            # max_correlation = max_rscc_correlation_index[0]
+            # max_index = max_rscc_correlation_index[1]
+            # max_mean_map_correlation = max_rscc_correlation_index[2]
+            # max_delta_correlation = max_rscc_correlation_index[3]
+            # max_array = max_rscc_correlation_index[4]
+
+            max_rscc_bdc = max(rmsds, key=lambda x: rmsds[x][0])
+            max_rscc_correlation_index = rmsds[max_rscc_bdc]
             max_correlation = max_rscc_correlation_index[0]
             max_index = max_rscc_correlation_index[1]
             max_mean_map_correlation = max_rscc_correlation_index[2]
             max_delta_correlation = max_rscc_correlation_index[3]
-            # max_array = max_rscc_correlation_index[4]
 
             max_bdc = max_rscc_bdc
             max_rotation = list(fragment_maps.keys())[max_index[1]]
@@ -3152,8 +3245,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        # if dtag != "HAO1A-x0604":
-        #     continue
+        if dtag != "HAO1A-x0604":
+            continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -3164,9 +3257,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0808":
         #     continue
 
-        if dtag != "HAO1A-x0707":
-            continue
-
+        # if dtag != "HAO1A-x0707":
+        #     continue
 
         dataset = residue_datasets[dtag]
 
