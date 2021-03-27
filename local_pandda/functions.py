@@ -3083,7 +3083,7 @@ def analyse_dataset_gpu(
                 mean_map_np.shape[3])
             # reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
             # mean_map_max_correlation = torch.max(reference_map).cpu().item()
-            reference_map = fragment_search_mask_gpu(mean_map_np, fragment_masks_np, 2.25)
+            reference_map = fragment_search_mask_gpu(mean_map_np, fragment_masks_np, 3.0)
             mean_map_max_correlation = torch.max(reference_map).cpu().item()
 
 
@@ -3102,7 +3102,7 @@ def analyse_dataset_gpu(
                 #                                            mean_map_rscc, 0.5, 0.4)
 
                 # target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
-                target_map = fragment_search_mask_gpu(event_maps_np, fragment_masks_np, 2.25)
+                target_map = fragment_search_mask_gpu(event_maps_np, fragment_masks_np, 3.0)
 
                 rmsds[bdcs[b_index]] = peak_search_mask(reference_map, target_map)
 
