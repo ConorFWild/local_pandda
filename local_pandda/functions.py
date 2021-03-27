@@ -2662,10 +2662,10 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
 def peak_search(reference_map, target_map):
     delta_map = target_map - reference_map
 
-    max_delta = torch.max(delta_map).cpu()
+    max_delta = torch.min(delta_map).cpu()
     print(f"max_delta: {max_delta}")
 
-    max_index = np.unravel_index(torch.argmax(delta_map).cpu(), delta_map.shape)
+    max_index = np.unravel_index(torch.argmin(delta_map).cpu(), delta_map.shape)
 
     max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
     print(f"max_map_val: {max_map_val}")
