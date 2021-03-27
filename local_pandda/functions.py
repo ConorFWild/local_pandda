@@ -2661,6 +2661,47 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
     return rmsd
 
 
+
+def fragment_search_mask_gpu(xmap_np, fragment_masks_np, cutoff):
+
+    reference_mask = fragment_masks_np[0, 0, :, :, :]
+    print(f"reference_mask: {reference_mask.shape}")
+
+    size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+    print(f"size: {size}")
+
+    # Tensors
+    rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
+    print(f"rho_o: {rho_o.shape}")
+
+    rho_o_greater_cutoff = rho_o > cutoff
+
+    rho_o_less_cutoff = rho_o < cutoff
+
+    rho_o[rho_o_greater_cutoff] = 1.0
+
+    rho_o[rho_o_less_cutoff] = 0.0
+
+    masks = torch.tensor(fragment_masks_np, dtype=torch.float).cuda()
+    print(f"masks: {masks.shape}")
+
+    # Convolutions
+    conv_rho_o_mask_overlap = torch.nn.functional.conv3d(rho_o, masks, padding=padding) / size
+    print(
+        f"conv_rho_o_rho_c: {conv_rho_o_mask_overlap.shape} {torch.max(conv_rho_o_mask_overlap)} {torch.min(conv_rho_o_mask_overlap)}")
+
+    print(f"RSCC: {conv_rho_o_mask_overlap.shape} {conv_rho_o_mask_overlap[0, 0, 32, 32, 32]}")
+
+    conv_rho_o_mask_overlap = torch.nan_to_num(conv_rho_o_mask_overlap, nan=0.0, posinf=0.0, neginf=0.0, )
+
+    del rho_o
+    del rho_o_greater_cutoff
+    del rho_o_less_cutoff
+    del masks
+
+    return conv_rho_o_mask_overlap
+
+
 def peak_search(reference_map, target_map):
     delta_map = target_map - reference_map
 
@@ -2675,6 +2716,23 @@ def peak_search(reference_map, target_map):
     reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
 
     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
+
+
+def peak_search_mask(reference_map, target_map):
+    delta_map = target_map - reference_map
+
+    max_delta = torch.max(delta_map).cpu()
+    print(f"max_delta: {max_delta}")
+
+    max_index = np.unravel_index(torch.argmax(delta_map).cpu(), delta_map.shape)
+
+    max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
+    print(f"max_map_val: {max_map_val}")
+
+    reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
+
+    return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
+
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -2960,7 +3018,7 @@ def analyse_dataset_gpu(
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
-            arr_mask = fragment_map > 0.1 * np.max(fragment_map)
+            arr_mask = fragment_map > 0.5 * np.max(fragment_map)
 
             arr[~arr_mask] = 0.0
             fragment_mask_arr = np.zeros(fragment_map.shape)
@@ -2971,6 +3029,7 @@ def analyse_dataset_gpu(
 
             fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
             fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
+
 
             fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
@@ -3017,8 +3076,10 @@ def analyse_dataset_gpu(
                 mean_map_np.shape[1],
                 mean_map_np.shape[2],
                 mean_map_np.shape[3])
-            reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
-            mean_map_max_correlation = torch.max(reference_map).cpu().item()
+            # reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
+            # mean_map_max_correlation = torch.max(reference_map).cpu().item()
+            reference_map = fragment_search_mask_gpu(mean_map_np, fragment_masks_np, 1.5)
+
 
             # rsccs = {}
             rmsds = {}
@@ -3034,9 +3095,10 @@ def analyse_dataset_gpu(
                 # rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
                 #                                            mean_map_rscc, 0.5, 0.4)
 
-                target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
+                # target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
+                target_map = fragment_search_mask_gpu(event_maps_np, fragment_masks_np, 1.5)
 
-                rmsds[bdcs[b_index]] = peak_search(reference_map, target_map)
+                rmsds[bdcs[b_index]] = peak_search_mask(reference_map, target_map)
 
                 gc.collect()
                 torch.cuda.empty_cache()
