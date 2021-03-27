@@ -3093,7 +3093,7 @@ def analyse_dataset_gpu(
 
             fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
             fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
-            fragment_mask_low[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
+            fragment_mask_low[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_low_arr[:, :, :]
 
             fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
