@@ -3530,16 +3530,16 @@ def analyse_dataset_masks_gpu(
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
         if params.debug:
             print(f"\t\tProcessing fragment: {fragment_id}")
-        fragment_masks: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_masks(
+        initial_fragment_masks: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_masks(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
             [1.5, 1.0]
         )
 
-        max_x = max([fragment_map.shape[0] for fragment_map in fragment_masks.values()])
-        max_y = max([fragment_map.shape[1] for fragment_map in fragment_masks.values()])
-        max_z = max([fragment_map.shape[2] for fragment_map in fragment_masks.values()])
+        max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
+        max_y = max([fragment_map.shape[1] for fragment_map in initial_fragment_masks.values()])
+        max_z = max([fragment_map.shape[2] for fragment_map in initial_fragment_masks.values()])
         if max_x % 2 == 0: max_x = max_x + 1
         if max_y % 2 == 0: max_y = max_y + 1
         if max_z % 2 == 0: max_z = max_z + 1
@@ -3548,7 +3548,7 @@ def analyse_dataset_masks_gpu(
         fragment_masks_low_list = []
 
         fragment_masks = {}
-        for rotation, initial_fragment_mask in fragment_masks.items():
+        for rotation, initial_fragment_mask in initial_fragment_masks.items():
             arr = initial_fragment_mask.copy()
 
             arr_mask = initial_fragment_mask > 2.0
@@ -3605,7 +3605,6 @@ def analyse_dataset_masks_gpu(
                                                               fragment_masks_low_np.shape[3])
             print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
 
-
             mean_map_np = np.stack([sample_mean], axis=0)
             mean_map_np = mean_map_np.reshape(
                 1,
@@ -3634,7 +3633,6 @@ def analyse_dataset_masks_gpu(
                                                           event_maps_np.shape[2],
                                                           event_maps_np.shape[3])
                     print(f"event_maps_np: {event_maps_np.shape}")
-
 
                     target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
                     target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np, contour)
@@ -3665,14 +3663,14 @@ def analyse_dataset_masks_gpu(
             max_delta_correlation = max_rscc_correlation_index[3]
 
             max_bdc = max_rscc_bdc
-            max_rotation = list(fragment_maps.keys())[max_index[1]]
-            max_index_fragment_map = fragment_maps[max_rotation]
+            max_rotation = list(fragment_masks.keys())[max_index[1]]
+            max_index_fragment_mask = fragment_masks[max_rotation]
             max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
-            max_index_fragment_map_shape = max_index_fragment_map.shape
+            max_index_fragment_map_shape = max_index_fragment_mask.shape
             max_index_fragment_coord = [
-                max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
-                max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
-                max_index_mask_coord[2] - (max_z / 2) + (fragment_maps[max_rotation].shape[2] / 2),
+                max_index_mask_coord[0] - (max_x / 2) + (fragment_masks[max_rotation].shape[0] / 2),
+                max_index_mask_coord[1] - (max_y / 2) + (fragment_masks[max_rotation].shape[1] / 2),
+                max_index_mask_coord[2] - (max_z / 2) + (fragment_masks[max_rotation].shape[2] / 2),
             ]
             print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
@@ -3892,9 +3890,12 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0707":
         #     continue
 
+        if dtag != "HAO1A-x0132":
+            continue
+
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_masks_gpu(
             dataset,
             residue_datasets,
             marker,
