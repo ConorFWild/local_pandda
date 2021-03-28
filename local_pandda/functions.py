@@ -3551,8 +3551,8 @@ def analyse_dataset_masks_gpu(
         for rotation, initial_fragment_mask in initial_fragment_masks.items():
             arr = initial_fragment_mask.copy()
 
-            arr_mask = initial_fragment_mask > 2.0
-            arr_mask_low = initial_fragment_mask > 1.0
+            arr_mask = initial_fragment_mask >= 2.0
+            arr_mask_low = initial_fragment_mask >= 1.0
 
             print(f"arr_mask: {np.sum(arr_mask)}")
             print(f"arr_mask_low: {np.sum(arr_mask_low)}")
@@ -3653,7 +3653,6 @@ def analyse_dataset_masks_gpu(
                         print(type(obj), obj.size())
                 except:
                     pass
-
 
             max_rscc_bdc = max(rmsds, key=lambda x: rmsds[x][0])
             max_rscc_correlation_index = rmsds[max_rscc_bdc]
