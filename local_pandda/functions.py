@@ -318,6 +318,7 @@ def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate)
 
 def get_fragment_mask(rotated_structure, grid_spacing, radii):
     unit_cell = rotated_structure.cell
+
     grid = gemmi.FloatGrid(
         int(unit_cell.a / grid_spacing),
         int(unit_cell.b / grid_spacing),
@@ -333,7 +334,7 @@ def get_fragment_mask(rotated_structure, grid_spacing, radii):
                 for residue in chain:
                     for atom in residue:
                         pos: gemmi.Position = atom.pos
-                        grid.set_points_around(pos, radius, float(i))
+                        grid.set_points_around(pos, radius, float(i) + 1.0)
 
     arr = np.array(grid, copy=True)
     return arr
