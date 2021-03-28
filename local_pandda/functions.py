@@ -318,7 +318,7 @@ def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate)
 
 def get_fragment_mask(rotated_structure, grid_spacing, radii):
     unit_cell = rotated_structure.cell
-    grid = np.FloatGrid(
+    grid = gemmi.FloatGrid(
         int(unit_cell.a / grid_spacing),
         int(unit_cell.b / grid_spacing),
         int(unit_cell.c / grid_spacing),
