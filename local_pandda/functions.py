@@ -324,6 +324,9 @@ def get_fragment_mask(rotated_structure, grid_spacing, radii):
         int(unit_cell.c / grid_spacing),
     )
 
+    grid.set_unit_cell(unit_cell)
+    grid.spacegroup = gemmi.find_spacegroup_by_name("P 1")
+
     for i, radius in enumerate(radii):
         for model in rotated_structure:
             for chain in model:
