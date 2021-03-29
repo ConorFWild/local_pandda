@@ -3663,7 +3663,7 @@ def analyse_dataset_masks_gpu(
                                                                            contour)
 
 
-                    rmsds[bdcs[b_index]] = peak_search_mask(
+                    rmsds[(bdcs[b_index], contour)] = peak_search_mask(
                         target_map + (fragment_mask_low_size-target_map_low))
                     print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
 
@@ -3679,7 +3679,10 @@ def analyse_dataset_masks_gpu(
                 except:
                     pass
 
-            max_rscc_bdc = max(rmsds, key=lambda x: rmsds[x][0])
+            max_rscc_bdc_contour = max(rmsds, key=lambda x: rmsds[x][0])
+            print(f"max_rscc_bdc_contour: {max_rscc_bdc_contour}")
+            max_rscc_bdc = max_rscc_bdc_contour[0]
+            max_rscc_contour = max_rscc_bdc_contour[0]
             max_rscc_correlation_index = rmsds[max_rscc_bdc]
             max_correlation = max_rscc_correlation_index[0]
             max_index = max_rscc_correlation_index[1]
