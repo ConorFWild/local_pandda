@@ -3570,7 +3570,7 @@ def analyse_dataset_masks_gpu(
             arr = initial_fragment_mask.copy()
 
             arr_mask = initial_fragment_mask >= 2.0
-            arr_mask_low = initial_fragment_mask >= 1.0
+            arr_mask_low = (initial_fragment_mask >= 1.0) * (initial_fragment_mask < 2.0)
 
             print(f"arr_mask: {np.sum(arr_mask)}")
             print(f"arr_mask_low: {np.sum(arr_mask_low)}")
@@ -3592,6 +3592,7 @@ def analyse_dataset_masks_gpu(
             fragment_masks_low_list.append(fragment_mask_low)
 
             fragment_masks[rotation] = fragment_mask
+
 
         if params.debug:
             print(f"\t\tGot {len(fragment_masks)} fragment maps")
@@ -3622,6 +3623,10 @@ def analyse_dataset_masks_gpu(
                                                               fragment_masks_low_np.shape[2],
                                                               fragment_masks_low_np.shape[3])
             print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
+
+            fragment_mask_low_size = np.sum(fragment_masks_low_np[0, 0, :, :, :])
+            print(f"fragment_mask_low_size: {fragment_mask_low_size}")
+
 
             mean_map_np = np.stack([sample_mean], axis=0)
             mean_map_np = mean_map_np.reshape(
@@ -3657,9 +3662,9 @@ def analyse_dataset_masks_gpu(
                     target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
                                                                            contour)
 
-                    target_map[target_map * 1.5 < target_map_low] = 0
 
-                    rmsds[bdcs[b_index]] = peak_search_mask(target_map)
+                    rmsds[bdcs[b_index]] = peak_search_mask(
+                        target_map + ((-1 * target_map_low) + fragment_mask_low_size))
                     print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
 
                     gc.collect()
