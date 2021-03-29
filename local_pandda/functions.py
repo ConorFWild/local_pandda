@@ -3659,7 +3659,7 @@ def analyse_dataset_masks_gpu(
 
                     target_map[target_map * 1.5 < target_map_low] = 0
 
-                    rmsds[bdcs[b_index]] = peak_search_mask(reference_map)
+                    rmsds[bdcs[b_index]] = peak_search_mask(target_map)
                     print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
 
                     gc.collect()
