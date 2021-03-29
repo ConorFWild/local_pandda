@@ -3640,8 +3640,11 @@ def analyse_dataset_masks_gpu(
             reference_maps = {}
             for contour in contours:
                 reference_map = fragment_search_mask_unnormalised_gpu(mean_map_np, fragment_masks_np, contour)
+                reference_map_low = fragment_search_mask_unnormalised_gpu(mean_map_np, fragment_masks_low_np, contour)
+
                 mean_map_max_correlation = torch.max(reference_map).cpu().item()
-                reference_maps[contour] = reference_map
+                reference_maps[contour] = reference_map + (fragment_mask_low_size-reference_map_low)
+
 
             # rsccs = {}
             rmsds = {}
