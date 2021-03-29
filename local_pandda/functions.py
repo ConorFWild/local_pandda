@@ -3683,7 +3683,7 @@ def analyse_dataset_masks_gpu(
             print(f"max_rscc_bdc_contour: {max_rscc_bdc_contour}")
             max_rscc_bdc = max_rscc_bdc_contour[0]
             max_rscc_contour = max_rscc_bdc_contour[0]
-            max_rscc_correlation_index = rmsds[max_rscc_bdc]
+            max_rscc_correlation_index = rmsds[max_rscc_bdc_contour]
             max_correlation = max_rscc_correlation_index[0]
             max_index = max_rscc_correlation_index[1]
             max_mean_map_correlation = max_rscc_correlation_index[2]
