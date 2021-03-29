@@ -3900,8 +3900,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        # if dtag != "HAO1A-x0604":
-        #     continue
+        if dtag != "HAO1A-x0604":
+            continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -3915,8 +3915,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0707":
         #     continue
 
-        if dtag != "HAO1A-x0132":
-            continue
+        # if dtag != "HAO1A-x0132":
+        #     continue
 
         dataset = residue_datasets[dtag]
 
