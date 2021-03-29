@@ -3665,7 +3665,7 @@ def analyse_dataset_masks_gpu(
 
                     rmsds[(bdcs[b_index], contour)] = peak_search_mask(
                         target_map + (fragment_mask_low_size-target_map_low))
-                    print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
+                    print(f"\tContour {contour}: {rmsds[(bdcs[b_index], contour)]}")
 
                     gc.collect()
                     torch.cuda.empty_cache()
