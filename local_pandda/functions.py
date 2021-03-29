@@ -3552,7 +3552,7 @@ def analyse_dataset_masks_gpu(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
-            [1.25, 0.75]
+            [1.5, 1.0]
         )
 
         max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
