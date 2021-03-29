@@ -3641,9 +3641,11 @@ def analyse_dataset_masks_gpu(
                     target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
                     target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np, contour)
 
-                    target_map[target_map * 1.5 < target_map_low] = 0
+                    # target_map[target_map * 1.5 < target_map_low] = 0
 
-                    rmsds[bdcs[b_index]] = peak_search_mask(reference_map, target_map)
+
+
+                    rmsds[bdcs[b_index]] = peak_search_mask(reference_map, 2*target_map-target_map_low)
                     print(f"Contour {contour}: {rmsds[bdcs[b_index]]}")
 
                     gc.collect()
