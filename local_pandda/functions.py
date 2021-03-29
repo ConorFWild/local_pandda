@@ -2834,7 +2834,7 @@ def peak_search(reference_map, target_map):
     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
 
 
-def peak_search_mask(reference_map, target_map):
+def peak_search_mask_dep(reference_map, target_map):
     delta_map = target_map - reference_map
 
     max_delta = torch.max(delta_map).cpu()
@@ -2849,22 +2849,17 @@ def peak_search_mask(reference_map, target_map):
 
     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
 
-# def peak_search_mask(target_map):
-#     delta_map = target_map - reference_map
-#
-#     max_delta = torch.max(delta_map).cpu()
-#     print(f"max_delta: {max_delta}")
-#
-#     max_index = np.unravel_index(torch.argmax(delta_map).cpu(), delta_map.shape)
-#
-#     max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
-#     print(f"max_map_val: {max_map_val}")
-#
-#     reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
-#
-#     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
-#
 
+def peak_search_mask(target_map):
+    max_delta = 0.0
+    print(f"max_delta: {max_delta}")
+
+    max_index = np.unravel_index(torch.argmax(target_map).cpu(), target_map.shape)
+
+    max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
+    print(f"max_map_val: {max_map_val}")
+
+    return max_map_val.item(), max_index, 0.0, 0.0
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -3445,7 +3440,6 @@ def analyse_dataset_masks_gpu(
         out_dir: Path,
         params: Params,
 ) -> Optional[DatasetAffinityResults]:
-
     contours = [2.0, 3.0, 4.0, 5.0]
 
     # Get the fragment
@@ -3640,7 +3634,6 @@ def analyse_dataset_masks_gpu(
 
             reference_maps = {}
             for contour in contours:
-
                 reference_map = fragment_search_mask_unnormalised_gpu(mean_map_np, fragment_masks_np, contour)
                 mean_map_max_correlation = torch.max(reference_map).cpu().item()
                 reference_maps[contour] = reference_map
@@ -3661,7 +3654,8 @@ def analyse_dataset_masks_gpu(
                     print(f"event_maps_np: {event_maps_np.shape}")
 
                     target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
-                    target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np, contour)
+                    target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
+                                                                           contour)
 
                     target_map[target_map * 1.5 < target_map_low] = 0
 
