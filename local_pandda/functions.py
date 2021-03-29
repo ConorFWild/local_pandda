@@ -333,6 +333,9 @@ def get_fragment_mask(rotated_structure, grid_spacing, radii):
             for chain in model:
                 for residue in chain:
                     for atom in residue:
+                        if atom.element.name == "H":
+                            print("Skipping H")
+                            continue
                         pos: gemmi.Position = atom.pos
                         grid.set_points_around(pos, radius, float(i) + 1.0)
 
