@@ -2846,6 +2846,23 @@ def peak_search_mask(reference_map, target_map):
 
     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
 
+# def peak_search_mask(target_map):
+#     delta_map = target_map - reference_map
+#
+#     max_delta = torch.max(delta_map).cpu()
+#     print(f"max_delta: {max_delta}")
+#
+#     max_index = np.unravel_index(torch.argmax(delta_map).cpu(), delta_map.shape)
+#
+#     max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
+#     print(f"max_map_val: {max_map_val}")
+#
+#     reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
+#
+#     return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
+#
+
+
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
     # Get mean map RSCC
@@ -3630,6 +3647,8 @@ def analyse_dataset_masks_gpu(
             for b_index in range(len(event_map_list)):
 
                 for contour in contours:
+                    reference_map = reference_maps[contour]
+
                     event_maps_np = np.stack([event_map_list[b_index]], axis=0)
                     event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                           1,
@@ -3643,10 +3662,8 @@ def analyse_dataset_masks_gpu(
 
                     # target_map[target_map * 1.5 < target_map_low] = 0
 
-
-
-                    rmsds[bdcs[b_index]] = peak_search_mask(reference_map, 2*target_map-target_map_low)
-                    print(f"Contour {contour}: {rmsds[bdcs[b_index]]}")
+                    rmsds[bdcs[b_index]] = peak_search_mask(reference_map, (2*target_map)-target_map_low)
+                    print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
 
                     gc.collect()
                     torch.cuda.empty_cache()
