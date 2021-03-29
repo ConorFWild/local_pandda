@@ -3624,6 +3624,9 @@ def analyse_dataset_masks_gpu(
                                                               fragment_masks_low_np.shape[3])
             print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
 
+            fragment_mask_size = np.sum(fragment_masks_np[0, 0, :, :, :])
+            print(f"fragment_mask_size: {fragment_mask_size}")
+
             fragment_mask_low_size = np.sum(fragment_masks_low_np[0, 0, :, :, :])
             print(f"fragment_mask_low_size: {fragment_mask_low_size}")
 
@@ -3668,7 +3671,9 @@ def analyse_dataset_masks_gpu(
 
                     search_map = target_map + (fragment_mask_low_size-target_map_low)
 
-                    search_map[reference_map > 0.6 * search_map] = 0.0
+                    # search_map[reference_map > 0.6 * search_map] = 0.0
+
+                    search_map[(target_map / fragment_mask_size) < 0.6] = 0.0
 
                     rmsds[(bdcs[b_index], contour)] = peak_search_mask(
                         search_map,
