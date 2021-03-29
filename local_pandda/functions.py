@@ -3666,9 +3666,12 @@ def analyse_dataset_masks_gpu(
                                                                            contour)
 
 
-                    rmsds[(bdcs[b_index], contour)] = peak_search_mask_dep(
-                        reference_map,
-                        target_map + (fragment_mask_low_size-target_map_low),
+                    search_map = target_map + (fragment_mask_low_size-target_map_low)
+
+                    sarch_map[reference_map > 0.6 * search_map] = 0.0
+
+                    rmsds[(bdcs[b_index], contour)] = peak_search_mask(
+                        search_map,
                     )
                     print(f"\tContour {contour}: {rmsds[(bdcs[b_index], contour)]}")
 
