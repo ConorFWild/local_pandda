@@ -3552,7 +3552,7 @@ def analyse_dataset_masks_gpu(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
-            [1.0, 0.75]
+            [1.25, 0.75]
         )
 
         max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
@@ -3664,7 +3664,7 @@ def analyse_dataset_masks_gpu(
 
 
                     rmsds[bdcs[b_index]] = peak_search_mask(
-                        target_map + ((-1 * target_map_low) + fragment_mask_low_size))
+                        target_map + (fragment_mask_low_size-target_map_low))
                     print(f"\tContour {contour}: {rmsds[bdcs[b_index]]}")
 
                     gc.collect()
