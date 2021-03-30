@@ -3680,38 +3680,75 @@ def analyse_dataset_masks_gpu(
 
             # rsccs = {}
             rmsds = {}
-            for b_index in range(len(event_map_list)):
+            # for b_index in range(len(event_map_list)):
+            #
+            #     for contour in contours:
+            #         reference_map = reference_maps[contour]
+            #
+            #         event_maps_np = np.stack([event_map_list[b_index]], axis=0)
+            #         event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
+            #                                               1,
+            #                                               event_maps_np.shape[1],
+            #                                               event_maps_np.shape[2],
+            #                                               event_maps_np.shape[3])
+            #         print(f"event_maps_np: {event_maps_np.shape}")
+            #
+            #         target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
+            #         target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
+            #                                                                contour)
+            #
+            #         # Get the score of each point as the number of contoured points in the inner mask +
+            #         # The number of outer mask points not in the contour
+            #         search_map = target_map + (fragment_mask_low_size-target_map_low)
+            #
+            #         # Censor points where the inner mask is a bad fit
+            #         search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
+            #
+            #         # Find the strongest match
+            #         rmsds[(bdcs[b_index], contour)] = peak_search_mask(
+            #             search_map,
+            #         )
+            #         print(f"\tContour {contour}: {rmsds[(bdcs[b_index], contour)]}")
+            #
+            #         gc.collect()
+            #         torch.cuda.empty_cache()
+            #         torch.cuda.synchronize()
+            #         torch.cuda.ipc_collect()
 
-                for contour in contours:
-                    reference_map = reference_maps[contour]
+            # Searching z map
+            for contour in contours:
+                reference_map = reference_maps[contour]
 
-                    event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-                    event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
-                                                          1,
-                                                          event_maps_np.shape[1],
-                                                          event_maps_np.shape[2],
-                                                          event_maps_np.shape[3])
-                    print(f"event_maps_np: {event_maps_np.shape}")
+                event_maps_np = np.stack([sample_z], axis=0)
+                event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
+                                                      1,
+                                                      event_maps_np.shape[1],
+                                                      event_maps_np.shape[2],
+                                                      event_maps_np.shape[3])
+                print(f"event_maps_np: {event_maps_np.shape}")
 
-                    target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
-                    target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
-                                                                           contour)
+                target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, contour)
+                target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
+                                                                       contour)
 
-                    search_map = target_map + (fragment_mask_low_size-target_map_low)
+                # Get the score of each point as the number of contoured points in the inner mask +
+                # The number of outer mask points not in the contour
+                search_map = target_map + (fragment_mask_low_size-target_map_low)
 
-                    # search_map[reference_map > 0.6 * search_map] = 0.0
+                # Censor points where the inner mask is a bad fit
+                search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
 
-                    search_map[(target_map / fragment_mask_size) < 0.6] = 0.0
+                # Find the strongest match
+                rmsds[(0, contour)] = peak_search_mask(
+                    search_map,
+                )
+                print(f"\tContour {contour}: {rmsds[(0, contour)]}")
 
-                    rmsds[(bdcs[b_index], contour)] = peak_search_mask(
-                        search_map,
-                    )
-                    print(f"\tContour {contour}: {rmsds[(bdcs[b_index], contour)]}")
+                gc.collect()
+                torch.cuda.empty_cache()
+                torch.cuda.synchronize()
+                torch.cuda.ipc_collect()
 
-                    gc.collect()
-                    torch.cuda.empty_cache()
-                    torch.cuda.synchronize()
-                    torch.cuda.ipc_collect()
 
             for obj in gc.get_objects():
                 try:
@@ -3943,8 +3980,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        # if dtag != "HAO1A-x0604":
-        #     continue
+        if dtag != "HAO1A-x0604":
+            continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -3958,8 +3995,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0707":
         #     continue
 
-        if dtag != "HAO1A-x0132":
-            continue
+        # if dtag != "HAO1A-x0132":
+        #     continue
 
 
         dataset = residue_datasets[dtag]
