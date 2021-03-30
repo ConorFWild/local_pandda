@@ -3906,7 +3906,7 @@ def analyse_dataset_masks_gpu(
             )
 
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                sample_adjusted,
+                sample_z,
                 # max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
@@ -4012,8 +4012,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        if dtag != "HAO1A-x0604":
-            continue
+        # if dtag != "HAO1A-x0604":
+        #     continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -4027,8 +4027,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0707":
         #     continue
 
-        # if dtag != "HAO1A-x0132":
-        #     continue
+        if dtag != "HAO1A-x0132":
+            continue
 
 
         dataset = residue_datasets[dtag]
