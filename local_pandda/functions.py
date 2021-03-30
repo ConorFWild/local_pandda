@@ -3901,6 +3901,34 @@ def analyse_dataset_masks_gpu(
                 resolution,
             )
 
+            event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                sample_z,
+                # max_array[0,:,:,:],
+                reference_dataset,
+                dataset,
+                alignments[dataset.dtag][marker],
+                marker,
+                params.grid_size,
+                params.grid_spacing,
+                params.structure_factors,
+                params.sample_rate,
+            )
+
+
+            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                          None,
+                                          )
+
+            write_event_map(
+                event_map,
+                out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
+                dataset_event_marker,
+                dataset,
+                resolution,
+            )
+
     # End loop over fragment builds
 
     # Get a result object
