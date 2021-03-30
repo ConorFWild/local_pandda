@@ -286,7 +286,7 @@ def get_fragment_map(
     mask_grid.interpolate_values(mask_arr, tr)
 
     # mask the array
-    arr[mask_arr < 1.0] = 0
+    arr[mask_arr <0.5] = 0
 
     return arr
 
@@ -3178,6 +3178,7 @@ def analyse_dataset_gpu(
             print(f"arr_mask: {np.sum(arr_mask)}")
 
             arr[~arr_mask] = 0.0
+
             fragment_mask_arr = np.zeros(fragment_map.shape)
             fragment_mask_arr[arr_mask] = 1.0
 
