@@ -252,7 +252,41 @@ def get_fragment_map(
     grid.interpolate_values(arr, tr)
     print(arr.shape)
 
-    arr = (arr / np.max(arr)) * 3
+
+    # Mask
+
+    mask_grid = gemmi.FloatGrid(
+        grid.nu,
+        grid.nv,
+        grid.nw,
+    )
+
+    mask_grid.set_unit_cell(grid.unit_cell)
+    mask_grid.spacegroup = gemmi.find_spacegroup_by_name("P 1")
+
+    for model in structure:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    if atom.element.name == "H":
+                        print("Skipping H")
+                        continue
+                    pos: gemmi.Position = atom.pos
+                    mask_grid.set_points_around(pos, 1.0, 1.0)
+
+    mask_arr = np.zeros(
+        [
+            int(distance.x / grid_spacing) + 1,
+            int(distance.y / grid_spacing) + 1,
+            int(distance.z / grid_spacing) + 1,
+        ],
+        dtype=np.float32
+    )
+
+    mask_grid.interpolate_values(mask_arr, tr)
+
+    # mask the array
+    arr[mask_arr < 1.0] = 0
 
     return arr
 
@@ -365,18 +399,11 @@ def get_fragment_maps(
         grid_spacing: float):
     sample_angles = np.linspace(0, 360, num=10, endpoint=False).tolist()
 
-    fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = {}
-
     rotations = [(x, y, z) for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles)]
-    # print([x, y, z])
-    # rotation_index = (x, y, z)
-
-    # path = structure_to_path(fragment_structure)
 
     fragment_samples = joblib.Parallel(
         verbose=50,
         n_jobs=-1,
-        # backend="multiprocessing",
     )(
         joblib.delayed(sample_fragment)(
             rotation_index, structure_to_path(fragment_structure), resolution, grid_spacing, sample_rate
@@ -3140,37 +3167,28 @@ def analyse_dataset_gpu(
         if max_z % 2 == 0: max_z = max_z + 1
 
         fragment_masks_list = []
-        fragment_masks_low_list = []
 
         fragment_maps_list = []
         fragment_masks = {}
         for rotation, fragment_map in fragment_maps.items():
             arr = fragment_map.copy()
 
-            arr_mask = fragment_map > 0.7 * np.max(fragment_map)
-            arr_mask_low = fragment_map > 0.5 * np.max(fragment_map)
+            arr_mask = fragment_map > 0.0
 
             print(f"arr_mask: {np.sum(arr_mask)}")
-            print(f"arr_mask_low: {np.sum(arr_mask_low)}")
 
             arr[~arr_mask] = 0.0
             fragment_mask_arr = np.zeros(fragment_map.shape)
             fragment_mask_arr[arr_mask] = 1.0
 
-            fragment_mask_low_arr = np.zeros(fragment_map.shape)
-            fragment_mask_low_arr[arr_mask_low] = 1.0
-
             fragment_map = np.zeros((max_x, max_y, max_z,))
             fragment_mask = np.zeros((max_x, max_y, max_z,))
-            fragment_mask_low = np.zeros((max_x, max_y, max_z,))
 
             fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
             fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
-            fragment_mask_low[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_low_arr[:, :, :]
 
             fragment_maps_list.append(fragment_map)
             fragment_masks_list.append(fragment_mask)
-            fragment_masks_low_list.append(fragment_mask_low)
 
             fragment_masks[rotation] = fragment_mask
 
@@ -3182,7 +3200,6 @@ def analyse_dataset_gpu(
         bdcs = np.linspace(0, 0.90, 10)
         for b in bdcs:
             event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
-            # event_map = (dataset_sample - sample_mean) / (1 - b)
 
             event_map_list.append(event_map)
 
@@ -3205,32 +3222,12 @@ def analyse_dataset_gpu(
                                                           fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
-            fragment_masks_low_np = np.stack(fragment_masks_low_list, axis=0)
-            fragment_masks_low_np = fragment_masks_np.reshape(fragment_masks_low_np.shape[0],
-                                                              1,
-                                                              fragment_masks_low_np.shape[1],
-                                                              fragment_masks_low_np.shape[2],
-                                                              fragment_masks_low_np.shape[3])
-            print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
 
-            # mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
-            # mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
-            mean_map_np = np.stack([sample_mean], axis=0)
-            mean_map_np = mean_map_np.reshape(
-                1,
-                1,
-                mean_map_np.shape[1],
-                mean_map_np.shape[2],
-                mean_map_np.shape[3])
-            # reference_map = fragment_search_rmsd_gpu(mean_map_np, fragment_maps_np, fragment_masks_np, )
-            # mean_map_max_correlation = torch.max(reference_map).cpu().item()
-            # reference_map = fragment_search_mask_gpu(mean_map_np, fragment_masks_np, 3.0)
-            # mean_map_max_correlation = torch.max(reference_map).cpu().item()
-            reference_map = fragment_search_mask_unnormalised_gpu(mean_map_np, fragment_masks_np, 3.0)
-            mean_map_max_correlation = torch.max(reference_map).cpu().item()
+            mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
+            mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
-            # rsccs = {}
-            rmsds = {}
+
+            rsccs = {}
             for b_index in range(len(event_map_list)):
                 event_maps_np = np.stack([event_map_list[b_index]], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
@@ -3240,16 +3237,9 @@ def analyse_dataset_gpu(
                                                       event_maps_np.shape[3])
                 print(f"event_maps_np: {event_maps_np.shape}")
 
-                # rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
-                #                                            mean_map_rscc, 0.5, 0.4)
+                rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
+                                                           mean_map_rscc, 0.5, 0.4)
 
-                # target_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np, )
-                target_map = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_np, 3.0)
-                target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np, 3.0)
-
-                target_map[target_map * 1.5 < target_map_low] = 0
-
-                rmsds[bdcs[b_index]] = peak_search_mask(target_map)
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -3263,16 +3253,8 @@ def analyse_dataset_gpu(
                 except:
                     pass
 
-            # max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
-            # max_rscc_correlation_index = rsccs[max_rscc_bdc]
-            # max_correlation = max_rscc_correlation_index[0]
-            # max_index = max_rscc_correlation_index[1]
-            # max_mean_map_correlation = max_rscc_correlation_index[2]
-            # max_delta_correlation = max_rscc_correlation_index[3]
-            # max_array = max_rscc_correlation_index[4]
-
-            max_rscc_bdc = max(rmsds, key=lambda x: rmsds[x][0])
-            max_rscc_correlation_index = rmsds[max_rscc_bdc]
+            max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
+            max_rscc_correlation_index = rsccs[max_rscc_bdc]
             max_correlation = max_rscc_correlation_index[0]
             max_index = max_rscc_correlation_index[1]
             max_mean_map_correlation = max_rscc_correlation_index[2]
@@ -3934,7 +3916,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_masks_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
             dataset,
             residue_datasets,
             marker,
