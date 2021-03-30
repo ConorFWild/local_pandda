@@ -254,7 +254,6 @@ def get_fragment_map(
 
 
     # Mask
-
     mask_grid = gemmi.FloatGrid(
         grid.nu,
         grid.nv,
