@@ -3914,6 +3914,7 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0132":
         #     continue
 
+
         dataset = residue_datasets[dtag]
 
         dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
