@@ -271,7 +271,7 @@ def get_fragment_map(
                         print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
-                    mask_grid.set_points_around(pos, 1.0, 1.0)
+                    mask_grid.set_points_around(pos, 1.25, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -3006,6 +3006,13 @@ def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
     mean_map_rscc = torch.nan_to_num(mean_map_rscc, nan=0.0, posinf=0.0, neginf=0.0, )
 
     mean_map_max_correlation = torch.max(mean_map_rscc).cpu()
+
+    max_index = np.unravel_index(torch.argmax(mean_map_rscc).cpu(), mean_map_rscc.shape)
+
+    print(f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+    print(f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+
+
     print(f"mean_map_max_correlation: {mean_map_max_correlation}")
     del rho_o
     del rho_c
