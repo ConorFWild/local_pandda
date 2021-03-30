@@ -3570,6 +3570,8 @@ def analyse_dataset_masks_gpu(
     sample_mean: np.ndarray = get_mean(comparator_sample_arrays)
     sample_std: np.ndarray = get_std(comparator_sample_arrays)
     sample_z: np.ndarray = get_z(dataset_sample, sample_mean, sample_std)
+
+    sample_adjusted = sample_z + dataset_sample
     if params.debug:
         print(f"\tGot mean: max {np.max(sample_mean)}, min: {np.min(sample_mean)}")
         print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
@@ -3721,7 +3723,7 @@ def analyse_dataset_masks_gpu(
             for contour in contours:
                 reference_map = reference_maps[contour]
 
-                event_maps_np = np.stack([sample_z], axis=0)
+                event_maps_np = np.stack([sample_adjusted], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
                                                       event_maps_np.shape[1],
@@ -3904,7 +3906,7 @@ def analyse_dataset_masks_gpu(
             )
 
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                sample_z,
+                sample_adjusted,
                 # max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
