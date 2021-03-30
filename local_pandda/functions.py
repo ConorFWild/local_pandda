@@ -3469,7 +3469,9 @@ def analyse_dataset_masks_gpu(
         out_dir: Path,
         params: Params,
 ) -> Optional[DatasetAffinityResults]:
-    contours = [2.0, 3.0, 4.0, 5.0]
+    # contours = [2.0, 3.0, 4.0, 5.0]
+    contours = [1.5, 2.0, 2.5, 3.0]
+
 
     # Get the fragment
     dataset_fragment_structures: Optional[MutableMapping[str, gemmi.Structure]] = dataset.fragment_structures
