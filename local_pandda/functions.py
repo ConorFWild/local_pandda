@@ -2658,6 +2658,10 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     max_correlation = rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
     print(f"max_correlation: {max_correlation}")
 
+    print(f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+    print(f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+
+
     # print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
 
     mean_map_correlation = mean_map_rscc[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
