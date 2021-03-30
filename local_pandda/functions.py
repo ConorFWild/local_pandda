@@ -3668,7 +3668,6 @@ def analyse_dataset_masks_gpu(
                     target_map_low = fragment_search_mask_unnormalised_gpu(event_maps_np, fragment_masks_low_np,
                                                                            contour)
 
-
                     search_map = target_map + (fragment_mask_low_size-target_map_low)
 
                     # search_map[reference_map > 0.6 * search_map] = 0.0
@@ -3915,8 +3914,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        if dtag != "HAO1A-x0604":
-            continue
+        # if dtag != "HAO1A-x0604":
+        #     continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -3930,8 +3929,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0707":
         #     continue
 
-        # if dtag != "HAO1A-x0132":
-        #     continue
+        if dtag != "HAO1A-x0132":
+            continue
 
         dataset = residue_datasets[dtag]
 
