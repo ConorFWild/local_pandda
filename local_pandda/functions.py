@@ -3069,6 +3069,44 @@ def save_example_fragment_map(fragment_map, grid_spacing, path):
     ccp4.write_ccp4_map(str(path))
 
 
+def max_coord_to_position(max_index_mask_coord, fragment_maps, max_rotation, grid_size, grid_spacing, max_x, max_y, max_z, alignments, dataset, marker):
+    max_index_fragment_coord = [
+        max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
+        max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
+        max_index_mask_coord[2] - (max_z / 2) + (fragment_maps[max_rotation].shape[2] / 2),
+    ]
+    print(f"max_index_fragment_coord: {max_index_fragment_coord}")
+
+    max_index_fragment_relative_coord = [max_index_fragment_coord[0] - grid_size / 2,
+                                         max_index_fragment_coord[1] - grid_size / 2,
+                                         max_index_fragment_coord[2] - grid_size / 2,
+                                         ]
+    print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
+
+    max_index_fragment_relative_position = gemmi.Position(
+        max_index_fragment_relative_coord[0] * grid_spacing,
+        max_index_fragment_relative_coord[1] * grid_spacing,
+        max_index_fragment_relative_coord[2] * grid_spacing,
+    )
+    print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
+
+    transform = alignments[dataset.dtag][marker].transform
+    inverse_transform = transform.inverse()
+    rotation_tr = gemmi.Transform()
+    rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
+
+    max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
+    print(
+        f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
+
+    max_index_fragment_position_dataset_frame = [
+        max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
+        max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.y),
+        max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.z),
+    ]
+    print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
+
+    return max_index_fragment_position_dataset_frame
 
 
 def analyse_dataset_gpu(
@@ -3270,6 +3308,7 @@ def analyse_dataset_gpu(
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
+                print(f"\tBDC: {bdcs[b_index]}")
                 event_maps_np = np.stack([event_map_list[b_index]], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
@@ -3280,6 +3319,16 @@ def analyse_dataset_gpu(
 
                 rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
                                                            mean_map_rscc, 0.5, 0.4)
+
+                max_index = rsccs[bdcs[b_index]][1]
+                max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+                max_rotation = list(fragment_maps.keys())[max_index[1]]
+                max_position = max_coord_to_position(
+                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x,
+                    max_y, max_z,
+                    alignments, dataset, marker)
+
+                print(f"max position: {max_position}")
 
 
                 gc.collect()
@@ -3306,41 +3355,11 @@ def analyse_dataset_gpu(
             max_index_fragment_map = fragment_maps[max_rotation]
             max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
             max_index_fragment_map_shape = max_index_fragment_map.shape
-            max_index_fragment_coord = [
-                max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
-                max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
-                max_index_mask_coord[2] - (max_z / 2) + (fragment_maps[max_rotation].shape[2] / 2),
-            ]
-            print(f"max_index_fragment_coord: {max_index_fragment_coord}")
 
-            max_index_fragment_relative_coord = [max_index_fragment_coord[0] - params.grid_size / 2,
-                                                 max_index_fragment_coord[1] - params.grid_size / 2,
-                                                 max_index_fragment_coord[2] - params.grid_size / 2,
-                                                 ]
-            print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
-
-            max_index_fragment_relative_position = gemmi.Position(
-                max_index_fragment_relative_coord[0] * params.grid_spacing,
-                max_index_fragment_relative_coord[1] * params.grid_spacing,
-                max_index_fragment_relative_coord[2] * params.grid_spacing,
+            max_index_fragment_position_dataset_frame = max_coord_to_position(
+                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y, max_z,
+                alignments, dataset, marker
             )
-            print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
-
-            transform = alignments[dataset.dtag][marker].transform
-            inverse_transform = transform.inverse()
-            rotation_tr = gemmi.Transform()
-            rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
-
-            max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
-            print(
-                f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
-
-            max_index_fragment_position_dataset_frame = [
-                max_index_fragment_relative_position_dataset_frame.x + (marker.x - transform.vec.x),
-                max_index_fragment_relative_position_dataset_frame.y + (marker.y - transform.vec.y),
-                max_index_fragment_relative_position_dataset_frame.z + (marker.z - transform.vec.z),
-            ]
-            print(f"max_index_fragment_position_dataset_frame: {max_index_fragment_position_dataset_frame}")
 
             # get affinity maxima
             maxima: AffinityMaxima = AffinityMaxima(
