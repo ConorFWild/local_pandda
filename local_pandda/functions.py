@@ -3043,6 +3043,34 @@ def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
     return mean_map_rscc
 
 
+def save_example_fragment_map(fragment_map, grid_spacing, path):
+    shape = fragment_map.shape
+    grid = gemmi.FloatGrid(*shape)
+    unit_cell = gemmi.UnitCell(
+        shape[0]*grid_spacing,
+        shape[1] * grid_spacing,
+        shape[2] * grid_spacing,
+        90,
+        90,
+        90
+    )
+    grid.spacegroup = gemmi.find_spacegroup_by_name("P 1")
+
+    grid.set_unit_cell(unit_cell)
+
+    for index, value in np.ndenumerate(fragment_map):
+        grid.set_value(index[0], index[1], index[2], value)
+
+    ccp4 = gemmi.Ccp4Map()
+    ccp4.grid = grid
+    ccp4.setup()
+    ccp4.update_ccp4_header(2, True)
+
+    ccp4.write_ccp4_map(str(path))
+
+
+
+
 def analyse_dataset_gpu(
         dataset: Dataset,
         residue_datasets: MutableMapping[str, Dataset],
@@ -3168,6 +3196,8 @@ def analyse_dataset_gpu(
             params.sample_rate,
             params.grid_spacing,
         )
+
+        save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing, out_dir / "example_fragment_map.ccp4")
 
         max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
         max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
