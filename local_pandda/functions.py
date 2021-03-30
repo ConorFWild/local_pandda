@@ -3723,7 +3723,7 @@ def analyse_dataset_masks_gpu(
             for contour in contours:
                 reference_map = reference_maps[contour]
 
-                event_maps_np = np.stack([sample_adjusted], axis=0)
+                event_maps_np = np.stack([sample_z], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
                                                       event_maps_np.shape[1],
