@@ -3585,7 +3585,7 @@ def analyse_dataset_masks_gpu(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
-            [1.5, 1.0]
+            [1.5, 1.25, 0.75]
         )
 
         max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
@@ -3602,7 +3602,7 @@ def analyse_dataset_masks_gpu(
         for rotation, initial_fragment_mask in initial_fragment_masks.items():
             arr = initial_fragment_mask.copy()
 
-            arr_mask = initial_fragment_mask >= 2.0
+            arr_mask = initial_fragment_mask >= 3.0
             arr_mask_low = (initial_fragment_mask >= 1.0) * (initial_fragment_mask < 2.0)
 
             print(f"arr_mask: {np.sum(arr_mask)}")
@@ -3737,7 +3737,8 @@ def analyse_dataset_masks_gpu(
 
                 # Get the score of each point as the number of contoured points in the inner mask +
                 # The number of outer mask points not in the contour
-                search_map = target_map + (fragment_mask_low_size-target_map_low)
+                # search_map = target_map + (fragment_mask_low_size-target_map_low)
+                search_map = (target_map / fragment_mask_size) * ((fragment_mask_low_size-target_map_low)/fragment_mask_low_size)
 
                 # Censor points where the inner mask is a bad fit
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
