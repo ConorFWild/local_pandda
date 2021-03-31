@@ -3738,7 +3738,11 @@ def analyse_dataset_masks_gpu(
                 # Get the score of each point as the number of contoured points in the inner mask +
                 # The number of outer mask points not in the contour
                 # search_map = target_map + (fragment_mask_low_size-target_map_low)
-                search_map = (target_map / fragment_mask_size) * ((fragment_mask_low_size-target_map_low)/fragment_mask_low_size)
+                # search_map = (target_map / fragment_mask_size) * ((fragment_mask_low_size-target_map_low)/fragment_mask_low_size)
+
+                search_map = (fragment_mask_low_size-target_map_low)/fragment_mask_low_size
+
+                search_map[(target_map / fragment_mask_size) < 0.8] = 0.0
 
                 # Censor points where the inner mask is a bad fit
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
