@@ -3907,7 +3907,7 @@ def analyse_dataset_masks_gpu(
             # )
 
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                sample_adjusted,
+                sample_z,
                 # max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
