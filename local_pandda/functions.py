@@ -4005,8 +4005,7 @@ def analyse_dataset_masks_gpu(
 
 
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                search_map,
-                # max_array[0,:,:,:],
+                torch.max(search_map, 1)[0].cpu().numpy()[0, :, :, :],                # max_array[0,:,:,:],
                 reference_dataset,
                 dataset,
                 alignments[dataset.dtag][marker],
