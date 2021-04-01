@@ -3950,31 +3950,31 @@ def analyse_dataset_masks_gpu(
             #     resolution,
             # )
 
-            # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-            #     torch.max(target_map - target_map_low, 1)[0].cpu().numpy()[0, :, :, :],
-            #     reference_dataset,
-            #     dataset,
-            #     alignments[dataset.dtag][marker],
-            #     marker,
-            #     params.grid_size,
-            #     params.grid_spacing,
-            #     params.structure_factors,
-            #     params.sample_rate,
-            # )
-            #
-            # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-            #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-            #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-            #                               None,
-            #                               )
-            #
-            # write_event_map(
-            #     event_map,
-            #     out_dir / f"{dataset.dtag}_target_map.mtz",
-            #     dataset_event_marker,
-            #     dataset,
-            #     resolution,
-            # )
+            event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                torch.max(target_map, 1)[0].cpu().numpy()[0, :, :, :],
+                reference_dataset,
+                dataset,
+                alignments[dataset.dtag][marker],
+                marker,
+                params.grid_size,
+                params.grid_spacing,
+                params.structure_factors,
+                params.sample_rate,
+            )
+
+            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                          None,
+                                          )
+
+            write_event_map(
+                event_map,
+                out_dir / f"{dataset.dtag}_target_map.mtz",
+                dataset_event_marker,
+                dataset,
+                resolution,
+            )
 
             event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
                 sample_z,
