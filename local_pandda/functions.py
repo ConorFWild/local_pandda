@@ -252,7 +252,6 @@ def get_fragment_map(
     grid.interpolate_values(arr, tr)
     print(arr.shape)
 
-
     # Mask
     mask_grid = gemmi.FloatGrid(
         grid.nu,
@@ -285,7 +284,7 @@ def get_fragment_map(
     mask_grid.interpolate_values(mask_arr, tr)
 
     # mask the array
-    arr[mask_arr <0.5] = 0
+    arr[mask_arr < 0.5] = 0
 
     return arr
 
@@ -2657,9 +2656,10 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     max_correlation = rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
     print(f"max_correlation: {max_correlation}")
 
-    print(f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
-    print(f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
-
+    print(
+        f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+    print(
+        f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
 
     # print(rscc[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]].cpu())
 
@@ -3009,9 +3009,10 @@ def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
 
     max_index = np.unravel_index(torch.argmax(mean_map_rscc).cpu(), mean_map_rscc.shape)
 
-    print(f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
-    print(f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
-
+    print(
+        f"max_correlation nominator: {nominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
+    print(
+        f"max_correlation denominator: {denominator[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]}")
 
     print(f"mean_map_max_correlation: {mean_map_max_correlation}")
     del rho_o
@@ -3047,7 +3048,7 @@ def save_example_fragment_map(fragment_map, grid_spacing, path):
     shape = fragment_map.shape
     grid = gemmi.FloatGrid(*shape)
     unit_cell = gemmi.UnitCell(
-        shape[0]*grid_spacing,
+        shape[0] * grid_spacing,
         shape[1] * grid_spacing,
         shape[2] * grid_spacing,
         90,
@@ -3069,7 +3070,8 @@ def save_example_fragment_map(fragment_map, grid_spacing, path):
     ccp4.write_ccp4_map(str(path))
 
 
-def max_coord_to_position(max_index_mask_coord, fragment_maps, max_rotation, grid_size, grid_spacing, max_x, max_y, max_z, alignments, dataset, marker):
+def max_coord_to_position(max_index_mask_coord, fragment_maps, max_rotation, grid_size, grid_spacing, max_x, max_y,
+                          max_z, alignments, dataset, marker):
     # max_index_fragment_coord = [
     #     max_index_mask_coord[0] - (max_x / 2) + (fragment_maps[max_rotation].shape[0] / 2),
     #     max_index_mask_coord[1] - (max_y / 2) + (fragment_maps[max_rotation].shape[1] / 2),
@@ -3271,7 +3273,8 @@ def analyse_dataset_gpu(
             params.grid_spacing,
         )
 
-        save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing, out_dir / "example_fragment_map.ccp4")
+        save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing,
+                                  out_dir / "example_fragment_map.ccp4")
 
         max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
         max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
@@ -3337,10 +3340,8 @@ def analyse_dataset_gpu(
                                                           fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
-
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
-
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
@@ -3360,14 +3361,13 @@ def analyse_dataset_gpu(
                 max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
                 max_rotation = list(fragment_maps.keys())[max_index[1]]
                 max_position = max_coord_to_position(
-                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
+                    max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
                     max_x,
                     max_y,
                     max_z,
                     alignments, dataset, marker)
 
                 print(f"max position: {max_position}")
-
 
                 gc.collect()
                 torch.cuda.empty_cache()
@@ -3395,7 +3395,8 @@ def analyse_dataset_gpu(
             max_index_fragment_map_shape = max_index_fragment_map.shape
 
             max_index_fragment_position_dataset_frame = max_coord_to_position(
-                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y, max_z,
+                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y,
+                max_z,
                 alignments, dataset, marker
             )
 
@@ -3439,7 +3440,6 @@ def analyse_dataset_gpu(
                 dataset,
                 resolution,
             )
-
 
     # End loop over fragment builds
 
@@ -3585,7 +3585,7 @@ def analyse_dataset_masks_gpu(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
-            [2.0, 1.25, 0.5]
+            [2.0, 1.25, 0.75]
         )
 
         max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
@@ -3605,7 +3605,6 @@ def analyse_dataset_masks_gpu(
             arr_mask = initial_fragment_mask >= 3.0
             # arr_mask_low = (initial_fragment_mask >= 1.0) * (initial_fragment_mask < 2.0)
             arr_mask_low = initial_fragment_mask >= 1.0
-
 
             print(f"arr_mask: {np.sum(arr_mask)}")
             print(f"arr_mask_low: {np.sum(arr_mask_low)}")
@@ -3627,7 +3626,6 @@ def analyse_dataset_masks_gpu(
             fragment_masks_low_list.append(fragment_mask_low)
 
             fragment_masks[rotation] = fragment_mask
-
 
         if params.debug:
             print(f"\t\tGot {len(fragment_masks)} fragment maps")
@@ -3653,10 +3651,10 @@ def analyse_dataset_masks_gpu(
 
             fragment_masks_low_np = np.stack(fragment_masks_low_list, axis=0)
             fragment_masks_low_np = fragment_masks_low_np.reshape(fragment_masks_low_np.shape[0],
-                                                              1,
-                                                              fragment_masks_low_np.shape[1],
-                                                              fragment_masks_low_np.shape[2],
-                                                              fragment_masks_low_np.shape[3])
+                                                                  1,
+                                                                  fragment_masks_low_np.shape[1],
+                                                                  fragment_masks_low_np.shape[2],
+                                                                  fragment_masks_low_np.shape[3])
             print(f"fragment_masks_low_np: {fragment_masks_low_np.shape}")
 
             fragment_mask_size = np.sum(fragment_masks_np[0, 0, :, :, :])
@@ -3664,7 +3662,6 @@ def analyse_dataset_masks_gpu(
 
             fragment_mask_low_size = np.sum(fragment_masks_low_np[0, 0, :, :, :])
             print(f"fragment_mask_low_size: {fragment_mask_low_size}")
-
 
             mean_map_np = np.stack([sample_mean], axis=0)
             mean_map_np = mean_map_np.reshape(
@@ -3681,8 +3678,7 @@ def analyse_dataset_masks_gpu(
                 reference_map_low = fragment_search_mask_unnormalised_gpu(mean_map_np, fragment_masks_low_np, contour)
 
                 mean_map_max_correlation = torch.max(reference_map).cpu().item()
-                reference_maps[contour] = reference_map + (fragment_mask_low_size-reference_map_low)
-
+                reference_maps[contour] = reference_map + (fragment_mask_low_size - reference_map_low)
 
             # rsccs = {}
             rmsds = {}
@@ -3749,7 +3745,6 @@ def analyse_dataset_masks_gpu(
                 search_map = target_map * (target_map / target_map_low)
                 search_map = torch.nan_to_num(search_map, nan=0.0, posinf=0.0, neginf=0.0, )
 
-
                 # Censor points where the inner mask is a bad fit
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
 
@@ -3766,7 +3761,6 @@ def analyse_dataset_masks_gpu(
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
                 torch.cuda.ipc_collect()
-
 
             for obj in gc.get_objects():
                 try:
@@ -3932,7 +3926,6 @@ def analyse_dataset_masks_gpu(
                 params.sample_rate,
             )
 
-
             dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
                                           marker.y - alignments[dataset.dtag][marker].transform.vec.y,
                                           marker.z - alignments[dataset.dtag][marker].transform.vec.z,
@@ -4043,7 +4036,6 @@ def analyse_residue_gpu(
 
         # if dtag != "HAO1A-x0132":
         #     continue
-
 
         dataset = residue_datasets[dtag]
 
