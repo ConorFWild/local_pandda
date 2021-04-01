@@ -3754,10 +3754,13 @@ def analyse_dataset_masks_gpu(
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
 
                 # Find the strongest match
-                rmsds[(0, contour)] = peak_search_mask(
+                peak = peak_search_mask(
                     search_map,
                 )
+                rmsds[(0, contour)] = peak
                 print(f"\tContour {contour}: {rmsds[(0, contour)]}")
+
+                print(torch.nonzero(search_map > 0.7*peak[0]).shape)
 
                 gc.collect()
                 torch.cuda.empty_cache()
