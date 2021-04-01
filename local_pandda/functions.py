@@ -3740,9 +3740,11 @@ def analyse_dataset_masks_gpu(
                 # search_map = target_map + (fragment_mask_low_size-target_map_low)
                 # search_map = (target_map / fragment_mask_size) * ((fragment_mask_low_size-target_map_low)/fragment_mask_low_size)
 
-                search_map = (fragment_mask_low_size-target_map_low)/fragment_mask_low_size
+                # search_map = (fragment_mask_low_size-target_map_low)/fragment_mask_low_size
 
-                search_map[(target_map / fragment_mask_size) < 0.8] = 0.0
+                # search_map[(target_map / fragment_mask_size) < 0.8] = 0.0
+
+                search_map = target_map
 
                 # Censor points where the inner mask is a bad fit
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
