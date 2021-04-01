@@ -3470,8 +3470,8 @@ def analyse_dataset_masks_gpu(
         params: Params,
 ) -> Optional[DatasetAffinityResults]:
     # contours = [2.0, 3.0, 4.0, 5.0]
-    contours = [1.5, 2.0, 2.5, 3.0]
-
+    # contours = [1.5, 2.0, 2.5, 3.0]
+    contours = [2.0]
 
     # Get the fragment
     dataset_fragment_structures: Optional[MutableMapping[str, gemmi.Structure]] = dataset.fragment_structures
@@ -3585,7 +3585,7 @@ def analyse_dataset_masks_gpu(
             fragment_structure,
             params.num_fragment_pose_samples,
             params.grid_spacing,
-            [1.5, 1.25, 0.75]
+            [2.0, 1.25, 0.75]
         )
 
         max_x = max([fragment_map.shape[0] for fragment_map in initial_fragment_masks.values()])
@@ -3603,7 +3603,9 @@ def analyse_dataset_masks_gpu(
             arr = initial_fragment_mask.copy()
 
             arr_mask = initial_fragment_mask >= 3.0
-            arr_mask_low = (initial_fragment_mask >= 1.0) * (initial_fragment_mask < 2.0)
+            # arr_mask_low = (initial_fragment_mask >= 1.0) * (initial_fragment_mask < 2.0)
+            arr_mask_low = initial_fragment_mask >= 1.0
+
 
             print(f"arr_mask: {np.sum(arr_mask)}")
             print(f"arr_mask_low: {np.sum(arr_mask_low)}")
@@ -3744,7 +3746,9 @@ def analyse_dataset_masks_gpu(
 
                 # search_map[(target_map / fragment_mask_size) < 0.8] = 0.0
 
-                search_map = target_map
+                search_map = target_map * (target_map / target_map_low)
+                search_map = torch.nan_to_num(search_map, nan=0.0, posinf=0.0, neginf=0.0, )
+
 
                 # Censor points where the inner mask is a bad fit
                 # search_map[(target_map / fragment_mask_size) < 0.5] = 0.0
