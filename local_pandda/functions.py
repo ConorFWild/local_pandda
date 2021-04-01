@@ -289,7 +289,6 @@ def get_fragment_map(
     return arr
 
 
-
 def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix, max_dist: float,
                                margin: float = 3.0) -> gemmi.Structure:
     # print(rotation_matrix)
@@ -300,7 +299,7 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
 
     # Get fragment mean
     xs = []
-    ys= []
+    ys = []
     zs = []
     for model in structure_copy:
         for chain in model:
@@ -312,9 +311,9 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     ys.append(pos.y)
                     zs.append(pos.z)
 
-    mean_x= np.mean(np.array(xs))
-    mean_y= np.mean(np.array(ys))
-    mean_z= np.mean(np.array(zs))
+    mean_x = np.mean(np.array(xs))
+    mean_y = np.mean(np.array(ys))
+    mean_z = np.mean(np.array(zs))
 
     # demean
     for model in structure_copy:
@@ -346,9 +345,9 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
             for residue in chain:
                 for atom in residue:
                     pos: gemmi.Position = atom.pos
-                    new_x = pos.x + ((max_dist/2) + margin)
-                    new_y = pos.y + ((max_dist/2) + margin)
-                    new_z = pos.z + ((max_dist/2) + margin)
+                    new_x = pos.x + ((max_dist / 2) + margin)
+                    new_y = pos.y + ((max_dist / 2) + margin)
+                    new_z = pos.z + ((max_dist / 2) + margin)
                     atom.pos = gemmi.Position(new_x, new_y, new_z)
 
     #
@@ -367,9 +366,9 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     #                 atom.pos = gemmi.Position(new_x, new_y, new_z)
 
     structure_copy.cell = gemmi.UnitCell(
-        max_dist + (2*margin),
-        max_dist + (2*margin),
-        max_dist + (2*margin),
+        max_dist + (2 * margin),
+        max_dist + (2 * margin),
+        max_dist + (2 * margin),
         90.0, 90.0, 90.0)
 
     structure_copy.spacegroup_hm = gemmi.find_spacegroup_by_name("P 1").xhm()
@@ -457,7 +456,8 @@ def get_fragment_maps(
 
     return fragment_maps
 
-def get_max_dist(fragment_structure):#
+
+def get_max_dist(fragment_structure):  #
     distances = []
     for model in fragment_structure:
         for chain in model:
@@ -474,7 +474,6 @@ def get_max_dist(fragment_structure):#
                         distances.append(pos.dist(pos_2))
 
     return max(distances)
-
 
 
 def get_fragment_masks(
@@ -3819,7 +3818,7 @@ def analyse_dataset_masks_gpu(
                 rmsds[(0, contour)] = peak
                 print(f"\tContour {contour}: {rmsds[(0, contour)]}")
 
-                print(torch.nonzero(search_map > (0.7*peak[0])).shape)
+                print(torch.nonzero(search_map > (0.7 * peak[0])).shape)
 
                 gc.collect()
                 torch.cuda.empty_cache()
