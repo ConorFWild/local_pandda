@@ -3760,7 +3760,7 @@ def analyse_dataset_masks_gpu(
                 rmsds[(0, contour)] = peak
                 print(f"\tContour {contour}: {rmsds[(0, contour)]}")
 
-                print(torch.nonzero(search_map > 0.7*peak[0]).shape)
+                # print(torch.nonzero(search_map > (0.7*peak[0])).shape)
 
                 gc.collect()
                 torch.cuda.empty_cache()
