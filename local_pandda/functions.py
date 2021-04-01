@@ -289,7 +289,8 @@ def get_fragment_map(
     return arr
 
 
-def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix,
+
+def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_matrix, max_dist: float,
                                margin: float = 3.0) -> gemmi.Structure:
     # print(rotation_matrix)
     structure_copy = fragment_structure.clone()
@@ -297,6 +298,36 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
     transform.mat.fromlist(rotation_matrix.tolist())
     transform.vec.fromlist([0.0, 0.0, 0.0])
 
+    # Get fragment mean
+    xs = []
+    ys= []
+    zs = []
+    for model in structure_copy:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    # print(atom.pos)
+                    pos: gemmi.Position = atom.pos
+                    xs.append(pos.x)
+                    ys.append(pos.y)
+                    zs.append(pos.z)
+
+    mean_x= np.mean(np.array(xs))
+    mean_y= np.mean(np.array(ys))
+    mean_z= np.mean(np.array(zs))
+
+    # demean
+    for model in structure_copy:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    pos: gemmi.Position = atom.pos
+                    new_x = pos.x - mean_x
+                    new_y = pos.y - mean_y
+                    new_z = pos.z - mean_z
+                    atom.pos = gemmi.Position(new_x, new_y, new_z)
+
+    # rotate
     for model in structure_copy:
         for chain in model:
             for residue in chain:
@@ -309,24 +340,36 @@ def rotate_translate_structure(fragment_structure: gemmi.Structure, rotation_mat
                     atom.pos = rotated_position
                     # print(atom.pos)
 
-    box = structure_copy.calculate_box()
-    box.add_margin(margin)
-    min_pos: gemmi.Position = box.minimum
-
+    # remean to max_dist/2 + margin
     for model in structure_copy:
         for chain in model:
             for residue in chain:
                 for atom in residue:
                     pos: gemmi.Position = atom.pos
-                    new_x = pos.x - min_pos.x
-                    new_y = pos.y - min_pos.y
-                    new_z = pos.z - min_pos.z
+                    new_x = pos.x + ((max_dist/2) + margin)
+                    new_y = pos.y + ((max_dist/2) + margin)
+                    new_z = pos.z + ((max_dist/2) + margin)
                     atom.pos = gemmi.Position(new_x, new_y, new_z)
 
+    #
+    # box = structure_copy.calculate_box()
+    # box.add_margin(margin)
+    # min_pos: gemmi.Position = box.minimum
+    #
+    # for model in structure_copy:
+    #     for chain in model:
+    #         for residue in chain:
+    #             for atom in residue:
+    #                 pos: gemmi.Position = atom.pos
+    #                 new_x = pos.x - min_pos.x
+    #                 new_y = pos.y - min_pos.y
+    #                 new_z = pos.z - min_pos.z
+    #                 atom.pos = gemmi.Position(new_x, new_y, new_z)
+
     structure_copy.cell = gemmi.UnitCell(
-        box.maximum.x - box.minimum.x,
-        box.maximum.y - box.minimum.y,
-        box.maximum.z - box.minimum.z,
+        max_dist + (2*margin),
+        max_dist + (2*margin),
+        max_dist + (2*margin),
         90.0, 90.0, 90.0)
 
     structure_copy.spacegroup_hm = gemmi.find_spacegroup_by_name("P 1").xhm()
@@ -375,7 +418,7 @@ def get_fragment_mask(rotated_structure, grid_spacing, radii):
     return arr
 
 
-def sample_fragment_mask(rotation_index, path, grid_spacing, radii):
+def sample_fragment_mask(rotation_index, path, max_dist, grid_spacing, radii):
     fragment_structure = path_to_structure(path)
     rotation = spsp.transform.Rotation.from_euler("xyz",
                                                   [rotation_index[0],
@@ -383,7 +426,7 @@ def sample_fragment_mask(rotation_index, path, grid_spacing, radii):
                                                    rotation_index[2]],
                                                   degrees=True)
     rotation_matrix: np.ndarray = rotation.as_matrix()
-    rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
+    rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix, max_dist)
     fragment_map: np.ndarray = get_fragment_mask(rotated_structure, grid_spacing, radii)
 
     return fragment_map
@@ -414,6 +457,25 @@ def get_fragment_maps(
 
     return fragment_maps
 
+def get_max_dist(fragment_structure):#
+    distances = []
+    for model in fragment_structure:
+        for chain in model:
+            for residue in chain:
+                for atom in residue:
+                    if atom.element.name == "H":
+                        continue
+                    pos: gemmi.Position = atom.pos
+
+                    for atom_2 in residue:
+                        if atom.element.name == "H":
+                            continue
+                        pos_2: gemmi.Position = atom_2.pos
+                        distances.append(pos.dist(pos_2))
+
+    return max(distances)
+
+
 
 def get_fragment_masks(
         fragment_structure: gemmi.Structure,
@@ -425,12 +487,14 @@ def get_fragment_masks(
 
     rotations = [(x, y, z) for x, y, z in itertools.product(sample_angles, sample_angles, sample_angles)]
 
+    max_dist = get_max_dist(fragment_structure)
+
     fragment_samples = joblib.Parallel(
         verbose=50,
         n_jobs=-1,
     )(
         joblib.delayed(sample_fragment_mask)(
-            rotation_index, structure_to_path(fragment_structure), grid_spacing, radii
+            rotation_index, structure_to_path(fragment_structure), max_dist, grid_spacing, radii
         )
         for rotation_index
         in rotations
