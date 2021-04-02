@@ -523,10 +523,18 @@ def get_comparator_datasets(
         num_datasets: int,
 ) -> Optional[MutableMapping[str, Dataset]]:
     #
-    apo_cluster_indexes: np.ndarray = np.unique(dataset_clusters[apo_mask])
+    # apo_cluster_indexes: np.ndarray = np.unique(dataset_clusters[apo_mask])
+    #
+    # apo_clusters: MutableMapping[int, np.ndarray] = {}
+    # for apo_cluster_index in apo_cluster_indexes:
+    #     cluster: np.ndarray = dataset_clusters[dataset_clusters == apo_cluster_index]
+    #
+    #     #
+    #     if cluster.size > min_cluster_size:
+    #         apo_clusters[apo_cluster_index] = cluster
 
     apo_clusters: MutableMapping[int, np.ndarray] = {}
-    for apo_cluster_index in apo_cluster_indexes:
+    for apo_cluster_index in np.unique(dataset_clusters):
         cluster: np.ndarray = dataset_clusters[dataset_clusters == apo_cluster_index]
 
         #
@@ -3560,6 +3568,8 @@ def analyse_dataset_masks_gpu(
         )
 
     # Select the comparator datasets
+    print(f"dataset clusters: {dataset_clusters}")
+
     comparator_datasets: Optional[MutableMapping[str, Dataset]] = get_comparator_datasets(
         linkage,
         dataset_clusters,
@@ -3570,6 +3580,7 @@ def analyse_dataset_masks_gpu(
         params.min_dataset_cluster_size,
         params.min_dataset_cluster_size,
     )
+    exit()
 
     if params.debug:
         print(f"\tComparator datasets are: {list(comparator_datasets.keys())}")
@@ -3633,14 +3644,12 @@ def analyse_dataset_masks_gpu(
     sample_mean: np.ndarray = get_mean(comparator_sample_arrays)
     sample_std: np.ndarray = get_std(comparator_sample_arrays)
     sample_z: np.ndarray = get_z(dataset_sample, sample_mean, sample_std)
-
     sample_adjusted = sample_z + dataset_sample
+
     if params.debug:
         print(f"\tGot mean: max {np.max(sample_mean)}, min: {np.min(sample_mean)}")
         print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
-
-    exit()
 
     # Get the comparator affinity maps
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
