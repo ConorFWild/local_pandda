@@ -3580,7 +3580,6 @@ def analyse_dataset_masks_gpu(
         params.min_dataset_cluster_size,
         params.min_dataset_cluster_size,
     )
-    exit()
 
     if params.debug:
         print(f"\tComparator datasets are: {list(comparator_datasets.keys())}")
