@@ -3640,6 +3640,8 @@ def analyse_dataset_masks_gpu(
         print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
+    exit()
+
     # Get the comparator affinity maps
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
         if params.debug:
