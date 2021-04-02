@@ -3816,7 +3816,7 @@ def analyse_dataset_masks_gpu(
                 # search_map[(target_map / fragment_mask_size) < 0.8] = 0.0
 
                 # search_map = target_map * (target_map / ( target_map_low))
-                search_map = target_map / target_map_low
+                search_map = (target_map/fragment_mask_size) / ((target_map_low-target_map) / fragment_mask_low_size)
                 search_map = torch.nan_to_num(search_map, nan=0.0, posinf=0.0, neginf=0.0, )
 
                 # Censor points where the inner mask is a bad fit
