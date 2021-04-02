@@ -2960,7 +2960,7 @@ def peak_search_mask(target_map):
     max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
     print(f"max_map_val: {max_map_val}")
 
-    return max_map_val.item(), max_index, 0.0, 0.0
+    return [max_map_val.item(), max_index, 0.0, 0.0]
 
 
 def get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np):
@@ -3825,6 +3825,9 @@ def analyse_dataset_masks_gpu(
                 peak = peak_search_mask(
                     search_map,
                 )
+                max_index = peak[1]
+                peak[2] = target_map_low[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
+                peak[3] = fragment_mask_low_size
                 rmsds[(0, contour)] = peak
                 print(f"\tContour {contour}: {rmsds[(0, contour)]}")
 
