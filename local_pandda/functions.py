@@ -270,7 +270,7 @@ def get_fragment_map(
                         print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
-                    mask_grid.set_points_around(pos, 1.5, 1.0)
+                    mask_grid.set_points_around(pos, 0.75, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -384,6 +384,9 @@ def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate)
                                                    rotation_index[2]],
                                                   degrees=True)
     rotation_matrix: np.ndarray = rotation.as_matrix()
+
+    max_dist = get_max_dist(fragment_structure)
+
     rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
     fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing, sample_rate)
 
