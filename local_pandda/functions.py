@@ -4125,8 +4125,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0381":
         #     continue
 
-        # if dtag != "HAO1A-x0604":
-        #     continue
+        if dtag != "HAO1A-x0604":
+            continue
 
         # if dtag != "HAO1A-x0964":
         #     continue
@@ -4145,7 +4145,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_masks_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_gpu(
             dataset,
             residue_datasets,
             marker,
