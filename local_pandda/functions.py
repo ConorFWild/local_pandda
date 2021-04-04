@@ -387,7 +387,7 @@ def sample_fragment(rotation_index, path, resolution, grid_spacing, sample_rate)
 
     max_dist = get_max_dist(fragment_structure)
 
-    rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix)
+    rotated_structure: gemmi.Structure = rotate_translate_structure(fragment_structure, rotation_matrix, max_dist)
     fragment_map: np.ndarray = get_fragment_map(rotated_structure, resolution, grid_spacing, sample_rate)
 
     return fragment_map
