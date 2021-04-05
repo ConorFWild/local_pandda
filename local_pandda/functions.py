@@ -3855,7 +3855,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
             background_rmsd_map = fragment_search_rmsd_gpu(
-                sample_mean.reshape(1,1,sample_mean.shape[0], sample_mean[1], sample_mean[2]),
+                sample_mean.reshape(1,1,sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
                 fragment_maps_np,
                 fragment_masks_np)
 
