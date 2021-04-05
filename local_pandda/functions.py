@@ -3761,6 +3761,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
     # Find the scaling for the fragments
     scaling = get_protein_scaling(dataset, params.structure_factors, params.sample_rate)
+    print(f"scaling: {scaling}")
 
     # Get the comparator affinity maps
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
@@ -3848,7 +3849,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             reference_scale = np.mean(reference_map_points)
             print(f"reference_scale: {reference_scale}")
 
-            fragment_maps_np = fragment_maps_np *(scale/reference_scale)
+            fragment_maps_np = fragment_maps_np * (scaling/reference_scale)
 
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
