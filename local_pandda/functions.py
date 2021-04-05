@@ -270,7 +270,7 @@ def get_fragment_map(
                         print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
-                    mask_grid.set_points_around(pos, 0.75, 1.0)
+                    mask_grid.set_points_around(pos, 1.0, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -3825,7 +3825,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
         with torch.no_grad():
 
             # Fragment maps
-            fragment_maps_np = (np.stack(fragment_maps_list, axis=0) / np.mean(fragment_maps_np)) * scaling
+            fragment_maps_np = np.stack(fragment_maps_list, axis=0)
             fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
                                                         1,
                                                         fragment_maps_np.shape[1],
@@ -3840,6 +3840,15 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                                                           fragment_masks_np.shape[2],
                                                           fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
+
+            # Scale
+            reference_map = fragment_maps_np[0,0,:,:,:]
+            reference_mask = fragment_masks_np[0,0,:,:,:]
+            reference_map_points = reference_map[reference_mask]
+            reference_scale = np.mean(reference_map_points)
+            print(f"reference_scale: {reference_scale}")
+
+            fragment_maps_np = fragment_maps_np *(scale/reference_scale)
 
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
