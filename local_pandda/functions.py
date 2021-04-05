@@ -229,22 +229,25 @@ def get_fragment_map(
     print(grid)
     # array: np.ndarray = np.array(grid, copy=True)
 
-    box = structure.calculate_box()
-    box.add_margin(margin)
-    min_pos: gemmi.Position = box.minimum
-    max_pos = box.maximum
+    # box = structure.calculate_box()
+    # box.add_margin(margin)
+    # min_pos: gemmi.Position = box.minimum
+    # max_pos = box.maximum
+    #
+    # distance = max_pos - min_pos
+    unit_cell = grid.unit_cell
+    min_pos = [0.0,0.0,0.0]
 
-    distance = max_pos - min_pos
 
     tr = gemmi.Transform()
     tr.mat.fromlist([[1 * grid_spacing, 0, 0], [0, 1 * grid_spacing, 0], [0, 0, 1 * grid_spacing]])
-    tr.vec.fromlist([min_pos.x, min_pos.y, min_pos.z])
+    tr.vec.fromlist([min_pos, min_pos, min_pos])
 
     arr = np.zeros(
         [
-            int(distance.x / grid_spacing) + 1,
-            int(distance.y / grid_spacing) + 1,
-            int(distance.z / grid_spacing) + 1,
+            int(unit_cell.a / grid_spacing) + 1,
+            int(unit_cell.b / grid_spacing) + 1,
+            int(unit_cell.c / grid_spacing) + 1,
         ],
         dtype=np.float32
     )
@@ -274,9 +277,9 @@ def get_fragment_map(
 
     mask_arr = np.zeros(
         [
-            int(distance.x / grid_spacing) + 1,
-            int(distance.y / grid_spacing) + 1,
-            int(distance.z / grid_spacing) + 1,
+            int(unit_cell.a / grid_spacing) + 1,
+            int(unit_cell.b / grid_spacing) + 1,
+            int(unit_cell.c / grid_spacing) + 1,
         ],
         dtype=np.float32
     )
