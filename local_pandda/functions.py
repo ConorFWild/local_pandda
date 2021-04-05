@@ -3854,7 +3854,10 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
             mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
-            background_rmsd_map = fragment_search_rmsd_gpu(sample_mean, fragment_maps_np, fragment_masks_np)
+            background_rmsd_map = fragment_search_rmsd_gpu(
+                sample_mean.reshape(1,1,sample_mean.shape[0], sample_mean[1], sample_mean[2]),
+                fragment_maps_np,
+                fragment_masks_np)
 
             rsccs = {}
             for b_index in range(len(event_map_list)):
