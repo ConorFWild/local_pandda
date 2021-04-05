@@ -2839,8 +2839,8 @@ def fragment_search_rmsd_scaled_gpu(xmap_np, fragment_maps_np, fragment_masks_np
     rmsd = t1 + t2 - t3
 
     # outliers
-    maxval = torch.max(rmsd)
-    rmsd = torch.nan_to_num(rmsd, nan=maxval, posinf=maxval, neginf=maxval, )
+    # maxval = torch.max(rmsd)
+    rmsd = torch.nan_to_num(rmsd, nan=float('inf'), posinf=float('inf'), neginf=float('inf'), )
 
 
     return rmsd
