@@ -3845,7 +3845,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             # Scale
             reference_map = fragment_maps_np[0,0,:,:,:]
             reference_mask = fragment_masks_np[0,0,:,:,:]
-            reference_map_points = reference_map[reference_mask]
+            reference_map_points = reference_map[reference_mask > 0.0]
             reference_scale = np.mean(reference_map_points)
             print(f"reference_scale: {reference_scale}")
 
