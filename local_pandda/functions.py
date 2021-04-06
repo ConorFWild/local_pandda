@@ -3895,7 +3895,7 @@ def analyse_dataset_b_factor_gpu(
                     torch.cuda.synchronize()
                     torch.cuda.ipc_collect()
 
-                    results.append((rsccs[bdcs[b_index]], max_position))
+                    results.append((b_factor, rsccs[bdcs[b_index]], max_position))
 
                 for obj in gc.get_objects():
                     try:
