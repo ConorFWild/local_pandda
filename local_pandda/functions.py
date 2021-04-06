@@ -3774,6 +3774,8 @@ def analyse_dataset_b_factor_gpu(
 
     # Get the comparator affinity maps
 
+
+    results = []
     for b_factor in (15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0):
         print(f"############ B FACTOR: {b_factor} ########")
         for fragment_id, fragment_structure in dataset_fragment_structures.items():
@@ -3873,7 +3875,7 @@ def analyse_dataset_b_factor_gpu(
                     rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
                                                                mean_map_rscc, 0.5, 0.4)
 
-                    print(f"\teresults: {rsccs[bdcs[b_index]]}")
+                    print(f"\tresults: {rsccs[bdcs[b_index]]}")
 
 
                     max_index = rsccs[bdcs[b_index]][1]
@@ -3892,6 +3894,8 @@ def analyse_dataset_b_factor_gpu(
                     torch.cuda.empty_cache()
                     torch.cuda.synchronize()
                     torch.cuda.ipc_collect()
+
+                    results.append((rsccs[bdcs[b_index]], max_position))
 
                 for obj in gc.get_objects():
                     try:
@@ -3960,7 +3964,13 @@ def analyse_dataset_b_factor_gpu(
                     resolution,
                 )
 
-    # End loop over fragment builds
+        # End loop over fragment builds
+    # end loop over b factors
+
+    for result in results:
+        print(result)
+
+    exit()
 
     # Get a result object
     dataset_results: DatasetAffinityResults = DatasetAffinityResults(
