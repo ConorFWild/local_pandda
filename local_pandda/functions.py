@@ -2650,7 +2650,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
         1,
     )
     reference_map_sum = torch.tensor(reference_map_sum_np, dtype=torch.float).cuda()
-    print(f"reference_map_sum: {reference_map_sum}")
+    print(f"reference_map_sum: {reference_map_sum.shape}")
 
 
 
@@ -2687,7 +2687,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
         1,
     )
     rho_c_mu = torch.tensor(rho_c_mu_np, dtype=torch.float).cuda()
-    print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
+    print(f"rho_c_mu: {rho_c_mu.shape}; ")
 
 
 
