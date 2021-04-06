@@ -3879,12 +3879,12 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 rsccs[bdcs[b_index]] = peak
 
-                rmsd_map = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
-                inverse_rmsd_map = 1/rmsd_map
-                inverse_rmsd_map = np.nan_to_num(inverse_rmsd_map, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
+                rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
+                inverse_rmsd_map_np = 1/rmsd_map_np
+                inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
 
                 event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                    inverse_rmsd_map,
+                    inverse_rmsd_map_np,
                     reference_dataset,
                     dataset,
                     alignments[dataset.dtag][marker],
