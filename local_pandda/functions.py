@@ -3874,7 +3874,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 rmsd_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np)
 
-                peak = peak_search_rmsd(rmsd_map-background_rmsd_map)
+                peak = peak_search_rmsd(rmsd_map)
                 print(f"\tpeak: {peak}")
 
                 rsccs[bdcs[b_index]] = peak
