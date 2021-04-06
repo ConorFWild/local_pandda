@@ -3776,7 +3776,7 @@ def analyse_dataset_b_factor_gpu(
 
 
     results = []
-    for b_factor in (15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0):
+    for b_factor in (10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0):
         print(f"############ B FACTOR: {b_factor} ########")
         for fragment_id, fragment_structure in dataset_fragment_structures.items():
             if params.debug:
