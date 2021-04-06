@@ -3863,6 +3863,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             )
 
             peak = peak_search_rmsd(background_rmsd_map)
+            print(f"peak: {peak}")
+
             max_index = peak[1]
             max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
             max_rotation = list(fragment_maps.keys())[max_index[1]]
