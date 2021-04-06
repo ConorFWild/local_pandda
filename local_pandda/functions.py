@@ -3895,7 +3895,7 @@ def analyse_dataset_b_factor_gpu(
                     torch.cuda.synchronize()
                     torch.cuda.ipc_collect()
 
-                    results.append((b_factor, rsccs[bdcs[b_index]], max_position))
+                    results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
 
                 for obj in gc.get_objects():
                     try:
@@ -3967,7 +3967,7 @@ def analyse_dataset_b_factor_gpu(
         # End loop over fragment builds
     # end loop over b factors
 
-    for result in sorted(results, key=lambda result: result[1][0]):
+    for result in sorted(results, key=lambda result: result[2][0]):
         print(result)
 
     exit()
