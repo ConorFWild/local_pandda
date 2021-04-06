@@ -3873,6 +3873,9 @@ def analyse_dataset_b_factor_gpu(
                     rsccs[bdcs[b_index]] = fragment_search_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
                                                                mean_map_rscc, 0.5, 0.4)
 
+                    print(f"\teresults: {rsccs[bdcs[b_index]]}")
+
+
                     max_index = rsccs[bdcs[b_index]][1]
                     max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
                     max_rotation = list(fragment_maps.keys())[max_index[1]]
