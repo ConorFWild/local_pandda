@@ -3910,8 +3910,8 @@ def analyse_dataset_b_factor_gpu(
                 print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
                 fragment_size_np = np.array(fragment_map_size_list).reshape(
-                    len(fragment_map_size_list),
                     1,
+                    len(fragment_map_size_list),
                     1,
                     1,
                     1)
