@@ -272,7 +272,7 @@ def get_fragment_map(
                         print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
-                    mask_grid.set_points_around(pos, 1.0, 1.0)
+                    mask_grid.set_points_around(pos, 0.75, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -3326,16 +3326,17 @@ def get_protein_scaling(dataset: Dataset, structure_factors, sample_rate):
         for chain in model:
             for residue in chain.get_polymer():
                 for atom in residue:
-                    mask.set_points_around(atom.pos, 1.0, 1.0)
+                    mask.set_points_around(atom.pos, 0.75, 1.0)
 
     mask_np = np.array(mask)
 
     masked_points = xmap_np[mask_np == 1.0]
 
-    scaling = np.mean(masked_points)
-    print(f"scaling is: {scaling}")
+    location = np.mean(masked_points)
+    scale = np.std(masked_points)
+    print(f"scaling is: {scale}")
 
-    return scaling
+    return location, scale
 
 
 def analyse_dataset_gpu(
@@ -3762,8 +3763,10 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
     # Find the scaling for the fragments
-    scaling = get_protein_scaling(dataset, params.structure_factors, params.sample_rate)
-    print(f"scaling: {scaling}")
+    protein_location, protein_scale = get_protein_scaling(dataset, params.structure_factors, params.sample_rate)
+    print(f"protein_location: {protein_location}")
+
+    print(f"protein_scale: {protein_scale}")
 
     # Get the comparator affinity maps
     for fragment_id, fragment_structure in dataset_fragment_structures.items():
@@ -3827,6 +3830,29 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
         with torch.no_grad():
 
+            # Scale
+            reference_map = fragment_maps_list[0]
+            reference_mask = fragment_masks_list[0]
+            reference_map_points = reference_map[reference_mask > 0.0]
+            reference_location = np.mean(reference_map_points)
+            reference_scale = np.std(reference_map_points)
+            print(f"reference_loc: {reference_location}")
+            print(f"reference_scale: {reference_scale}")
+
+            for j, fragment_map in enumerate(fragment_maps_list):
+                fragment_map = fragment_maps_list[j]
+                fragment_mask = fragment_masks_list[j]
+
+                masked_points = fragment_map[fragment_mask > 0.0]
+
+                masked_points = (((masked_points - reference_location) / reference_scale) * protein_scale) + protein_location
+
+                fragment_maps_list[j][fragment_masks_list[j] > 0.0] = masked_points
+
+            print(f"exmaple map stats: {np.max(fragment_maps_list[0])} {np.min(fragment_maps_list[0])} {np.mean(fragment_maps_list[0])} {np.std(fragment_maps_list[0])}")
+
+
+
             # Fragment maps
             fragment_maps_np = np.stack(fragment_maps_list, axis=0)
             fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
@@ -3844,17 +3870,6 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                                                           fragment_masks_np.shape[3])
             print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
-            # Scale
-            reference_map = fragment_maps_np[0,0,:,:,:]
-            reference_mask = fragment_masks_np[0,0,:,:,:]
-            reference_map_points = reference_map[reference_mask > 0.0]
-            reference_scale = np.mean(reference_map_points)
-            print(f"reference_scale: {reference_scale}")
-
-            fragment_maps_np = fragment_maps_np * (scaling/reference_scale)
-
-            mean_map_rscc = get_mean_rscc(sample_mean, fragment_maps_np, fragment_masks_np)
-            mean_map_max_correlation = torch.max(mean_map_rscc).cpu().item()
 
             background_rmsd_map = fragment_search_rmsd_gpu(
                 sample_mean.reshape(1,1,sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
