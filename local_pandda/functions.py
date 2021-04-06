@@ -225,15 +225,15 @@ def get_fragment_map(
     dencalc.d_min = resolution
     dencalc.rate = resolution / (2 * grid_spacing)
 
-    print(resolution)
-    print(grid_spacing)
-    print(structure.spacegroup_hm)
-    print(structure.cell)
+    # print(resolution)
+    # print(grid_spacing)
+    # print(structure.spacegroup_hm)
+    # print(structure.cell)
     dencalc.set_grid_cell_and_spacegroup(structure)
     dencalc.put_model_density_on_grid(structure[0])
 
     grid: gemmi.FloatGrid = dencalc.grid
-    print(grid)
+    # print(grid)
     # array: np.ndarray = np.array(grid, copy=True)
 
     # box = structure.calculate_box()
@@ -259,7 +259,7 @@ def get_fragment_map(
     )
 
     grid.interpolate_values(arr, tr)
-    print(arr.shape)
+    # print(arr.shape)
 
     # Mask
     mask_grid = gemmi.FloatGrid(
@@ -276,7 +276,7 @@ def get_fragment_map(
             for residue in chain:
                 for atom in residue:
                     if atom.element.name == "H":
-                        print("Skipping H")
+                        # print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
                     mask_grid.set_points_around(pos, 0.75, 1.0)
@@ -3810,7 +3810,7 @@ def analyse_dataset_b_factor_gpu(
 
                 arr_mask = fragment_map > 0.0
 
-                print(f"arr_mask: {np.sum(arr_mask)}")
+                # print(f"arr_mask: {np.sum(arr_mask)}")
 
                 arr[~arr_mask] = 0.0
 
