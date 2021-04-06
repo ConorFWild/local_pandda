@@ -279,7 +279,7 @@ def get_fragment_map(
                         # print("Skipping H")
                         continue
                     pos: gemmi.Position = atom.pos
-                    mask_grid.set_points_around(pos, 0.75, 1.0)
+                    mask_grid.set_points_around(pos, 1.0, 1.0)
 
     mask_arr = np.zeros(
         [
