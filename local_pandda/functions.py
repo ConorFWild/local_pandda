@@ -3859,7 +3859,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             background_rmsd_map = fragment_search_rmsd_gpu(
                 sample_mean.reshape(1,1,sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
                 fragment_maps_np,
-                fragment_masks_np)
+                fragment_masks_np,
+            )
 
             peak = peak_search_rmsd(background_rmsd_map)
             max_index = peak[1]
