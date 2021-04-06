@@ -2693,6 +2693,8 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     rho_c_mu = torch.tensor(rho_c_mu_np, dtype=torch.float).cuda()
     print(f"rho_c_mu: {rho_c_mu.shape}; ")
 
+    rho_c_mu = rho_c_mu.reshape((1,-1,1,1,1))
+
 
 
     # Nominator
