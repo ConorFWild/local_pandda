@@ -3967,7 +3967,10 @@ def analyse_dataset_b_factor_gpu(
         # End loop over fragment builds
     # end loop over b factors
 
-    for result in sorted(results, key=lambda result: result[2][0]):
+    for result in sorted(
+            results,
+            key=lambda result: result[2][0],
+    ):
         print(result)
 
     exit()
