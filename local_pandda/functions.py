@@ -3861,6 +3861,21 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                 fragment_maps_np,
                 fragment_masks_np)
 
+            peak = peak_search_rmsd(background_rmsd_map)
+            max_index = peak[1]
+            max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+            max_rotation = list(fragment_maps.keys())[max_index[1]]
+            max_position = max_coord_to_position(
+                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
+                max_x,
+                max_y,
+                max_z,
+                alignments, dataset, marker)
+
+            print(f"max reference position: {max_position}")
+
+            exit()
+
             rsccs = {}
             for b_index in range(len(event_map_list)):
                 print(f"\tBDC: {bdcs[b_index]}")
