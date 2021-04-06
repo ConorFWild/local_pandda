@@ -241,7 +241,7 @@ def get_fragment_map(
 
     tr = gemmi.Transform()
     tr.mat.fromlist([[1 * grid_spacing, 0, 0], [0, 1 * grid_spacing, 0], [0, 0, 1 * grid_spacing]])
-    tr.vec.fromlist([min_pos, min_pos, min_pos])
+    tr.vec.fromlist([min_pos[0], min_pos[1], min_pos[2]])
 
     arr = np.zeros(
         [
