@@ -3396,7 +3396,7 @@ def max_coord_to_position(max_index_mask_coord, fragment_maps, max_rotation, gri
     print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
 
     transform = alignments[dataset.dtag][marker].transform
-    inverse_transform = transform.inverse()
+    inverse_transform = transform#  .inverse()
     rotation_tr = gemmi.Transform()
     rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
 
