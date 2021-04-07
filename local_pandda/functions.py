@@ -4408,32 +4408,32 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                     results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
 
-
-                    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                        fragment_maps_np[0,0,:,:,:],
-                        reference_dataset,
-                        dataset,
-                        alignments[dataset.dtag][marker],
-                        marker,
-                        params.grid_size,
-                        params.grid_spacing,
-                        params.structure_factors,
-                        params.sample_rate,
-                    )
-
-                    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                                  None,
-                                                  )
-
-                    write_event_map(
-                        event_map,
-                        out_dir / f"example_fragment.mtz",
-                        dataset_event_marker,
-                        dataset,
-                        resolution,
-                    )
+                    #
+                    # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                    #     fragment_maps_np[0,0,:,:,:],
+                    #     reference_dataset,
+                    #     dataset,
+                    #     alignments[dataset.dtag][marker],
+                    #     marker,
+                    #     params.grid_size,
+                    #     params.grid_spacing,
+                    #     params.structure_factors,
+                    #     params.sample_rate,
+                    # )
+                    #
+                    # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                    #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                    #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                    #                               None,
+                    #                               )
+                    #
+                    # write_event_map(
+                    #     event_map,
+                    #     out_dir / f"example_fragment.mtz",
+                    #     dataset_event_marker,
+                    #     dataset,
+                    #     resolution,
+                    # )
 
                     rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
                     inverse_rmsd_map_np = 1 / rmsd_map_np
