@@ -280,7 +280,7 @@ def get_fragment_map(
                         continue
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
-                    mask_grid.set_points_around(pos, 1.5, 1.0)
+                    mask_grid.set_points_around(pos, 0.5, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -5593,7 +5593,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_rmsd_protein_scaled_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_b_factor_gpu(
             dataset,
             residue_datasets,
             marker,
