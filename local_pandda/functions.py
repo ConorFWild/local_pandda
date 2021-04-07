@@ -4307,6 +4307,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                     fragment_maps_list[j][fragment_masks_list[j] > 0.0] = masked_points
 
+                    fragment_map_value_list[j] = (((fragment_map_value_list[j]  - reference_location) / reference_scale) * protein_scale) + protein_location
+
                 print(
                     f"exmaple map stats: {np.max(fragment_maps_list[0])} {np.min(fragment_maps_list[0])} {np.mean(fragment_maps_list[0])} {np.std(fragment_maps_list[0])}")
 
