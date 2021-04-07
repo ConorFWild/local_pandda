@@ -4408,9 +4408,6 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                     results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
 
-                    # rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
-                    # inverse_rmsd_map_np = 1 / rmsd_map_np
-                    # inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
 
                     event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
                         fragment_maps_np[0,0,:,:,:],
@@ -4437,33 +4434,39 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                         dataset,
                         resolution,
                     )
-                    exit()
 
-                    # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                    #     inverse_rmsd_map_np,
-                    #     reference_dataset,
-                    #     dataset,
-                    #     alignments[dataset.dtag][marker],
-                    #     marker,
-                    #     params.grid_size,
-                    #     params.grid_spacing,
-                    #     params.structure_factors,
-                    #     params.sample_rate,
-                    # )
-                    #
-                    # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                    #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                    #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                    #                               None,
-                    #                               )
-                    #
-                    # write_event_map(
-                    #     event_map,
-                    #     out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
-                    #     dataset_event_marker,
-                    #     dataset,
-                    #     resolution,
-                    # )
+                    rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
+                    inverse_rmsd_map_np = 1 / rmsd_map_np
+                    inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
+
+
+                    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                        inverse_rmsd_map_np,
+                        reference_dataset,
+                        dataset,
+                        alignments[dataset.dtag][marker],
+                        marker,
+                        params.grid_size,
+                        params.grid_spacing,
+                        params.structure_factors,
+                        params.sample_rate,
+                    )
+
+                    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                                  None,
+                                                  )
+
+                    write_event_map(
+                        event_map,
+                        out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
+                        dataset_event_marker,
+                        dataset,
+                        resolution,
+                    )
+
+                    exit()
                     #
                     # rmsd_delta_map = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
                     # inverse_rmsd_delta_map = 1 / rmsd_delta_map
