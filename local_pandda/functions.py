@@ -4500,7 +4500,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     )
 
                     event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                        torch.min(search_map, 1)[0].cpu().numpy()[0, :, :, :],
+                        -torch.min(search_map, 1)[0].cpu().numpy()[0, :, :, :],
                         reference_dataset,
                         dataset,
                         alignments[dataset.dtag][marker],
