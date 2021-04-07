@@ -4371,6 +4371,36 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     max_z,
                     alignments, dataset, marker)
 
+                background_rmsd_map_np = torch.min(background_rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
+                inverse_background_rmsd_map_np = 1 / background_rmsd_map_np
+                inverse_background_rmsd_map_np = np.nan_to_num(inverse_background_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
+
+                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                    inverse_background_rmsd_map_np,
+                    reference_dataset,
+                    dataset,
+                    alignments[dataset.dtag][marker],
+                    marker,
+                    params.grid_size,
+                    params.grid_spacing,
+                    params.structure_factors,
+                    params.sample_rate,
+                )
+
+                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                              None,
+                                              )
+
+                write_event_map(
+                    event_map,
+                    out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_inverse_background_rmsd.mtz",
+                    dataset_event_marker,
+                    dataset,
+                    resolution,
+                )
+
                 print(f"max reference position: {max_position}")
 
                 rsccs = {}
