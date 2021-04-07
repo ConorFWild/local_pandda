@@ -4372,7 +4372,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     peak = peak_search_rmsd(rmsd_map)
                     print(f"\tpeak: {peak}")
                     max_index = peak[1]
-                    peak[2] = background_rmsd_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4], max_index[5]]
+                    peak[2] = background_rmsd_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4],]
 
                     rsccs[bdcs[b_index]] = peak
 
