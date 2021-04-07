@@ -4395,7 +4395,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 write_event_map(
                     event_map,
-                    out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_inverse_background_rmsd.mtz",
+                    out_dir / f"{dataset.dtag}_{b_factor}_inverse_background_rmsd.mtz",
                     dataset_event_marker,
                     dataset,
                     resolution,
