@@ -2784,7 +2784,10 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     delta_rscc.mul_(mean_map_rscc_mask)
 
-    max_delta_correlation = torch.max(delta_rscc).cpu()
+    # max_delta_correlation = torch.max(delta_rscc).cpu()
+    # print(f"max_delta_correlation: {max_delta_correlation}")
+
+    max_delta_correlation = torch.max(rscc).cpu()
     print(f"max_delta_correlation: {max_delta_correlation}")
 
     max_index = np.unravel_index(torch.argmax(delta_rscc).cpu(), delta_rscc.shape)
