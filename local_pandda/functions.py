@@ -4396,6 +4396,16 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                     rsccs[bdcs[b_index]] = peak
 
+                    max_index = peak[1]
+                    max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+                    max_rotation = list(fragment_maps.keys())[max_index[1]]
+                    max_position = max_coord_to_position(
+                        max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
+                        max_x,
+                        max_y,
+                        max_z,
+                        alignments, dataset, marker)
+
                     results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
 
                     # rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
