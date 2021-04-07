@@ -2643,8 +2643,8 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     print(f"size: {size.shape}")
 
     reference_map_sum_np = np.array([np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
-        len(fragment_map_value_list),
         1,
+        len(fragment_map_value_list),
         1,
         1,
         1,
