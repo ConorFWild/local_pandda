@@ -2992,6 +2992,11 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     rmsd = rmsd_unsacled / size
     print(f"rmsd: {rmsd.shape} {rmsd[0, 0, 24, 24, 24]}")
 
+    min_index = np.unravel_index(torch.argmin(rmsd).cpu(), rmsd.shape)
+    print(f"\t{rho_o_squared[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]} {rho_c_rho_c[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]} {conv_rho_o_rho_c[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]}")
+
+
+
     rmsd = torch.nan_to_num(rmsd, nan=0.0, posinf=0.0, neginf=0.0, )
 
     del rho_o
