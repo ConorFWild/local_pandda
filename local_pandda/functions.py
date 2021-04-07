@@ -2911,7 +2911,7 @@ def fragment_search_rmsd_scaled_gpu(xmap_np, fragment_maps_np, fragment_masks_np
 
 def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
                              fragment_size_np,
-                                                               fragment_map_value_list):
+                             fragment_map_value_list):
     reference_fragment = fragment_maps_np[0, 0, :, :, :]
     print(f"reference_fragment: {reference_fragment.shape}")
 
@@ -4364,7 +4364,10 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                                                           event_maps_np.shape[3])
                     print(f"event_maps_np: {event_maps_np.shape}")
 
-                    rmsd_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np)
+                    rmsd_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np,
+                                                        fragment_size_np,
+                                                        fragment_map_value_list
+                                                        )
 
                     peak = peak_search_rmsd(rmsd_map)
                     print(f"\tpeak: {peak}")
