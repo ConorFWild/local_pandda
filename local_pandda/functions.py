@@ -4460,13 +4460,13 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                     write_event_map(
                         event_map,
-                        out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
+                        out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_inverse_rmsd.mtz",
                         dataset_event_marker,
                         dataset,
                         resolution,
                     )
 
-                    exit()
+
                     #
                     # rmsd_delta_map = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
                     # inverse_rmsd_delta_map = 1 / rmsd_delta_map
