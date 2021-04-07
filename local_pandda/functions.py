@@ -2642,7 +2642,8 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     size = torch.tensor(fragment_size_np, dtype=torch.float).cuda()
     print(f"size: {size.shape}")
 
-    reference_map_sum_np = np.array([np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
+    reference_map_sum_np = np.array(
+        [np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
         1,
         len(fragment_map_value_list),
         1,
@@ -2651,8 +2652,6 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     )
     reference_map_sum = torch.tensor(reference_map_sum_np, dtype=torch.float).cuda()
     print(f"reference_map_sum: {reference_map_sum.shape}")
-
-
 
     # size = torch.tensor(np.sum(reference_mask > 0.0), dtype=torch.float).cuda()
     # print(f"size: {size}")
@@ -2679,8 +2678,6 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
 
     # rho_o_mu = (rho_o_mu / size).reshape((1,-1,1,1,1))
 
-
-
     # rho_c_mu = torch.tensor(np.mean(reference_map_masked_values), dtype=torch.float).cuda()
     # print(f"rho_c_mu: {rho_c_mu.shape}; {rho_c_mu}")
     rho_c_mu_np = np.array([np.mean(fragment_map_values) for fragment_map_values in fragment_map_value_list]).reshape(
@@ -2693,9 +2690,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     rho_c_mu = torch.tensor(rho_c_mu_np, dtype=torch.float).cuda()
     print(f"rho_c_mu: {rho_c_mu.shape}; ")
 
-    rho_c_mu = rho_c_mu.reshape((1,-1,1,1,1))
-
-
+    rho_c_mu = rho_c_mu.reshape((1, -1, 1, 1, 1))
 
     # Nominator
     conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
@@ -2741,7 +2736,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
             np.sum(np.square(fragment_map_value - np.mean(fragment_map_value)))
             for fragment_map_value
             in fragment_map_value_list
-    ]
+        ]
     ).reshape(
         1,
         len(fragment_map_value_list),
@@ -2970,7 +2965,7 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
         rho_c_rho_c_np,
         dtype=torch.float).cuda()
     print(
-        f"denominator_rho_c: {rho_c_rho_c.shape}; {torch.max(rho_c_rho_c)} {torch.min(rho_c_rho_c)}")
+        f"rho_c_rho_c: {rho_c_rho_c.shape}; {torch.max(rho_c_rho_c)} {torch.min(rho_c_rho_c)} {rho_c_rho_c[0,0,0,0,0]}")
 
     # Tensors
     rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
@@ -2985,10 +2980,10 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     # Convolutions
     conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
     print(
-        f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)}")
+        f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)} {conv_rho_o_rho_c[0,0,24,24,24]}")
 
     rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
-    print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
+    print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)} {rho_o_squared[0,0,24,24,24]}")
 
     rmsd = (rho_o_squared + rho_c_rho_c - 2 * conv_rho_o_rho_c) / size
     print(f"RSCC: {rmsd.shape} {rmsd[0, 0, 32, 32, 32]}")
@@ -4278,6 +4273,9 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
             for b in bdcs:
                 event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
 
+                # Mask the significant density in the event map
+                event_map[sample_z < 1.5] = 0.0
+
                 event_map_list.append(event_map)
 
             with torch.no_grad():
@@ -4307,19 +4305,21 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 # Fragment maps
                 fragment_maps_np = np.stack(fragment_maps_list, axis=0)
-                fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
-                                                            1,
-                                                            fragment_maps_np.shape[1],
-                                                            fragment_maps_np.shape[2],
-                                                            fragment_maps_np.shape[3])
+                fragment_maps_np = fragment_maps_np.reshape(
+                    fragment_maps_np.shape[0],
+                    1,
+                    fragment_maps_np.shape[1],
+                    fragment_maps_np.shape[2],
+                    fragment_maps_np.shape[3])
                 print(f"fragment_maps_np: {fragment_maps_np.shape}")
 
                 fragment_masks_np = np.stack(fragment_masks_list, axis=0)
-                fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
-                                                              1,
-                                                              fragment_masks_np.shape[1],
-                                                              fragment_masks_np.shape[2],
-                                                              fragment_masks_np.shape[3])
+                fragment_masks_np = fragment_masks_np.reshape(
+                    fragment_masks_np.shape[0],
+                    1,
+                    fragment_masks_np.shape[1],
+                    fragment_masks_np.shape[2],
+                    fragment_masks_np.shape[3])
                 print(f"fragment_masks_np: {fragment_masks_np.shape}")
 
                 fragment_size_np = np.array(fragment_map_size_list).reshape(
@@ -4329,8 +4329,13 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     1,
                     1)
 
+                # Mask the significant density in the sample mean
+                sample_mean_masked = sample_mean.copy()
+                sample_mean_masked[sample_z < 1.5] = 0
+
+                # Perform the search
                 background_rmsd_map = fragment_search_rmsd_gpu(
-                    sample_mean.reshape(1, 1, sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
+                    sample_mean_masked.reshape(1, 1, sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
                     fragment_maps_np,
                     fragment_masks_np,
                     fragment_size_np,
@@ -4352,7 +4357,6 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 print(f"max reference position: {max_position}")
 
-
                 rsccs = {}
                 for b_index in range(len(event_map_list)):
                     print(f"\tBDC: {bdcs[b_index]}")
@@ -4372,12 +4376,11 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     peak = peak_search_rmsd(rmsd_map)
                     print(f"\tpeak: {peak}")
                     max_index = peak[1]
-                    peak[2] = background_rmsd_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4],]
+                    peak[2] = background_rmsd_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4],].item()
 
                     rsccs[bdcs[b_index]] = peak
 
                     results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
-
 
                     # rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
                     # inverse_rmsd_map_np = 1 / rmsd_map_np
@@ -4464,7 +4467,6 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     except:
                         pass
 
-
                 max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
                 max_rscc_correlation_index = rsccs[max_rscc_bdc]
                 max_correlation = max_rscc_correlation_index[0]
@@ -4479,7 +4481,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                 max_index_fragment_map_shape = max_index_fragment_map.shape
 
                 max_index_fragment_position_dataset_frame = max_coord_to_position(
-                    max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y,
+                    max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x,
+                    max_y,
                     max_z,
                     alignments, dataset, marker
                 )
