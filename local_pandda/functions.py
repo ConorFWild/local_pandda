@@ -280,7 +280,7 @@ def get_fragment_map(
                         continue
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
-                    mask_grid.set_points_around(pos, 0.75, 1.0)
+                    mask_grid.set_points_around(pos, 1.0, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -428,6 +428,7 @@ def get_fragment_mask(rotated_structure, grid_spacing, radii):
 
     arr = np.array(grid, copy=True)
     return arr
+
 
 
 def sample_fragment_mask(rotation_index, path, max_dist, grid_spacing, radii):
