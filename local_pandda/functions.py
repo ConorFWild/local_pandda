@@ -282,7 +282,6 @@ def get_fragment_map(
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
                     mask_grid.set_points_around(pos, 0.75, 1.0)
 
-
     mask_arr = np.zeros(
         [
             int(unit_cell.a / grid_spacing) + 1,
@@ -2924,7 +2923,7 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     # print(f"size: {size}")
 
     size = torch.tensor(fragment_size_np, dtype=torch.float).cuda()
-    print(f"size: {size.shape} {size[0,0,0,0,0]}")
+    print(f"size: {size.shape} {size[0, 0, 0, 0, 0]}")
 
     reference_map_sum_np = np.array(
         [np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
@@ -2966,7 +2965,7 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
         rho_c_rho_c_np,
         dtype=torch.float).cuda()
     print(
-        f"rho_c_rho_c: {rho_c_rho_c.shape}; {torch.max(rho_c_rho_c)} {torch.min(rho_c_rho_c)} {rho_c_rho_c[0,0,0,0,0]}")
+        f"rho_c_rho_c: {rho_c_rho_c.shape}; {torch.max(rho_c_rho_c)} {torch.min(rho_c_rho_c)} {rho_c_rho_c[0, 0, 0, 0, 0]}")
 
     # Tensors
     rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
@@ -2981,10 +2980,11 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     # Convolutions
     conv_rho_o_rho_c = torch.nn.functional.conv3d(rho_o, rho_c, padding=padding)
     print(
-        f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)} {conv_rho_o_rho_c[0,0,24,24,24]}")
+        f"conv_rho_o_rho_c: {conv_rho_o_rho_c.shape} {torch.max(conv_rho_o_rho_c)} {torch.min(conv_rho_o_rho_c)} {conv_rho_o_rho_c[0, 0, 24, 24, 24]}")
 
     rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
-    print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)} {rho_o_squared[0,0,24,24,24]}")
+    print(
+        f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)} {rho_o_squared[0, 0, 24, 24, 24]}")
 
     rmsd_unsacled = (rho_o_squared + rho_c_rho_c - 2 * conv_rho_o_rho_c)
     print(f"rmsd: {rmsd_unsacled.shape} {rmsd_unsacled[0, 0, 24, 24, 24]}")
@@ -2993,7 +2993,8 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     print(f"rmsd: {rmsd.shape} {rmsd[0, 0, 24, 24, 24]}")
 
     min_index = np.unravel_index(torch.argmin(rmsd).cpu(), rmsd.shape)
-    print(f"\t{rho_o_squared[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]} {rho_c_rho_c[0, min_index[1], 0, 0, 0]} {conv_rho_o_rho_c[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]}")
+    print(
+        f"\t{rho_o_squared[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]} {rho_c_rho_c[0, min_index[1], 0, 0, 0]} {conv_rho_o_rho_c[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]}")
 
     rmsd = torch.nan_to_num(rmsd, nan=0.0, posinf=0.0, neginf=0.0, )
 
@@ -4303,11 +4304,12 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     masked_points = fragment_map[fragment_mask > 0.0]
 
                     masked_points = (((
-                                                  masked_points - reference_location) / reference_scale) * protein_scale) + protein_location
+                                              masked_points - reference_location) / reference_scale) * protein_scale) + protein_location
 
                     fragment_maps_list[j][fragment_masks_list[j] > 0.0] = masked_points
 
-                    fragment_map_value_list[j] = (((fragment_map_value_list[j]  - reference_location) / reference_scale) * protein_scale) + protein_location
+                    fragment_map_value_list[j] = (((fragment_map_value_list[
+                                                        j] - reference_location) / reference_scale) * protein_scale) + protein_location
 
                 print(
                     f"exmaple map stats: {np.max(fragment_maps_list[0])} {np.min(fragment_maps_list[0])} {np.mean(fragment_maps_list[0])} {np.std(fragment_maps_list[0])}")
@@ -4385,7 +4387,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     peak = peak_search_rmsd(rmsd_map)
                     print(f"\tpeak: {peak}")
                     max_index = peak[1]
-                    peak[2] = background_rmsd_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4],].item()
+                    peak[2] = background_rmsd_map[
+                        max_index[0], max_index[1], max_index[2], max_index[3], max_index[4],].item()
 
                     rsccs[bdcs[b_index]] = peak
 
