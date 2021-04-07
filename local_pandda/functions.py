@@ -2677,7 +2677,7 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     rho_o_mu = torch.nn.functional.conv3d(rho_o, masks, padding=padding)
     print(f"rho_o_mu: {rho_o_mu.shape} {torch.max(rho_o_mu)} {torch.min(rho_o_mu)}")
 
-    rho_o_mu = (rho_o_mu / size).reshape((1,-1,1,1,1))
+    # rho_o_mu = (rho_o_mu / size).reshape((1,-1,1,1,1))
 
 
 
