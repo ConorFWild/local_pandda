@@ -3938,6 +3938,8 @@ def analyse_dataset_b_factor_gpu(
             for b in bdcs:
                 event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
 
+                event_map[sample_z < 1.5] = 0.0
+
                 event_map_list.append(event_map)
 
             with torch.no_grad():
