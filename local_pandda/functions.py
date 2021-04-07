@@ -2909,7 +2909,9 @@ def fragment_search_rmsd_scaled_gpu(xmap_np, fragment_maps_np, fragment_masks_np
     return rmsd
 
 
-def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
+def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
+                             fragment_size_np,
+                                                               fragment_map_value_list):
     reference_fragment = fragment_maps_np[0, 0, :, :, :]
     print(f"reference_fragment: {reference_fragment.shape}")
 
@@ -2922,20 +2924,53 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
                )
     print(f"Padding: {padding}")
 
-    size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
-    print(f"size: {size}")
+    # size = torch.tensor(np.sum(reference_mask), dtype=torch.float).cuda()
+    # print(f"size: {size}")
 
-    reference_map_masked_values = reference_fragment[reference_mask > 0]
-    print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
+    size = torch.tensor(fragment_size_np, dtype=torch.float).cuda()
+    print(f"size: {size.shape}")
 
-    reference_map_sum = np.sum(reference_map_masked_values)
-    print(f"reference_map_sum: {reference_map_sum}")
+    reference_map_sum_np = np.array(
+        [np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
+        1,
+        len(fragment_map_value_list),
+        1,
+        1,
+        1,
+    )
+    reference_map_sum = torch.tensor(reference_map_sum_np, dtype=torch.float).cuda()
+    print(f"reference_map_sum: {reference_map_sum.shape}")
 
-    reference_map_squared_masked_values = np.square(reference_map_masked_values)
-    print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values.shape}")
+    # reference_map_masked_values = reference_fragment[reference_mask > 0]
+    # print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
 
-    reference_map_squared_sum = np.sum(reference_map_squared_masked_values)
-    print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values}")
+    # reference_map_sum = np.sum(reference_map_masked_values)
+    # print(f"reference_map_sum: {reference_map_sum}")
+
+    # reference_map_squared_masked_values = np.square(reference_map_masked_values)
+    # print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values.shape}")
+    #
+    # reference_map_squared_sum = np.sum(reference_map_squared_masked_values)
+    # print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values}")
+
+    rho_c_rho_c_np = np.array(
+        [
+            np.sum(np.square(fragment_map_value))
+            for fragment_map_value
+            in fragment_map_value_list
+        ]
+    ).reshape(
+        1,
+        len(fragment_map_value_list),
+        1,
+        1,
+        1
+    )
+    rho_c_rho_c = torch.tensor(
+        rho_c_rho_c_np,
+        dtype=torch.float).cuda()
+    print(
+        f"denominator_rho_c: {rho_c_rho_c.shape}; {torch.max(rho_c_rho_c)} {torch.min(rho_c_rho_c)}")
 
     # Tensors
     rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
@@ -2955,7 +2990,7 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np, ):
     rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
     print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)}")
 
-    rmsd = rho_o_squared + reference_map_squared_sum - 2 * conv_rho_o_rho_c
+    rmsd = (rho_o_squared + rho_c_rho_c - 2 * conv_rho_o_rho_c) / size
     print(f"RSCC: {rmsd.shape} {rmsd[0, 0, 32, 32, 32]}")
 
     rmsd = torch.nan_to_num(rmsd, nan=0.0, posinf=0.0, neginf=0.0, )
@@ -4175,210 +4210,137 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
     print(f"protein_scale: {protein_scale}")
 
     # Get the comparator affinity maps
-    for fragment_id, fragment_structure in dataset_fragment_structures.items():
-        if params.debug:
-            print(f"\t\tProcessing fragment: {fragment_id}")
-        fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_maps(
-            fragment_structure,
-            resolution,
-            params.num_fragment_pose_samples,
-            params.sample_rate,
-            params.grid_spacing,
-        )
+    results = []
 
-        save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing,
-                                  out_dir / "example_fragment_map.ccp4")
+    for b_factor in (10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0):
+        print(f"############ B FACTOR: {b_factor} ########")
 
-        max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
-        max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
-        max_z = max([fragment_map.shape[2] for fragment_map in fragment_maps.values()])
-        if max_x % 2 == 0: max_x = max_x + 1
-        if max_y % 2 == 0: max_y = max_y + 1
-        if max_z % 2 == 0: max_z = max_z + 1
-
-        fragment_masks_list = []
-
-        fragment_maps_list = []
-        fragment_masks = {}
-        for rotation, fragment_map in fragment_maps.items():
-            arr = fragment_map.copy()
-
-            arr_mask = fragment_map > 0.0
-
-            print(f"arr_mask: {np.sum(arr_mask)}")
-
-            arr[~arr_mask] = 0.0
-
-            fragment_mask_arr = np.zeros(fragment_map.shape)
-            fragment_mask_arr[arr_mask] = 1.0
-
-            fragment_map = np.zeros((max_x, max_y, max_z,))
-            fragment_mask = np.zeros((max_x, max_y, max_z,))
-
-            fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
-            fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
-
-            fragment_maps_list.append(fragment_map)
-            fragment_masks_list.append(fragment_mask)
-
-            fragment_masks[rotation] = fragment_mask
-
-        if params.debug:
-            print(f"\t\tGot {len(fragment_maps)} fragment maps")
-
-        # Get affinity maps for various orientations
-        event_map_list = []
-        bdcs = np.linspace(0, 0.90, 10)
-        for b in bdcs:
-            event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
-
-            event_map_list.append(event_map)
-
-        with torch.no_grad():
-
-            # Scale
-            reference_map = fragment_maps_list[0]
-            reference_mask = fragment_masks_list[0]
-            reference_map_points = reference_map[reference_mask > 0.0]
-            reference_location = np.mean(reference_map_points)
-            reference_scale = np.std(reference_map_points)
-            print(f"reference_loc: {reference_location}")
-            print(f"reference_scale: {reference_scale}")
-
-            for j, fragment_map in enumerate(fragment_maps_list):
-                fragment_map = fragment_maps_list[j]
-                fragment_mask = fragment_masks_list[j]
-
-                masked_points = fragment_map[fragment_mask > 0.0]
-
-                masked_points = (((
-                                              masked_points - reference_location) / reference_scale) * protein_scale) + protein_location
-
-                fragment_maps_list[j][fragment_masks_list[j] > 0.0] = masked_points
-
-            print(
-                f"exmaple map stats: {np.max(fragment_maps_list[0])} {np.min(fragment_maps_list[0])} {np.mean(fragment_maps_list[0])} {np.std(fragment_maps_list[0])}")
-
-            # Fragment maps
-            fragment_maps_np = np.stack(fragment_maps_list, axis=0)
-            fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
-                                                        1,
-                                                        fragment_maps_np.shape[1],
-                                                        fragment_maps_np.shape[2],
-                                                        fragment_maps_np.shape[3])
-            print(f"fragment_maps_np: {fragment_maps_np.shape}")
-
-            fragment_masks_np = np.stack(fragment_masks_list, axis=0)
-            fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
-                                                          1,
-                                                          fragment_masks_np.shape[1],
-                                                          fragment_masks_np.shape[2],
-                                                          fragment_masks_np.shape[3])
-            print(f"fragment_masks_np: {fragment_masks_np.shape}")
-
-            background_rmsd_map = fragment_search_rmsd_gpu(
-                sample_mean.reshape(1, 1, sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
-                fragment_maps_np,
-                fragment_masks_np,
+        for fragment_id, fragment_structure in dataset_fragment_structures.items():
+            if params.debug:
+                print(f"\t\tProcessing fragment: {fragment_id}")
+            fragment_maps: MutableMapping[Tuple[float, float, float], np.ndarray] = get_fragment_maps(
+                fragment_structure,
+                resolution,
+                params.num_fragment_pose_samples,
+                params.sample_rate,
+                params.grid_spacing,
+                b_factor
             )
 
-            peak = peak_search_rmsd(background_rmsd_map)
-            print(f"peak: {peak}")
+            save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing,
+                                      out_dir / "example_fragment_map.ccp4")
 
-            max_index = peak[1]
-            max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
-            max_rotation = list(fragment_maps.keys())[max_index[1]]
-            max_position = max_coord_to_position(
-                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
-                max_x,
-                max_y,
-                max_z,
-                alignments, dataset, marker)
+            max_x = max([fragment_map.shape[0] for fragment_map in fragment_maps.values()])
+            max_y = max([fragment_map.shape[1] for fragment_map in fragment_maps.values()])
+            max_z = max([fragment_map.shape[2] for fragment_map in fragment_maps.values()])
+            if max_x % 2 == 0: max_x = max_x + 1
+            if max_y % 2 == 0: max_y = max_y + 1
+            if max_z % 2 == 0: max_z = max_z + 1
 
-            print(f"max reference position: {max_position}")
+            fragment_masks_list = []
 
-            exit()
+            fragment_maps_list = []
+            fragment_masks = {}
+            fragment_map_size_list = []
+            fragment_map_value_list = []
+            for rotation, fragment_map in fragment_maps.items():
+                arr = fragment_map.copy()
 
-            rsccs = {}
-            for b_index in range(len(event_map_list)):
-                print(f"\tBDC: {bdcs[b_index]}")
-                event_maps_np = np.stack([event_map_list[b_index]], axis=0)
-                event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
-                                                      1,
-                                                      event_maps_np.shape[1],
-                                                      event_maps_np.shape[2],
-                                                      event_maps_np.shape[3])
-                print(f"event_maps_np: {event_maps_np.shape}")
+                arr_mask = fragment_map > 0.0
 
-                rmsd_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np)
+                print(f"arr_mask: {np.sum(arr_mask)}")
 
-                peak = peak_search_rmsd(rmsd_map)
-                print(f"\tpeak: {peak}")
+                arr[~arr_mask] = 0.0
 
-                rsccs[bdcs[b_index]] = peak
+                fragment_map_size_list.append(np.sum(arr_mask))
+                fragment_map_value_list.append(arr[arr_mask])
 
-                rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
-                inverse_rmsd_map_np = 1 / rmsd_map_np
-                inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
+                fragment_mask_arr = np.zeros(fragment_map.shape)
+                fragment_mask_arr[arr_mask] = 1.0
 
-                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                    inverse_rmsd_map_np,
-                    reference_dataset,
-                    dataset,
-                    alignments[dataset.dtag][marker],
-                    marker,
-                    params.grid_size,
-                    params.grid_spacing,
-                    params.structure_factors,
-                    params.sample_rate,
+                fragment_map = np.zeros((max_x, max_y, max_z,))
+                fragment_mask = np.zeros((max_x, max_y, max_z,))
+
+                fragment_map[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = arr[:, :, :]
+                fragment_mask[:arr.shape[0], :arr.shape[1], :arr.shape[2]] = fragment_mask_arr[:, :, :]
+
+                fragment_maps_list.append(fragment_map)
+                fragment_masks_list.append(fragment_mask)
+
+                fragment_masks[rotation] = fragment_mask
+
+            if params.debug:
+                print(f"\t\tGot {len(fragment_maps)} fragment maps")
+
+            # Get affinity maps for various orientations
+            event_map_list = []
+            bdcs = np.linspace(0, 0.90, 10)
+            for b in bdcs:
+                event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
+
+                event_map_list.append(event_map)
+
+            with torch.no_grad():
+
+                # Scale
+                reference_map = fragment_maps_list[0]
+                reference_mask = fragment_masks_list[0]
+                reference_map_points = reference_map[reference_mask > 0.0]
+                reference_location = np.mean(reference_map_points)
+                reference_scale = np.std(reference_map_points)
+                print(f"reference_loc: {reference_location}")
+                print(f"reference_scale: {reference_scale}")
+
+                for j, fragment_map in enumerate(fragment_maps_list):
+                    fragment_map = fragment_maps_list[j]
+                    fragment_mask = fragment_masks_list[j]
+
+                    masked_points = fragment_map[fragment_mask > 0.0]
+
+                    masked_points = (((
+                                                  masked_points - reference_location) / reference_scale) * protein_scale) + protein_location
+
+                    fragment_maps_list[j][fragment_masks_list[j] > 0.0] = masked_points
+
+                print(
+                    f"exmaple map stats: {np.max(fragment_maps_list[0])} {np.min(fragment_maps_list[0])} {np.mean(fragment_maps_list[0])} {np.std(fragment_maps_list[0])}")
+
+                # Fragment maps
+                fragment_maps_np = np.stack(fragment_maps_list, axis=0)
+                fragment_maps_np = fragment_maps_np.reshape(fragment_maps_np.shape[0],
+                                                            1,
+                                                            fragment_maps_np.shape[1],
+                                                            fragment_maps_np.shape[2],
+                                                            fragment_maps_np.shape[3])
+                print(f"fragment_maps_np: {fragment_maps_np.shape}")
+
+                fragment_masks_np = np.stack(fragment_masks_list, axis=0)
+                fragment_masks_np = fragment_masks_np.reshape(fragment_masks_np.shape[0],
+                                                              1,
+                                                              fragment_masks_np.shape[1],
+                                                              fragment_masks_np.shape[2],
+                                                              fragment_masks_np.shape[3])
+                print(f"fragment_masks_np: {fragment_masks_np.shape}")
+
+                fragment_size_np = np.array(fragment_map_size_list).reshape(
+                    1,
+                    len(fragment_map_size_list),
+                    1,
+                    1,
+                    1)
+
+                background_rmsd_map = fragment_search_rmsd_gpu(
+                    sample_mean.reshape(1, 1, sample_mean.shape[0], sample_mean.shape[1], sample_mean.shape[2]),
+                    fragment_maps_np,
+                    fragment_masks_np,
+                    fragment_size_np,
+                    fragment_map_value_list
                 )
 
-                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                              None,
-                                              )
+                peak = peak_search_rmsd(background_rmsd_map)
+                print(f"peak: {peak}")
 
-                write_event_map(
-                    event_map,
-                    out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
-                    dataset_event_marker,
-                    dataset,
-                    resolution,
-                )
-
-                rmsd_delta_map = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
-                inverse_rmsd_delta_map = 1 / rmsd_delta_map
-                inverse_rmsd_delta_map = np.nan_to_num(inverse_rmsd_delta_map, copy=True, nan=0.0, posinf=0.0,
-                                                       neginf=0.0)
-
-                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                    inverse_rmsd_delta_map,
-                    reference_dataset,
-                    dataset,
-                    alignments[dataset.dtag][marker],
-                    marker,
-                    params.grid_size,
-                    params.grid_spacing,
-                    params.structure_factors,
-                    params.sample_rate,
-                )
-
-                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                              None,
-                                              )
-
-                write_event_map(
-                    event_map,
-                    out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
-                    dataset_event_marker,
-                    dataset,
-                    resolution,
-                )
-
-                max_index = rsccs[bdcs[b_index]][1]
+                max_index = peak[1]
                 max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
                 max_rotation = list(fragment_maps.keys())[max_index[1]]
                 max_position = max_coord_to_position(
@@ -4388,81 +4350,183 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     max_z,
                     alignments, dataset, marker)
 
-                print(f"max position: {max_position}")
+                print(f"max reference position: {max_position}")
 
-                gc.collect()
-                torch.cuda.empty_cache()
-                torch.cuda.synchronize()
-                torch.cuda.ipc_collect()
 
-            for obj in gc.get_objects():
-                try:
-                    if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-                        print(type(obj), obj.size())
-                except:
-                    pass
+                rsccs = {}
+                for b_index in range(len(event_map_list)):
+                    print(f"\tBDC: {bdcs[b_index]}")
+                    event_maps_np = np.stack([event_map_list[b_index]], axis=0)
+                    event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
+                                                          1,
+                                                          event_maps_np.shape[1],
+                                                          event_maps_np.shape[2],
+                                                          event_maps_np.shape[3])
+                    print(f"event_maps_np: {event_maps_np.shape}")
 
-            exit()
+                    rmsd_map = fragment_search_rmsd_gpu(event_maps_np, fragment_maps_np, fragment_masks_np)
 
-            max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
-            max_rscc_correlation_index = rsccs[max_rscc_bdc]
-            max_correlation = max_rscc_correlation_index[0]
-            max_index = max_rscc_correlation_index[1]
-            max_mean_map_correlation = max_rscc_correlation_index[2]
-            max_delta_correlation = max_rscc_correlation_index[3]
+                    peak = peak_search_rmsd(rmsd_map)
+                    print(f"\tpeak: {peak}")
 
-            max_bdc = max_rscc_bdc
-            max_rotation = list(fragment_maps.keys())[max_index[1]]
-            max_index_fragment_map = fragment_maps[max_rotation]
-            max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
-            max_index_fragment_map_shape = max_index_fragment_map.shape
+                    rsccs[bdcs[b_index]] = peak
 
-            max_index_fragment_position_dataset_frame = max_coord_to_position(
-                max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y,
-                max_z,
-                alignments, dataset, marker
-            )
+                    results.append((b_factor, bdcs[b_index], rsccs[bdcs[b_index]], max_position))
 
-            # get affinity maxima
-            maxima: AffinityMaxima = AffinityMaxima(
-                index=max_index,
-                correlation=max_correlation,
-                rotation_index=max_rotation,
-                position=max_index_fragment_position_dataset_frame,
-                bdc=max_bdc,
-                mean_map_correlation=max_mean_map_correlation,
-                mean_map_max_correlation=mean_map_max_correlation,
-                max_delta_correlation=max_delta_correlation,
-            )
-            print(maxima)
 
-            # if max_correlation > params.min_correlation:
-            event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                # max_array[0,:,:,:],
-                reference_dataset,
-                dataset,
-                alignments[dataset.dtag][marker],
-                marker,
-                params.grid_size,
-                params.grid_spacing,
-                params.structure_factors,
-                params.sample_rate,
-            )
+                    # rmsd_map_np = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
+                    # inverse_rmsd_map_np = 1 / rmsd_map_np
+                    # inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
 
-            dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                          marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                          marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                          None,
-                                          )
+                    # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                    #     inverse_rmsd_map_np,
+                    #     reference_dataset,
+                    #     dataset,
+                    #     alignments[dataset.dtag][marker],
+                    #     marker,
+                    #     params.grid_size,
+                    #     params.grid_spacing,
+                    #     params.structure_factors,
+                    #     params.sample_rate,
+                    # )
+                    #
+                    # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                    #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                    #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                    #                               None,
+                    #                               )
+                    #
+                    # write_event_map(
+                    #     event_map,
+                    #     out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
+                    #     dataset_event_marker,
+                    #     dataset,
+                    #     resolution,
+                    # )
+                    #
+                    # rmsd_delta_map = torch.min(rmsd_map, 1)[0].cpu().numpy()[0, :, :, :]
+                    # inverse_rmsd_delta_map = 1 / rmsd_delta_map
+                    # inverse_rmsd_delta_map = np.nan_to_num(inverse_rmsd_delta_map, copy=True, nan=0.0, posinf=0.0,
+                    #                                        neginf=0.0)
+                    #
+                    # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                    #     inverse_rmsd_delta_map,
+                    #     reference_dataset,
+                    #     dataset,
+                    #     alignments[dataset.dtag][marker],
+                    #     marker,
+                    #     params.grid_size,
+                    #     params.grid_spacing,
+                    #     params.structure_factors,
+                    #     params.sample_rate,
+                    # )
+                    #
+                    # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                    #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                    #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                    #                               None,
+                    #                               )
+                    #
+                    # write_event_map(
+                    #     event_map,
+                    #     out_dir / f"{dataset.dtag}_{b_index}_inverse_rmsd.mtz",
+                    #     dataset_event_marker,
+                    #     dataset,
+                    #     resolution,
+                    # )
+                    #
+                    # max_index = rsccs[bdcs[b_index]][1]
+                    # max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+                    # max_rotation = list(fragment_maps.keys())[max_index[1]]
+                    # max_position = max_coord_to_position(
+                    #     max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing,
+                    #     max_x,
+                    #     max_y,
+                    #     max_z,
+                    #     alignments, dataset, marker)
 
-            write_event_map(
-                event_map,
-                out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
-                dataset_event_marker,
-                dataset,
-                resolution,
-            )
+                    print(f"max position: {max_position}")
+
+                    gc.collect()
+                    torch.cuda.empty_cache()
+                    torch.cuda.synchronize()
+                    torch.cuda.ipc_collect()
+
+                for obj in gc.get_objects():
+                    try:
+                        if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+                            print(type(obj), obj.size())
+                    except:
+                        pass
+
+
+                max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
+                max_rscc_correlation_index = rsccs[max_rscc_bdc]
+                max_correlation = max_rscc_correlation_index[0]
+                max_index = max_rscc_correlation_index[1]
+                max_mean_map_correlation = max_rscc_correlation_index[2]
+                max_delta_correlation = max_rscc_correlation_index[3]
+
+                max_bdc = max_rscc_bdc
+                max_rotation = list(fragment_maps.keys())[max_index[1]]
+                max_index_fragment_map = fragment_maps[max_rotation]
+                max_index_mask_coord = [max_index[2], max_index[3], max_index[4]]
+                max_index_fragment_map_shape = max_index_fragment_map.shape
+
+                max_index_fragment_position_dataset_frame = max_coord_to_position(
+                    max_index_mask_coord, fragment_maps, max_rotation, params.grid_size, params.grid_spacing, max_x, max_y,
+                    max_z,
+                    alignments, dataset, marker
+                )
+
+                # get affinity maxima
+                maxima: AffinityMaxima = AffinityMaxima(
+                    index=max_index,
+                    correlation=max_correlation,
+                    rotation_index=max_rotation,
+                    position=max_index_fragment_position_dataset_frame,
+                    bdc=max_bdc,
+                    mean_map_correlation=max_mean_map_correlation,
+                    mean_map_max_correlation=0.0,
+                    max_delta_correlation=max_delta_correlation,
+                )
+                print(maxima)
+
+                # if max_correlation > params.min_correlation:
+                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                    (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                    # max_array[0,:,:,:],
+                    reference_dataset,
+                    dataset,
+                    alignments[dataset.dtag][marker],
+                    marker,
+                    params.grid_size,
+                    params.grid_spacing,
+                    params.structure_factors,
+                    params.sample_rate,
+                )
+
+                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                              None,
+                                              )
+
+                write_event_map(
+                    event_map,
+                    out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
+                    dataset_event_marker,
+                    dataset,
+                    resolution,
+                )
+
+    for result in sorted(
+            results,
+            key=lambda result: result[2][0],
+    ):
+        print(result)
+
+    exit()
 
     # End loop over fragment builds
 
@@ -5406,7 +5470,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_b_factor_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_rmsd_protein_scaled_gpu(
             dataset,
             residue_datasets,
             marker,
