@@ -280,7 +280,8 @@ def get_fragment_map(
                         continue
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
-                    mask_grid.set_points_around(pos, 1.0, 1.0)
+                    mask_grid.set_points_around(pos, 0.75, 1.0)
+
 
     mask_arr = np.zeros(
         [
@@ -2923,7 +2924,7 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     # print(f"size: {size}")
 
     size = torch.tensor(fragment_size_np, dtype=torch.float).cuda()
-    print(f"size: {size.shape}")
+    print(f"size: {size.shape} {size[0,0,0,0,0]}")
 
     reference_map_sum_np = np.array(
         [np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
@@ -2985,8 +2986,11 @@ def fragment_search_rmsd_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     rho_o_squared = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
     print(f"rho_o_squared: {rho_o_squared.shape} {torch.max(rho_o_squared)} {torch.min(rho_o_squared)} {rho_o_squared[0,0,24,24,24]}")
 
-    rmsd = (rho_o_squared + rho_c_rho_c - 2 * conv_rho_o_rho_c) / size
-    print(f"RSCC: {rmsd.shape} {rmsd[0, 0, 32, 32, 32]}")
+    rmsd_unsacled = (rho_o_squared + rho_c_rho_c - 2 * conv_rho_o_rho_c)
+    print(f"rmsd: {rmsd_unsacled.shape} {rmsd_unsacled[0, 0, 24, 24, 24]}")
+
+    rmsd = rmsd_unsacled / size
+    print(f"rmsd: {rmsd.shape} {rmsd[0, 0, 24, 24, 24]}")
 
     rmsd = torch.nan_to_num(rmsd, nan=0.0, posinf=0.0, neginf=0.0, )
 
