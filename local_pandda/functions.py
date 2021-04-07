@@ -4419,7 +4419,8 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                                                         fragment_map_value_list
                                                         )
 
-                    peak = peak_search_rmsd(rmsd_map-background_rmsd_map)
+                    search_map = rmsd_map - background_rmsd_map
+                    peak = peak_search_rmsd(search_map)
                     print(f"\tpeak: {peak}")
                     max_index = peak[1]
                     peak[2] = background_rmsd_map[
@@ -4493,6 +4494,32 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                     write_event_map(
                         event_map,
                         out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_inverse_rmsd.mtz",
+                        dataset_event_marker,
+                        dataset,
+                        resolution,
+                    )
+
+                    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                        torch.min(search_map, 1)[0].cpu().numpy()[0, :, :, :],
+                        reference_dataset,
+                        dataset,
+                        alignments[dataset.dtag][marker],
+                        marker,
+                        params.grid_size,
+                        params.grid_spacing,
+                        params.structure_factors,
+                        params.sample_rate,
+                    )
+
+                    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                                  None,
+                                                  )
+
+                    write_event_map(
+                        event_map,
+                        out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_search_map.mtz",
                         dataset_event_marker,
                         dataset,
                         resolution,
