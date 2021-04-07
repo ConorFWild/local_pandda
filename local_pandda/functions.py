@@ -280,7 +280,7 @@ def get_fragment_map(
                         continue
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
-                    mask_grid.set_points_around(pos, 0.75, 1.0)
+                    mask_grid.set_points_around(pos, 1.5, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -3432,7 +3432,7 @@ def get_protein_scaling(dataset: Dataset, structure_factors, sample_rate):
         for chain in model:
             for residue in chain.get_polymer():
                 for atom in residue:
-                    mask.set_points_around(atom.pos, 0.75, 1.0)
+                    mask.set_points_around(atom.pos, 1.5, 1.0)
 
     mask_np = np.array(mask)
 
