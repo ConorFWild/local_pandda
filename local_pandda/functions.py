@@ -3150,7 +3150,7 @@ def peak_search_rmsd(target_map):
     min_index = np.unravel_index(torch.argmin(target_map).cpu(), target_map.shape)
 
     min_map_val = target_map[min_index[0], min_index[1], min_index[2], min_index[3], min_index[4]]
-    print(f"min_map_val: {min_map_val}")
+    print(f"min_map_val: {min_map_val} {torch.min(target_map).cpu()}")
 
     return [min_map_val.item(), min_index, 0.0, 0.0]
 
@@ -3396,7 +3396,7 @@ def max_coord_to_position(max_index_mask_coord, fragment_maps, max_rotation, gri
     print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
 
     transform = alignments[dataset.dtag][marker].transform
-    inverse_transform = transform#  .inverse()
+    inverse_transform = transform.inverse()
     rotation_tr = gemmi.Transform()
     rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
 
