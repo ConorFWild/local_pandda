@@ -5495,7 +5495,7 @@ def analyse_dataset_z_gpu(
                 sample_z_np = sample_z.copy()
                 sample_z_np[sample_z_np< 1.5] = 0
                 sample_z_np[sample_z_np>= 1.5] = 1
-                event_maps_np = np.stack([sample_z], axis=0)
+                event_maps_np = np.stack([sample_z_np], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
                                                       event_maps_np.shape[1],
