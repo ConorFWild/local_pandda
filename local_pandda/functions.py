@@ -5124,13 +5124,11 @@ def analyse_dataset_signal_gpu(
                     #     resolution,
                     # )
 
-                    rmsd_map_np = torch.max(signal_map, 1)[0].cpu().numpy()[0, :, :, :]
-                    inverse_rmsd_map_np = 1 / rmsd_map_np
-                    inverse_rmsd_map_np = np.nan_to_num(inverse_rmsd_map_np, copy=True, nan=0.0, posinf=0.0, neginf=0.0)
+                    signal_map_np = torch.max(signal_map, 1)[0].cpu().numpy()[0, :, :, :]
 
 
                     event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                        inverse_rmsd_map_np,
+                        signal_map_np,
                         reference_dataset,
                         dataset,
                         alignments[dataset.dtag][marker],
@@ -5150,32 +5148,6 @@ def analyse_dataset_signal_gpu(
                     write_event_map(
                         event_map,
                         out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_signal.mtz",
-                        dataset_event_marker,
-                        dataset,
-                        resolution,
-                    )
-
-                    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                        -torch.min(search_map, 1)[0].cpu().numpy()[0, :, :, :],
-                        reference_dataset,
-                        dataset,
-                        alignments[dataset.dtag][marker],
-                        marker,
-                        params.grid_size,
-                        params.grid_spacing,
-                        params.structure_factors,
-                        params.sample_rate,
-                    )
-
-                    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                                  None,
-                                                  )
-
-                    write_event_map(
-                        event_map,
-                        out_dir / f"{dataset.dtag}_{b_index}_{b_factor}_search_map.mtz",
                         dataset_event_marker,
                         dataset,
                         resolution,
