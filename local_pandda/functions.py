@@ -291,7 +291,6 @@ def get_fragment_map(
         dtype=np.float32
     )
 
-
     mask_grid.interpolate_values(mask_arr, tr)
 
     # mask the array
@@ -3032,43 +3031,6 @@ def fragment_search_signal_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     size = torch.tensor(fragment_size_np, dtype=torch.float).cuda()
     print(f"size: {size.shape} {size[0, 0, 0, 0, 0]}")
 
-    reference_map_sum_np = np.array(
-        [np.sum(fragment_map_value) for fragment_map_value in fragment_map_value_list]).reshape(
-        1,
-        len(fragment_map_value_list),
-        1,
-        1,
-        1,
-    )
-    reference_map_sum = torch.tensor(reference_map_sum_np, dtype=torch.float).cuda()
-    print(f"reference_map_sum: {reference_map_sum.shape}")
-
-    # reference_map_masked_values = reference_fragment[reference_mask > 0]
-    # print(f"reference_map_masked_values: {reference_map_masked_values.shape}")
-
-    # reference_map_sum = np.sum(reference_map_masked_values)
-    # print(f"reference_map_sum: {reference_map_sum}")
-
-    # reference_map_squared_masked_values = np.square(reference_map_masked_values)
-    # print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values.shape}")
-    #
-    # reference_map_squared_sum = np.sum(reference_map_squared_masked_values)
-    # print(f"reference_map_squared_masked_values: {reference_map_squared_masked_values}")
-
-    rho_c_rho_c_np = np.array(
-        [
-            np.sum(np.square(fragment_map_value))
-            for fragment_map_value
-            in fragment_map_value_list
-        ]
-    ).reshape(
-        1,
-        len(fragment_map_value_list),
-        1,
-        1,
-        1
-    )
-
     # Tensors
     rho_o = torch.tensor(xmap_np, dtype=torch.float).cuda()
     print(f"rho_o: {rho_o.shape}")
@@ -3080,7 +3042,7 @@ def fragment_search_signal_gpu(xmap_np, fragment_maps_np, fragment_masks_np,
     print(f"masks: {masks.shape}")
 
     # Convolutions
-    signal_unscaled = torch.nn.functional.conv3d(torch.square(rho_o), masks, padding=padding)
+    signal_unscaled = torch.nn.functional.conv3d(rho_o, masks, padding=padding)
     print(f"rmsd: {signal_unscaled.shape} {signal_unscaled[0, 0, 24, 24, 24]}")
 
     signal = signal_unscaled / size
@@ -4915,6 +4877,8 @@ def analyse_dataset_signal_gpu(
                 params.grid_spacing,
                 b_factor
             )
+
+
 
             save_example_fragment_map(list(fragment_maps.values())[0], params.grid_spacing,
                                       out_dir / "example_fragment_map.ccp4")
