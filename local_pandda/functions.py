@@ -5625,7 +5625,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset_b_factor_gpu(
+        dataset_results: DatasetAffinityResults = analyse_dataset_rmsd_protein_scaled_gpu(
             dataset,
             residue_datasets,
             marker,
