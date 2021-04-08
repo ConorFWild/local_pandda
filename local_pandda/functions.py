@@ -2824,11 +2824,11 @@ def fragment_search_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_r
     del denominator_rho_c
     del denominator
 
-    del rscc
+    # del rscc
     del delta_rscc
     # del rscc_mask
 
-    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item()  # , max_array
+    return max_correlation.item(), max_index, mean_map_correlation.item(), max_delta_correlation.item(), torch.max(rscc, 1)[0].cpu().numpy()[0, :, :, :]  # , max_array
 
 
 def fragment_search_rmsd_scaled_gpu(xmap_np, fragment_maps_np, fragment_masks_np, mean_map_rscc, min_correlation,
@@ -3938,7 +3938,7 @@ def analyse_dataset_b_factor_gpu(
             for b in bdcs:
                 event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
 
-                event_map[sample_z < 1.5] = 0.0
+                # event_map[sample_z < 1.5] = 0.0
 
                 event_map_list.append(event_map)
 
@@ -4000,6 +4000,34 @@ def analyse_dataset_b_factor_gpu(
 
                     print(f"max position: {max_position}")
 
+                    # if max_correlation > params.min_correlation:
+                    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                        rsccs[bdcs[b_index]][4],
+                        # max_array[0,:,:,:],
+                        reference_dataset,
+                        dataset,
+                        alignments[dataset.dtag][marker],
+                        marker,
+                        params.grid_size,
+                        params.grid_spacing,
+                        params.structure_factors,
+                        params.sample_rate,
+                    )
+
+                    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                                  None,
+                                                  )
+
+                    write_event_map(
+                        event_map,
+                        out_dir / f"{dataset.dtag}_{bdcs[b_index]}_{b_factor}_rscc.mtz",
+                        dataset_event_marker,
+                        dataset,
+                        resolution,
+                    )
+
                     gc.collect()
                     torch.cuda.empty_cache()
                     torch.cuda.synchronize()
@@ -4047,33 +4075,35 @@ def analyse_dataset_b_factor_gpu(
                 )
                 print(maxima)
 
-                # if max_correlation > params.min_correlation:
-                event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
-                    (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
-                    # max_array[0,:,:,:],
-                    reference_dataset,
-                    dataset,
-                    alignments[dataset.dtag][marker],
-                    marker,
-                    params.grid_size,
-                    params.grid_spacing,
-                    params.structure_factors,
-                    params.sample_rate,
-                )
+                # # if max_correlation > params.min_correlation:
+                # event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+                #     (dataset_sample - (maxima.bdc * sample_mean)) / (1 - maxima.bdc),
+                #     # max_array[0,:,:,:],
+                #     reference_dataset,
+                #     dataset,
+                #     alignments[dataset.dtag][marker],
+                #     marker,
+                #     params.grid_size,
+                #     params.grid_spacing,
+                #     params.structure_factors,
+                #     params.sample_rate,
+                # )
+                #
+                # dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                #                               marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                #                               marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                #                               None,
+                #                               )
+                #
+                # write_event_map(
+                #     event_map,
+                #     out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
+                #     dataset_event_marker,
+                #     dataset,
+                #     resolution,
+                # )
 
-                dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
-                                              marker.y - alignments[dataset.dtag][marker].transform.vec.y,
-                                              marker.z - alignments[dataset.dtag][marker].transform.vec.z,
-                                              None,
-                                              )
 
-                write_event_map(
-                    event_map,
-                    out_dir / f"{dataset.dtag}_{max_index_fragment_position_dataset_frame[0]}_{max_index_fragment_position_dataset_frame[1]}_{max_index_fragment_position_dataset_frame[2]}_{fragment_id}.mtz",
-                    dataset_event_marker,
-                    dataset,
-                    resolution,
-                )
 
         # End loop over fragment builds
     # end loop over b factors
