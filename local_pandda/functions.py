@@ -3083,6 +3083,8 @@ def fragment_search_z_gpu(xmap_np, fragment_masks_np,
     z_signal_unscaled = torch.nn.functional.conv3d(z, masks, padding=padding)
     print(f"z_signal_unscaled: {z_signal_unscaled.shape} {z_signal_unscaled[0, 0, 24, 24, 24]}")
 
+    z_signal_unscaled = z_signal_unscaled / torch.mean(z_signal_unscaled, 1)
+
     z_signal = z_signal_unscaled / size
     print(f"signal: {z_signal.shape} {z_signal[0, 0, 24, 24, 24]}")
 
