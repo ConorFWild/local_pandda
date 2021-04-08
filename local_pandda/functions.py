@@ -294,7 +294,7 @@ def get_fragment_map(
                                 pos.z + pos_2.z / 2,
 
                             )
-                            mask_grid.set_points_around(pos, 0.45, 1.0)
+                            mask_grid.set_points_around(new_pos, 0.45, 1.0)
 
     mask_arr = np.zeros(
         [
