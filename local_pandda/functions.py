@@ -4319,7 +4319,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
                 event_map = (dataset_sample - (b * sample_mean)) / (1 - b)
 
                 # Mask the significant density in the event map
-                event_map[sample_z < 1.5] = 0.0
+                # event_map[sample_z < 1.5] = 0.0
 
                 event_map_list.append(event_map)
 
@@ -4379,7 +4379,7 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
 
                 # Mask the significant density in the sample mean
                 sample_mean_masked = sample_mean.copy()
-                sample_mean_masked[sample_z < 1.5] = 0
+                # sample_mean_masked[sample_z < 1.5] = 0
 
                 # Perform the search
                 background_rmsd_map = fragment_search_rmsd_gpu(
