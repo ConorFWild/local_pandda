@@ -281,7 +281,14 @@ def get_fragment_map(
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
                     # mask_grid.set_points_around(pos, 0.75, 1.0)
-                    mask_grid.set_points_around(pos, 0.45, 1.0)
+                    for atom_2 in residue:
+                        if atom.element.name == "H":
+                            # print("Skipping H")
+                            continue
+                        pos_2 = atom_2.pos
+                        if pos.dist(pos_2) < 2.0:
+
+                            mask_grid.set_points_around(pos, 0.45, 1.0)
 
     mask_arr = np.zeros(
         [
@@ -3087,7 +3094,7 @@ def fragment_search_z_gpu(xmap_np, fragment_masks_np,
     z_signal = z_signal_unscaled / size
     print(f"signal: {z_signal.shape} {z_signal[0, 0, 24, 24, 24]}")
 
-    z_signal = z_signal*(z_signal / torch.mean(z_signal, 1))
+    # z_signal = z_signal*(z_signal / torch.mean(z_signal, 1))
 
     z_signal = torch.nan_to_num(z_signal, nan=0.0, posinf=0.0, neginf=0.0, )
 
