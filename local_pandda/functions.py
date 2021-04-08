@@ -280,7 +280,8 @@ def get_fragment_map(
                         continue
                     pos: gemmi.Position = atom.pos
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
-                    mask_grid.set_points_around(pos, 0.75, 1.0)
+                    # mask_grid.set_points_around(pos, 0.75, 1.0)
+                    mask_grid.set_points_around(pos, 0.45, 1.0)
 
     mask_arr = np.zeros(
         [
