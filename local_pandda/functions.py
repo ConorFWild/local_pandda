@@ -3087,8 +3087,6 @@ def fragment_search_z_gpu(xmap_np, fragment_masks_np,
     z_signal = z_signal_unscaled / size
     print(f"signal: {z_signal.shape} {z_signal[0, 0, 24, 24, 24]}")
 
-    z_signal = z_signal / torch.mean(z_signal, 1)
-
 
     z_signal = torch.nan_to_num(z_signal, nan=0.0, posinf=0.0, neginf=0.0, )
 
