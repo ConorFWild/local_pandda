@@ -3196,9 +3196,9 @@ def peak_search(target_map):
     max_map_val = target_map[max_index[0], max_index[1], max_index[2], max_index[3], max_index[4]]
     print(f"max_map_val: {max_map_val}")
 
-    reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
+    # reference_map_val = reference_map[0, max_index[1], max_index[2], max_index[3], max_index[4]].cpu()
 
-    return max_map_val.item(), max_index, reference_map_val.item(), max_delta.item()
+    return [max_map_val.item(), max_index, 0.0, max_delta.item()]
 
 
 def peak_search_mask_dep(reference_map, target_map):
@@ -5076,7 +5076,7 @@ def analyse_dataset_signal_gpu(
                                                         )
 
                     search_map = signal_map - background_signal_map
-                    peak = peak_search_rmsd(search_map)
+                    peak = peak_search(search_map)
                     print(f"\tpeak: {peak}")
                     max_index = peak[1]
                     peak[2] = background_signal_map[
