@@ -22,6 +22,7 @@ from scipy import signal as spsi
 from scipy import ndimage
 from scipy.signal import fftconvolve, oaconvolve
 from skimage.transform import rescale, resize, downscale_local_mean
+import skimage
 
 try:
     import torch
@@ -287,11 +288,10 @@ def get_fragment_map(
                             continue
                         pos_2 = atom_2.pos
                         if pos.dist(pos_2) < 2.0:
-
                             new_pos = gemmi.Position(
                                 (pos.x + pos_2.x) / 2,
                                 (pos.y + pos_2.y) / 2,
-                            (pos.z + pos_2.z) / 2,
+                                (pos.z + pos_2.z) / 2,
 
                             )
                             mask_grid.set_points_around(new_pos, 0.45, 1.0)
@@ -3542,6 +3542,88 @@ def get_protein_scaling(dataset: Dataset, structure_factors, sample_rate):
     return location, scale
 
 
+def calculate_z_clusters(sample_z,
+                         structure,
+                         z_contours=(1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0),
+                         ):
+    def get_fragment_expected_size(_structure):
+        grid = gemmi.FloatGrid()
+        grid.set_unit_cell(_structure.cell)
+
+        for model in _structure:
+            for chain in model:
+                for residue in chain:
+                    for atom in residue:
+                        if atom.element.name == "H":
+                            continue
+
+                        grid.set_points_around(atom.pos, 0.75, 1.0)
+
+        array = np.array(grid)
+
+        _expected_size = np.sum(array)
+
+        return _expected_size
+
+    def label_array(_contoured_map):
+        labelled_array = skimage.measure.label(_contoured_map)
+        return labelled_array
+
+    def sum_array(_labeled_array):
+        new_array = np.zeros(_labeled_array.shape)
+        for n in np.unique(_labeled_array):
+            if n == 0:
+                continue
+            array_sum = np.sum(_labeled_array[_labeled_array == n])
+
+            # Replace
+            new_array[_labeled_array == n] = array_sum
+
+        return new_array
+
+    def calculate_depths(_clustered_arrays):
+        stacked_arrays = np.stack(_clustered_arrays, axis=0)
+
+        stacked_arrays[stacked_arrays < lower_bound] = 0
+        stacked_arrays[stacked_arrays > upper_bound] = 0
+
+        _depth_array = np.sum(stacked_arrays > 0, axis=0)
+
+        return _depth_array
+
+    expected_size = get_fragment_expected_size(structure)
+    print(f"Expected size: {expected_size}")
+
+    # Get the upper and lower bounds on expected size
+    upper_bound = 1.25 * expected_size
+    lower_bound = 0.75 * expected_size
+
+    clustered_arrays = []
+    for contour in z_contours:
+        # Contour the map
+        contoured_map = sample_z.copy()
+        contoured_map[contoured_map < contour] = 0
+        contoured_map[contoured_map >= contour] = 1
+
+        # Label the clusters
+        labeled_array = label_array(contoured_map)
+
+        # Assign each point the size of the array it is in
+        sum_array = sum_array(labeled_array)
+
+        clustered_arrays.append(sum_array)
+    # calculate the depth that a point is in range for
+    depth_array = calculate_depths(clustered_arrays)
+
+    # Find the maxima
+    maxima_coords = np.argmax(depth_array)
+    print(f"maxima: {maxima_coords}")
+    maxima = depth_array[maxima_coords[0], maxima_coords[1], maxima_coords[2],]
+    print(f"maxima: {maxima}")
+
+    exit()
+
+
 def analyse_dataset_gpu(
         dataset: Dataset,
         residue_datasets: MutableMapping[str, Dataset],
@@ -5412,6 +5494,9 @@ def analyse_dataset_z_gpu(
         print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
+    # Calculate the z clusters
+    calculate_z_clusters(sample_z)
+
     # Get the comparator affinity maps
     results = []
 
@@ -5509,8 +5594,8 @@ def analyse_dataset_z_gpu(
                 print(f"\tBDC: {bdcs[b_index]}")
 
                 sample_z_np = sample_z.copy()
-                sample_z_np[sample_z_np< 1.5] = 0
-                sample_z_np[sample_z_np>= 1.5] = 1
+                sample_z_np[sample_z_np < 1.5] = 0
+                sample_z_np[sample_z_np >= 1.5] = 1
                 event_maps_np = np.stack([sample_z_np], axis=0)
                 event_maps_np = event_maps_np.reshape(event_maps_np.shape[0],
                                                       1,
