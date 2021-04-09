@@ -3546,6 +3546,9 @@ def calculate_z_clusters(sample_z,
                          structure,
                          z_contours=(1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0),
                          ):
+
+    z_contours = np.linspace(1.5, 3.0, 50)
+
     def get_fragment_expected_size(_structure):
         unit_cell = _structure.cell
         grid = gemmi.FloatGrid(
