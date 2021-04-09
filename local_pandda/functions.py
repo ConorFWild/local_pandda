@@ -3618,9 +3618,9 @@ def calculate_z_clusters(sample_z,
         labeled_array = label_array(contoured_map)
 
         # Assign each point the size of the array it is in
-        sum_array = sum_array(labeled_array)
+        cluster_sum_array = sum_array(labeled_array)
 
-        clustered_arrays.append(sum_array)
+        clustered_arrays.append(cluster_sum_array)
     # calculate the depth that a point is in range for
     depth_array = calculate_depths(clustered_arrays)
 
