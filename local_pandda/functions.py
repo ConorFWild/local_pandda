@@ -3632,7 +3632,10 @@ def calculate_z_clusters(sample_z,
     maxima_coords = np.unravel_index(np.argmax(depth_array), depth_array.shape)
     print(f"maxima coords: {maxima_coords}")
     maxima = depth_array[maxima_coords[0], maxima_coords[1], maxima_coords[2],]
-    print(f"maxima: {maxima}")
+    print(f"maxima: {maxima} {np.unique(depth_array, return_counts=True)}")
+
+    exit()
+
 
     return maxima_coords, depth_array
 
