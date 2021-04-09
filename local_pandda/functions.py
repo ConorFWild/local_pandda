@@ -3591,7 +3591,12 @@ def calculate_z_clusters(sample_z,
 
         return _depth_array
 
-    expected_size = get_fragment_expected_size(structure)
+
+    max_dist = get_max_dist(structure)
+
+    rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
+
+    expected_size = get_fragment_expected_size(rotated_structure)
     print(f"Expected size: {expected_size}")
 
     # Get the upper and lower bounds on expected size
@@ -5495,7 +5500,7 @@ def analyse_dataset_z_gpu(
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
     # Calculate the z clusters
-    calculate_z_clusters(sample_z)
+    calculate_z_clusters(sample_z, list(dataset_fragment_structures.values())[0])
 
     # Get the comparator affinity maps
     results = []
