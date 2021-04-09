@@ -3547,8 +3547,13 @@ def calculate_z_clusters(sample_z,
                          z_contours=(1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 3.0),
                          ):
     def get_fragment_expected_size(_structure):
-        grid = gemmi.FloatGrid()
-        grid.set_unit_cell(_structure.cell)
+        unit_cell = _structure.cell
+        grid = gemmi.FloatGrid(
+            int(unit_cell.a / 0.5) + 1,
+            int(unit_cell.b / 0.5) + 1,
+            int(unit_cell.c / 0.5) + 1,
+        )
+        grid.set_unit_cell(unit_cell)
 
         for model in _structure:
             for chain in model:
@@ -3590,7 +3595,6 @@ def calculate_z_clusters(sample_z,
         _depth_array = np.sum(stacked_arrays > 0, axis=0)
 
         return _depth_array
-
 
     max_dist = get_max_dist(structure)
 
