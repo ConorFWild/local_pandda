@@ -3582,7 +3582,7 @@ def calculate_z_clusters(sample_z,
         for n in np.unique(_labeled_array):
             if n == 0:
                 continue
-            array_sum = np.sum(_labeled_array[_labeled_array == n])
+            array_sum = np.sum(_labeled_array == n)
 
             # Replace
             new_array[_labeled_array == n] = array_sum
