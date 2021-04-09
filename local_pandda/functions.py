@@ -3616,13 +3616,17 @@ def calculate_z_clusters(sample_z,
 
         # Label the clusters
         labeled_array = label_array(contoured_map)
+        print(f"\tlabeled_array: {labeled_array}")
 
         # Assign each point the size of the array it is in
         cluster_sum_array = sum_array(labeled_array)
+        print(f"\tcluster_sum_array: {cluster_sum_array}")
+
 
         clustered_arrays.append(cluster_sum_array)
     # calculate the depth that a point is in range for
     depth_array = calculate_depths(clustered_arrays)
+    print(f"depth_array: {depth_array}")
 
     # Find the maxima
     maxima_coords = np.argmax(depth_array)
