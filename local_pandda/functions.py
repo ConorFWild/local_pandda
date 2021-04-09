@@ -3634,7 +3634,7 @@ def calculate_z_clusters(sample_z,
     maxima = depth_array[maxima_coords[0], maxima_coords[1], maxima_coords[2],]
     print(f"maxima: {maxima}")
 
-    exit()
+    return maxima_coords, depth_array
 
 
 def analyse_dataset_gpu(
@@ -5508,7 +5508,34 @@ def analyse_dataset_z_gpu(
         print(f"\tGot z: max {np.max(sample_z)}, min: {np.min(sample_z)}")
 
     # Calculate the z clusters
-    calculate_z_clusters(sample_z, list(dataset_fragment_structures.values())[0])
+    maxima_coords, depth_array = calculate_z_clusters(sample_z, list(dataset_fragment_structures.values())[0])
+
+    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+        depth_array,
+        # max_array[0,:,:,:],
+        reference_dataset,
+        dataset,
+        alignments[dataset.dtag][marker],
+        marker,
+        params.grid_size,
+        params.grid_spacing,
+        params.structure_factors,
+        params.sample_rate,
+    )
+
+    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                  None,
+                                  )
+
+    write_event_map(
+        event_map,
+        out_dir / f"{dataset.dtag}_depth.mtz",
+        dataset_event_marker,
+        dataset,
+        resolution,
+    )
 
     # Get the comparator affinity maps
     results = []
