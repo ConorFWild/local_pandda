@@ -3599,7 +3599,6 @@ def get_events(sample,
 
         return new_array
 
-
     def _calculate_persistence_array(_clustered_arrays, _lower_bound, _upper_bound):
         stacked_arrays = np.stack(_clustered_arrays, axis=0)
 
@@ -3641,9 +3640,9 @@ def get_events(sample,
         print(f"Expected size: {expected_size}")
 
         # Get the upper and lower bounds on expected size
-        lower_bound = 0.75 * expected_size
+        lower_bound = 0.9 * expected_size
 
-        upper_bound = 1.25 * expected_size
+        upper_bound = 1.1 * expected_size
 
         clustered_arrays = []
         for contour in contours:
