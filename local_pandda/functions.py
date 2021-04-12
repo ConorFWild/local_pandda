@@ -283,7 +283,7 @@ def get_fragment_map(
                     # mask_grid.set_points_around(pos, 1.0, 1.0)
                     # mask_grid.set_points_around(pos, 0.75, 1.0)
                     for atom_2 in residue:
-                        if atom.element.name == "H":
+                        if atom_2.element.name == "H":
                             # print("Skipping H")
                             continue
                         pos_2 = atom_2.pos
@@ -496,7 +496,7 @@ def get_max_dist(fragment_structure):  #
                     pos: gemmi.Position = atom.pos
 
                     for atom_2 in residue:
-                        if atom.element.name == "H":
+                        if atom_2.element.name == "H":
                             continue
                         pos_2: gemmi.Position = atom_2.pos
                         distances.append(pos.dist(pos_2))
