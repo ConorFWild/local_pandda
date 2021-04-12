@@ -3580,11 +3580,11 @@ def get_events(sample,
 
         array = np.array(grid)
 
-        # _expected_size = np.sum(array)
+        _expected_size = np.sum(array)
 
-        verts, faces, normals, values = skimage.measure.marching_cubes(array, 0.5)
+        # verts, faces, normals, values = skimage.measure.marching_cubes(array, 0.5)
 
-        _expected_size = skimage.measure.mesh_surface_area(verts, faces)
+        # _expected_size = skimage.measure.mesh_surface_area(verts, faces)
 
         return _expected_size
 
@@ -3599,12 +3599,12 @@ def get_events(sample,
                 continue
             else:
 
-                # array_sum = np.sum(_labeled_array == n)
-                array_mask = (_labeled_array == n).astype(float)
-
-                verts, faces, normals, values = skimage.measure.marching_cubes(array_mask, 0.5)
-
-                array_measure = skimage.measure.mesh_surface_area(verts, faces)
+                array_measure = np.sum(_labeled_array == n)
+                # array_mask = (_labeled_array == n).astype(float)
+                #
+                # verts, faces, normals, values = skimage.measure.marching_cubes(array_mask, 0.5)
+                #
+                # array_measure = skimage.measure.mesh_surface_area(verts, faces)
 
                 # Replace
                 new_array[_labeled_array == n] = array_measure
@@ -3652,9 +3652,9 @@ def get_events(sample,
         print(f"Expected size: {expected_size}")
 
         # Get the upper and lower bounds on expected size
-        lower_bound = 0.9 * expected_size
+        lower_bound = 0.8 * expected_size
 
-        upper_bound = 1.1 * expected_size
+        upper_bound = 1.2 * expected_size
 
         clustered_arrays = []
         for contour in contours:
