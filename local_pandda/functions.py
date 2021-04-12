@@ -3711,8 +3711,8 @@ def get_events(sample,
 
     event = Event(
         bdc=persistence_maxima_bdc,
-        centroid=persistence_dict[persistence_maxima_bdc][0],
-        score=persistence_dict[persistence_maxima_bdc][1],
+        score=persistence_dict[persistence_maxima_bdc][0],
+        centroid=persistence_dict[persistence_maxima_bdc][1],
     )
     print(f"Event is: {event}")
 
