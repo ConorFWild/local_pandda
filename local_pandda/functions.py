@@ -3677,7 +3677,12 @@ def get_events(sample,
     initial_persistence_maxima_bdc = max(persistence_dict, key=lambda _bdc: persistence_dict[_bdc][0])
     print(f"intiial Persistance maxima bdc is: {initial_persistence_maxima_bdc}")
     persistence_maxima_bdc = max(
-        [_bdc for _bdc in persistence_dict if persistence_dict[_bdc][0] == initial_persistence_maxima_bdc]
+        [
+            _bdc
+            for _bdc
+            in persistence_dict
+            if persistence_dict[_bdc][0] == persistence_dict[initial_persistence_maxima_bdc][0]
+        ]
     )
     print(f"Persistance maxima bdc is: {initial_persistence_maxima_bdc}")
 
