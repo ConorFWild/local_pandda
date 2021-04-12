@@ -3568,7 +3568,11 @@ def get_events(sample,
 
         array = np.array(grid)
 
-        _expected_size = np.sum(array)
+        # _expected_size = np.sum(array)
+
+        verts, faces, normals, values = skimage.measure.marching_cubes(array, 1.0)
+
+        _expected_size = skimage.measure.mesh_surface_area(verts, faces)
 
         return _expected_size
 
@@ -3576,15 +3580,22 @@ def get_events(sample,
         labelled_array = skimage.measure.label(_contoured_map)
         return labelled_array
 
-    def _sum_array(_labeled_array):
+    def _measure_clusters(_labeled_array):
         new_array = np.zeros(_labeled_array.shape)
         for n in np.unique(_labeled_array):
             if n == 0:
                 continue
-            array_sum = np.sum(_labeled_array == n)
+            else:
 
-            # Replace
-            new_array[_labeled_array == n] = array_sum
+                # array_sum = np.sum(_labeled_array == n)
+                array_mask = (_labeled_array == n).astype(float)
+
+                verts, faces, normals, values = skimage.measure.marching_cubes(array_mask, 1.0)
+
+                array_measure = skimage.measure.mesh_surface_area(verts, faces)
+
+                # Replace
+                new_array[_labeled_array == n] = array_measure
 
         return new_array
 
@@ -3645,10 +3656,10 @@ def get_events(sample,
             print(f"\tlabeled_array: {labeled_array.shape}")
 
             # Assign each point the size of the array it is in
-            cluster_sum_array = _sum_array(labeled_array)
-            print(f"\tcluster_sum_array: {cluster_sum_array.shape}")
+            cluster_measure_array = _measure_clusters(labeled_array)
+            print(f"\tcluster_sum_array: {cluster_measure_array.shape}")
 
-            clustered_arrays.append(cluster_sum_array)
+            clustered_arrays.append(cluster_measure_array)
 
         # calculate the depth that a point is in range for
         depth_array = _calculate_persistence_array(clustered_arrays, lower_bound, upper_bound)
