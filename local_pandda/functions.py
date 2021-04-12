@@ -3570,7 +3570,7 @@ def get_events(sample,
 
         # _expected_size = np.sum(array)
 
-        verts, faces, normals, values = skimage.measure.marching_cubes(array, 1.0)
+        verts, faces, normals, values = skimage.measure.marching_cubes(array, 0.5)
 
         _expected_size = skimage.measure.mesh_surface_area(verts, faces)
 
@@ -3590,7 +3590,7 @@ def get_events(sample,
                 # array_sum = np.sum(_labeled_array == n)
                 array_mask = (_labeled_array == n).astype(float)
 
-                verts, faces, normals, values = skimage.measure.marching_cubes(array_mask, 1.0)
+                verts, faces, normals, values = skimage.measure.marching_cubes(array_mask, 0.5)
 
                 array_measure = skimage.measure.mesh_surface_area(verts, faces)
 
@@ -3598,6 +3598,7 @@ def get_events(sample,
                 new_array[_labeled_array == n] = array_measure
 
         return new_array
+
 
     def _calculate_persistence_array(_clustered_arrays, _lower_bound, _upper_bound):
         stacked_arrays = np.stack(_clustered_arrays, axis=0)
