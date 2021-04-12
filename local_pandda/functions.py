@@ -3560,11 +3560,23 @@ def get_events(sample,
         for model in _structure:
             for chain in model:
                 for residue in chain:
-                    for atom in residue:
-                        if atom.element.name == "H":
+                    for atom_1 in residue:
+                        if atom_1.element.name == "H":
                             continue
+                        pos_1: gemmi.Position = atom_1.pos
+                        for atom_2 in residue:
+                            if atom_2.element.name == "H":
+                                continue
+                            pos_2 = atom_2.pos
+                            if pos_1.dist(pos_2) < 2.0:
+                                new_pos = gemmi.Position(
+                                    (pos_1.x + pos_2.x) / 2,
+                                    (pos_1.y + pos_2.y) / 2,
+                                    (pos_1.z + pos_2.z) / 2,
 
-                        grid.set_points_around(atom.pos, 0.75, 1.0)
+                                )
+
+                                grid.set_points_around(new_pos.pos, 0.6, 1.0)
 
         array = np.array(grid)
 
