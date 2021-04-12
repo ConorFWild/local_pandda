@@ -143,8 +143,9 @@ class Data:
 
 @dataclass()
 class Event:
+    bdc: float
     centroid: Tuple[float, float, float]
-    size: int
+    score: int
 
 
 @dataclass()
@@ -194,7 +195,7 @@ class Marker:
 @dataclass()
 class DatasetResults:
     dtag: str
-    residue_id: ResidueID
+    marker: Marker
     structure_path: Path
     reflections_path: Path
     fragment_path: Path
