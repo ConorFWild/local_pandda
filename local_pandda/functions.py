@@ -3548,7 +3548,7 @@ def get_events(sample,
                sample_mean,
                structure,
                ):
-    def get_fragment_expected_size(_structure):
+    def _get_fragment_expected_size(_structure):
         unit_cell = _structure.cell
         grid = gemmi.FloatGrid(
             int(unit_cell.a / 0.5) + 1,
@@ -3572,11 +3572,11 @@ def get_events(sample,
 
         return _expected_size
 
-    def label_array(_contoured_map):
+    def _label_array(_contoured_map):
         labelled_array = skimage.measure.label(_contoured_map)
         return labelled_array
 
-    def sum_array(_labeled_array):
+    def _sum_array(_labeled_array):
         new_array = np.zeros(_labeled_array.shape)
         for n in np.unique(_labeled_array):
             if n == 0:
@@ -3607,7 +3607,7 @@ def get_events(sample,
             return __centroid
 
         def _get_score(__array):
-            __score = np.argmax(__array)
+            __score = np.max(__array)
 
             return __score
 
@@ -3625,7 +3625,7 @@ def get_events(sample,
 
         rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
 
-        expected_size = get_fragment_expected_size(rotated_structure)
+        expected_size = _get_fragment_expected_size(rotated_structure)
         print(f"Expected size: {expected_size}")
 
         # Get the upper and lower bounds on expected size
@@ -3641,11 +3641,11 @@ def get_events(sample,
             contoured_map[contoured_map >= contour] = 1
 
             # Label the clusters
-            labeled_array = label_array(contoured_map)
+            labeled_array = _label_array(contoured_map)
             print(f"\tlabeled_array: {labeled_array.shape}")
 
             # Assign each point the size of the array it is in
-            cluster_sum_array = sum_array(labeled_array)
+            cluster_sum_array = _sum_array(labeled_array)
             print(f"\tcluster_sum_array: {cluster_sum_array.shape}")
 
             clustered_arrays.append(cluster_sum_array)
@@ -6983,7 +6983,7 @@ def analyse_residue_gpu(
 
         dataset = residue_datasets[dtag]
 
-        dataset_results: DatasetAffinityResults = analyse_dataset(
+        dataset_results: DatasetResults = analyse_dataset(
             dataset,
             residue_datasets,
             marker,
