@@ -3644,21 +3644,15 @@ def get_events(sample,
 
         return _score, _centroid
 
-    def _get_persistence(_array, _structure, ):
+    def _get_persistence(_array, _structure, _expected_size):
 
         contours = np.linspace(1.0, 3.0, 50)
 
-        max_dist = get_max_dist(structure)
-
-        rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
-
-        expected_size = _get_fragment_expected_size(rotated_structure)
-        print(f"Expected size: {expected_size}")
 
         # Get the upper and lower bounds on expected size
-        lower_bound = 0.8 * expected_size
+        lower_bound = 0.8 * _expected_size
 
-        upper_bound = 1.2 * expected_size
+        upper_bound = 1.2 * _expected_size
 
         clustered_arrays = []
         for contour in contours:
@@ -3735,8 +3729,15 @@ def get_events(sample,
     event_maps: Dict[int, np.ndarray] = _get_event_maps(sample, sample_mean)
     print(f"Event maps has length: {len(event_maps)}")
 
+    max_dist = get_max_dist(structure)
+
+    rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
+
+    expected_size = _get_fragment_expected_size(rotated_structure)
+    print(f"Expected size: {expected_size}")
+
     persistence_dict = {}
-    persistence_dict[0.5] = _get_persistence(sample_z, structure)
+    persistence_dict[0.5] = _get_persistence(sample_z, structure, expected_size)
     # for bdc, event_map in event_maps.items():
     #     persistence_dict[bdc] = _get_persistence(event_map, structure)
     print(f"Persistance dict is: {persistence_dict}")
@@ -3764,6 +3765,7 @@ def get_events(sample,
         bdc=persistence_maxima_bdc,
         score=persistence_dict[persistence_maxima_bdc][0],
         centroid=centroid_cart,
+        fragment_size=expected_size,
     )
     print(f"Event is: {event}")
 
@@ -7187,6 +7189,7 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAResults
             maxima_record = EventRecord(
                 bdc=dataset_results.events[0].bdc,
                 score=dataset_results.events[0].score,
+                fragment_size=event.fragment_size,
                 x=dataset_results.events[0].centroid[0],
                 y=dataset_results.events[0].centroid[1],
                 z=dataset_results.events[0].centroid[2],

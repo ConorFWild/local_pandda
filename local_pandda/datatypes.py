@@ -144,8 +144,9 @@ class Data:
 @dataclass()
 class Event:
     bdc: float
-    centroid: Tuple[float, float, float]
+    centroid: List[float]
     score: int
+    fragment_size: float
 
 
 @dataclass()

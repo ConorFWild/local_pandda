@@ -147,6 +147,7 @@ class EventRecord(base):
     # Data
     bdc = Column(Float)
     score = Column(Float)
+    fragment_size = Column(Float)
     x = Column(Float)
     y = Column(Float)
     z = Column(Float)
