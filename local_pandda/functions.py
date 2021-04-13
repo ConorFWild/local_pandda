@@ -3546,6 +3546,7 @@ def get_protein_scaling(dataset: Dataset, structure_factors, sample_rate):
 
 def get_events(sample,
                sample_mean,
+               sample_z,
                structure,
                spacing,
                alignment,
@@ -3645,7 +3646,7 @@ def get_events(sample,
 
     def _get_persistence(_array, _structure, ):
 
-        contours = np.linspace(1.5, 3.0, 50)
+        contours = np.linspace(1.0, 3.0, 50)
 
         max_dist = get_max_dist(structure)
 
@@ -3735,8 +3736,9 @@ def get_events(sample,
     print(f"Event maps has length: {len(event_maps)}")
 
     persistence_dict = {}
-    for bdc, event_map in event_maps.items():
-        persistence_dict[bdc] = _get_persistence(event_map, structure)
+    persistence_dict[0.5] = _get_persistence(sample_z, structure)
+    # for bdc, event_map in event_maps.items():
+    #     persistence_dict[bdc] = _get_persistence(event_map, structure)
     print(f"Persistance dict is: {persistence_dict}")
 
     initial_persistence_maxima_bdc = max(persistence_dict, key=lambda _bdc: persistence_dict[_bdc][0])
@@ -3892,6 +3894,7 @@ def analyse_dataset(
     events: Dict[int, Event] = get_events(
         dataset_sample,
         sample_mean,
+        sample_z,
         list(dataset_fragment_structures.values())[0],
         params.grid_spacing,
         alignments[dataset.dtag][marker],
@@ -7089,6 +7092,9 @@ def analyse_residue_gpu(
 
         # if dtag != "HAO1A-x1003":
         #     continue
+
+        if dtag not in ["HAO1A-x0381", "HAO1A-x0604", "HAO1A-x0964", "HAO1A-x0964", "HAO1A-x0132", "HAO1A-x0808", "HAO1A-x0707", "HAO1A-x1003"]:
+            continue
 
         dataset = residue_datasets[dtag]
 
