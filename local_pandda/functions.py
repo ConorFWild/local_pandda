@@ -3580,7 +3580,7 @@ def get_events(sample,
 
                                 )
 
-                                grid.set_points_around(new_pos, 0.5, 1.0)
+                                grid.set_points_around(new_pos, 0.75, 1.0)
 
         array = np.array(grid)
 
@@ -3650,9 +3650,9 @@ def get_events(sample,
 
 
         # Get the upper and lower bounds on expected size
-        lower_bound = 0.8 * _expected_size
+        lower_bound = 0.7 * _expected_size
 
-        upper_bound = 1.2 * _expected_size
+        upper_bound = 1.3 * _expected_size
 
         clustered_arrays = []
         for contour in contours:
