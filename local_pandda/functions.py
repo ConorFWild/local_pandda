@@ -3646,7 +3646,7 @@ def get_events(sample,
 
     def _get_persistence(_array, _structure, _lower_bound, _upper_bound):
 
-        contours = np.linspace(1.0, 3.0, 50)
+        contours = np.linspace(0.5, 3.0, 50)
 
 
 
