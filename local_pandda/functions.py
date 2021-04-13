@@ -7186,10 +7186,10 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAResults
             # )
             # database.session.add(maxima_record)
 
-            maxima_record = EventRecord(
+            event_record = EventRecord(
                 bdc=dataset_results.events[0].bdc,
                 score=dataset_results.events[0].score,
-                fragment_size=event.fragment_size,
+                fragment_size=dataset_results.events[0].fragment_size,
                 x=dataset_results.events[0].centroid[0],
                 y=dataset_results.events[0].centroid[1],
                 z=dataset_results.events[0].centroid[2],
@@ -7197,6 +7197,6 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAResults
                 marker=marker_record,
 
             )
-            database.session.add(maxima_record)
+            database.session.add(event_record)
 
     database.session.commit()
