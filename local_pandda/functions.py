@@ -1332,7 +1332,9 @@ def get_reference_mask(reference_dataset,
                                 unaligned_xmap.nw,
                                 )
 
-    mask_grid.set_unit_cell(mask_grid.unit_cell)
+    mask_grid.set_unit_cell(unaligned_xmap.unit_cell)
+
+
     for model in reference_dataset.structure:
         for chain in model:
             for residue in chain.get_polymer():
@@ -3842,7 +3844,6 @@ def analyse_dataset(
         linkage: np.ndarray,
         dataset_clusters: np.ndarray,
         dataset_index: int,
-        reference_mask,
         known_apos: List[str],
         out_dir: Path,
         params: Params,
@@ -3928,10 +3929,22 @@ def analyse_dataset(
     print(max([comparator_truncated_dataset.reflections.resolution_high() for comparator_truncated_dataset in
                comparator_truncated_datasets.values()]))
 
+    # Get the reference mask
+    reference_mask = get_reference_mask(reference_dataset,
+                                        marker,
+                                        alignments[reference_dataset.dtag][marker],
+                                        params.structure_factors,
+                                        params.sample_rate,
+                                        params.grid_size,
+                                        params.grid_spacing,
+                                        )
+
     comparator_sample_arrays = {dtag: comparator_sample_array*reference_mask
                                 for dtag, comparator_sample_array
                                 in comparator_sample_arrays.items()
                                 }
+
+
 
     # Get the sample associated with the dataset of interest
     dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
@@ -7214,7 +7227,6 @@ def analyse_residue_gpu(
             linkage,
             dataset_clusters,
             dataset_index,
-            reference_mask,
             known_apos,
             out_dir,
             params,
