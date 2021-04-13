@@ -140,6 +140,28 @@ class MaximaRecord(base):
     marker = relationship(MarkerRecord)
 
 
+class EventRecord(base):
+    __tablename__ = DatabaseConstants.MAXIMA
+    id = Column(Integer, primary_key=True)
+
+    # Data
+    bdc = Column(Float)
+    score = Column(Float)
+    x = Column(Float)
+    y = Column(Float)
+    z = Column(Float)
+
+    # Foriegn keys
+    dataset_id = Column(Integer, ForeignKey(DatasetRecord.id))
+    marker_id = Column(Integer, ForeignKey(MarkerRecord.id))
+
+    # Relationships
+    dataset = relationship(DatasetRecord)
+    marker = relationship(MarkerRecord)
+
+
+
+
 class Database:
 
     def __init__(self, database_path: Path, overwrite: bool = False) -> None:

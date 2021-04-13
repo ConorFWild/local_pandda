@@ -225,8 +225,8 @@ class ResidueResults(MutableMapping[str, DatasetResults]):
 
 
 @dataclass()
-class PanDDAResults(MutableMapping[ResidueID, ResidueResults]):
-    _pandda_results: Dict[ResidueID, ResidueResults] = field(default_factory=dict)
+class PanDDAResults(MutableMapping[Marker, ResidueResults]):
+    _pandda_results: Dict[Marker, ResidueResults] = field(default_factory=dict)
 
 
 class Transform:

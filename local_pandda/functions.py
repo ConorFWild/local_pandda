@@ -3547,6 +3547,9 @@ def get_protein_scaling(dataset: Dataset, structure_factors, sample_rate):
 def get_events(sample,
                sample_mean,
                structure,
+               spacing,
+               alignment,
+               marker,
                ):
     def _get_fragment_expected_size(_structure):
         unit_cell = _structure.cell
@@ -3689,6 +3692,45 @@ def get_events(sample,
 
         return _event_maps
 
+    def _coord_to_cart(_centroid_coord,
+                       _array,
+                       _spacing,
+                       _alignment,
+                       _marker
+                       ):
+
+        array_shape = _array.shape
+
+        max_index_fragment_relative_coord = [_centroid_coord[0] - array_shape[0] / 2,
+                                             _centroid_coord[1] - array_shape[1] / 2,
+                                             _centroid_coord[2] - array_shape[2] / 2,
+                                             ]
+        print(f"max_index_fragment_relative_coord: {max_index_fragment_relative_coord}")
+
+        max_index_fragment_relative_position = gemmi.Position(
+            max_index_fragment_relative_coord[0] * _spacing,
+            max_index_fragment_relative_coord[1] * _spacing,
+            max_index_fragment_relative_coord[2] * _spacing,
+        )
+        print(f"max_index_fragment_relative_position: {max_index_fragment_relative_position}")
+
+        transform = _alignment.transform
+        inverse_transform = transform.inverse()
+        rotation_tr = gemmi.Transform()
+        rotation_tr.mat.fromlist(inverse_transform.mat.tolist())
+
+        max_index_fragment_relative_position_dataset_frame = rotation_tr.apply(max_index_fragment_relative_position)
+        print(
+            f"max_index_fragment_relative_position_dataset_frame: {max_index_fragment_relative_position_dataset_frame}")
+
+        max_index_fragment_position_dataset_frame = [
+            max_index_fragment_relative_position_dataset_frame.x + (_marker.x - transform.vec.x),
+            max_index_fragment_relative_position_dataset_frame.y + (_marker.y - transform.vec.y),
+            max_index_fragment_relative_position_dataset_frame.z + (_marker.z - transform.vec.z),
+        ]
+
+        return max_index_fragment_position_dataset_frame
+
     event_maps: Dict[int, np.ndarray] = _get_event_maps(sample, sample_mean)
     print(f"Event maps has length: {len(event_maps)}")
 
@@ -3709,10 +3751,17 @@ def get_events(sample,
     )
     print(f"Persistance maxima bdc is: {initial_persistence_maxima_bdc}")
 
+    centroid_cart = _coord_to_cart(persistence_dict[persistence_maxima_bdc][1],
+                                   sample,
+                                   spacing,
+                                   alignment,
+                                   marker,
+                                   )
+
     event = Event(
         bdc=persistence_maxima_bdc,
         score=persistence_dict[persistence_maxima_bdc][0],
-        centroid=persistence_dict[persistence_maxima_bdc][1],
+        centroid=centroid_cart,
     )
     print(f"Event is: {event}")
 
@@ -3844,8 +3893,36 @@ def analyse_dataset(
         dataset_sample,
         sample_mean,
         list(dataset_fragment_structures.values())[0],
+        params.grid_spacing,
+        alignments[dataset.dtag][marker],
+        marker
     )
-    exit()
+
+    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+        (dataset_sample - (events[0].bdc * sample_mean)) / (1 - events[0].bdc),
+        reference_dataset,
+        dataset,
+        alignments[dataset.dtag][marker],
+        marker,
+        params.grid_size,
+        params.grid_spacing,
+        params.structure_factors,
+        params.sample_rate,
+    )
+
+    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                  None,
+                                  )
+
+    write_event_map(
+        event_map,
+        out_dir / f"{dataset.dtag}_{marker.resid}.mtz",
+        dataset_event_marker,
+        dataset,
+        resolution,
+    )
 
     # Get a result object
     dataset_results: DatasetResults = DatasetResults(
@@ -6998,8 +7075,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x0604":
         #     continue
 
-        if dtag != "HAO1A-x0964":
-            continue
+        # if dtag != "HAO1A-x0964":
+        #     continue
 
         # if dtag != "HAO1A-x0132":
         #     continue
@@ -7041,7 +7118,7 @@ def analyse_gpu_hits(pandda_results: PanDDAAffinityResults):
     ...
 
 
-def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAAffinityResults, database_path: Path):
+def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAResults, database_path: Path):
     database = Database(
         database_path,
         True,
@@ -7081,23 +7158,35 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAAffinit
         database.session.add(marker_record)
 
         for dtag, dataset_results in marker_result.items():
-            maxima = dataset_results.maxima
-            maxima_rotation = maxima.rotation_index
-            maxima_position = maxima.position
+            # maxima = dataset_results.maxima
+            # maxima_rotation = maxima.rotation_index
+            # maxima_position = maxima.position
+            #
+            # maxima_record = MaximaRecord(
+            #     bdc=maxima.bdc,
+            #     correlation=maxima.correlation,
+            #     rotation_x=maxima_rotation[0],
+            #     rotation_y=maxima_rotation[1],
+            #     rotation_z=maxima_rotation[2],
+            #     position_x=maxima_position[0],
+            #     position_y=maxima_position[1],
+            #     position_z=maxima_position[2],
+            #     dataset=database.session.query(DatasetRecord).filter(DatasetRecord.dtag == dtag).first(),
+            #     marker=marker_record,
+            #     mean_map_correlation=maxima.mean_map_correlation,
+            #     mean_map_max_correlation=maxima.mean_map_max_correlation,
+            # )
+            # database.session.add(maxima_record)
 
-            maxima_record = MaximaRecord(
-                bdc=maxima.bdc,
-                correlation=maxima.correlation,
-                rotation_x=maxima_rotation[0],
-                rotation_y=maxima_rotation[1],
-                rotation_z=maxima_rotation[2],
-                position_x=maxima_position[0],
-                position_y=maxima_position[1],
-                position_z=maxima_position[2],
+            maxima_record = EventRecord(
+                bdc=dataset_results.events[0].bdc,
+                score=dataset_results.events[0].score,
+                x=dataset_results.events[0].centroid[0],
+                y=dataset_results.events[0].centroid[1],
+                z=dataset_results.events[0].centroid[2],
                 dataset=database.session.query(DatasetRecord).filter(DatasetRecord.dtag == dtag).first(),
                 marker=marker_record,
-                mean_map_correlation=maxima.mean_map_correlation,
-                mean_map_max_correlation=maxima.mean_map_max_correlation,
+
             )
             database.session.add(maxima_record)
 
