@@ -141,7 +141,7 @@ class MaximaRecord(base):
 
 
 class EventRecord(base):
-    __tablename__ = DatabaseConstants.MAXIMA
+    __tablename__ = DatabaseConstants.EVENT_TABLE
     id = Column(Integer, primary_key=True)
 
     # Data
