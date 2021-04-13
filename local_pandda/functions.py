@@ -3580,7 +3580,7 @@ def get_events(sample,
 
                                 )
 
-                                grid.set_points_around(new_pos, 0.6, 1.0)
+                                grid.set_points_around(new_pos, 0.5, 1.0)
 
         array = np.array(grid)
 
