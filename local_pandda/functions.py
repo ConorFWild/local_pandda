@@ -3552,7 +3552,7 @@ def get_events(sample,
                alignment,
                marker,
                ):
-    def _get_fragment_expected_size(_structure):
+    def _get_fragment_expected_size(_structure, _radius):
         unit_cell = _structure.cell
         grid = gemmi.FloatGrid(
             int(unit_cell.a / 0.5) + 1,
@@ -3580,7 +3580,7 @@ def get_events(sample,
 
                                 )
 
-                                grid.set_points_around(new_pos, 0.75, 1.0)
+                                grid.set_points_around(new_pos, _radius, 1.0)
 
         array = np.array(grid)
 
@@ -3615,11 +3615,11 @@ def get_events(sample,
 
         return new_array
 
-    def _calculate_persistence_array(_clustered_arrays, _lower_bound, _upper_bound):
+    def _calculate_persistence_array(_clustered_arrays, __lower_bound, __upper_bound):
         stacked_arrays = np.stack(_clustered_arrays, axis=0)
 
-        stacked_arrays[stacked_arrays < _lower_bound] = 0
-        stacked_arrays[stacked_arrays > _upper_bound] = 0
+        stacked_arrays[stacked_arrays < __lower_bound] = 0
+        stacked_arrays[stacked_arrays > __upper_bound] = 0
 
         _depth_array = np.sum(stacked_arrays > 0, axis=0)
 
@@ -3644,15 +3644,11 @@ def get_events(sample,
 
         return _score, _centroid
 
-    def _get_persistence(_array, _structure, _expected_size):
+    def _get_persistence(_array, _structure, _lower_bound, _upper_bound):
 
         contours = np.linspace(1.0, 3.0, 50)
 
 
-        # Get the upper and lower bounds on expected size
-        lower_bound = 0.7 * _expected_size
-
-        upper_bound = 1.3 * _expected_size
 
         clustered_arrays = []
         for contour in contours:
@@ -3672,7 +3668,7 @@ def get_events(sample,
             clustered_arrays.append(cluster_measure_array)
 
         # calculate the depth that a point is in range for
-        depth_array = _calculate_persistence_array(clustered_arrays, lower_bound, upper_bound)
+        depth_array = _calculate_persistence_array(clustered_arrays, _lower_bound, _upper_bound)
         print(f"depth_array: {depth_array.shape}")
 
         _persistance_maxima = _get_persistance_maxima(depth_array)
@@ -3733,11 +3729,12 @@ def get_events(sample,
 
     rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
 
-    expected_size = _get_fragment_expected_size(rotated_structure)
-    print(f"Expected size: {expected_size}")
+    lower_bound = _get_fragment_expected_size(rotated_structure, 0.5)
+    upper_bound = _get_fragment_expected_size(rotated_structure, 0.8)
+    print(f"Expected size: {lower_bound} to {upper_bound}")
 
     persistence_dict = {}
-    persistence_dict[0.5] = _get_persistence(sample_z, structure, expected_size)
+    persistence_dict[0.5] = _get_persistence(sample_z, structure, lower_bound, upper_bound)
     # for bdc, event_map in event_maps.items():
     #     persistence_dict[bdc] = _get_persistence(event_map, structure)
     print(f"Persistance dict is: {persistence_dict}")
@@ -3765,7 +3762,7 @@ def get_events(sample,
         bdc=persistence_maxima_bdc,
         score=persistence_dict[persistence_maxima_bdc][0],
         centroid=centroid_cart,
-        fragment_size=expected_size,
+        fragment_size=lower_bound,
     )
     print(f"Event is: {event}")
 
