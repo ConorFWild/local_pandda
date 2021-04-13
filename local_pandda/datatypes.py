@@ -225,9 +225,11 @@ class ResidueResults(MutableMapping[str, DatasetResults]):
     _dataset_results: Dict[str, DatasetResults] = field(default_factory=dict)
 
 
-@dataclass()
-class PanDDAResults(MutableMapping[Marker, ResidueResults]):
-    _pandda_results: Dict[Marker, ResidueResults] = field(default_factory=dict)
+# @dataclass()
+# class PanDDAResults(MutableMapping[Marker, ResidueResults]):
+#     _pandda_results: Dict[Marker, ResidueResults] = field(default_factory=dict)
+
+PanDDAResults = MutableMapping[Marker, ResidueResults]
 
 
 class Transform:
@@ -238,7 +240,7 @@ class Transform:
     def __getstate__(self):
         state = {
             "mat": self.transform.mat.tolist(),
-                 "vec": self.transform.vec.tolist(),
+            "vec": self.transform.vec.tolist(),
         }
 
         return state

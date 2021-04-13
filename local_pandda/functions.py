@@ -3929,6 +3929,32 @@ def analyse_dataset(
         resolution,
     )
 
+    event_map: gemmi.FloatGrid = get_backtransformed_map_mtz(
+        sample_z,
+        reference_dataset,
+        dataset,
+        alignments[dataset.dtag][marker],
+        marker,
+        params.grid_size,
+        params.grid_spacing,
+        params.structure_factors,
+        params.sample_rate,
+    )
+
+    dataset_event_marker = Marker(marker.x - alignments[dataset.dtag][marker].transform.vec.x,
+                                  marker.y - alignments[dataset.dtag][marker].transform.vec.y,
+                                  marker.z - alignments[dataset.dtag][marker].transform.vec.z,
+                                  None,
+                                  )
+
+    write_event_map(
+        event_map,
+        out_dir / f"{dataset.dtag}_{marker.resid}_z.mtz",
+        dataset_event_marker,
+        dataset,
+        resolution,
+    )
+
     # Get a result object
     dataset_results: DatasetResults = DatasetResults(
         dataset.dtag,
@@ -7185,6 +7211,8 @@ def make_database(datasets: MutableMapping[str, Dataset], results: PanDDAResults
             #     mean_map_max_correlation=maxima.mean_map_max_correlation,
             # )
             # database.session.add(maxima_record)
+
+            event = dataset_results.events[0]
 
             event_record = EventRecord(
                 bdc=dataset_results.events[0].bdc,
