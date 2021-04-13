@@ -1312,6 +1312,64 @@ def sample_datasets(
     return samples
 
 
+def get_reference_mask(reference_dataset,
+                                        marker,
+                       transform,
+                                        structure_factors,
+                                        sample_rate,
+                                        grid_size,
+                                        grid_spacing ,
+                                        ):
+    reflections: gemmi.Mtz = reference_dataset.reflections
+    unaligned_xmap: gemmi.FloatGrid = reflections.transform_f_phi_to_map(
+        structure_factors.f,
+        structure_factors.phi,
+        sample_rate=sample_rate,
+    )
+
+    mask_grid = gemmi.FloatGrid(unaligned_xmap.nu,
+                                unaligned_xmap.nv,
+                                unaligned_xmap.nw,
+                                )
+
+    mask_grid.set_unit_cell(mask_grid.unit_cell)
+    for model in reference_dataset.structure:
+        for chain in model:
+            for residue in chain.get_polymer():
+                for atom in residue:
+                    pos = atom.pos
+                    mask_grid.set_points_around(pos, 5.0, 1.0)
+
+    transform_inverse = transform.transform.inverse()
+
+    # transform_vec = np.array(transform_inverse.vec.tolist())
+    transform_vec = -np.array(transform.transform.vec.tolist())
+
+    transform_mat = np.array(transform_inverse.mat.tolist()).T
+    transform_mat = np.matmul(transform_mat, np.eye(3) * grid_spacing)
+
+    offset = np.matmul(transform_mat, np.array([grid_size / 2, grid_size / 2, grid_size / 2]).reshape(3, 1)).flatten()
+    print(f"Offset from: {offset}")
+    print(f"transform_vec from: {transform_vec}")
+
+    offset_tranform_vec = transform_vec - offset
+    marker_offset_tranform_vec = offset_tranform_vec + np.array([marker.x, marker.y, marker.z])
+    print(f"Sampling from: {marker_offset_tranform_vec}")
+
+    tr = gemmi.Transform()
+    tr.mat.fromlist(transform_mat.tolist())
+    # transform_non_inv_mat = np.array(transform.transform.mat.tolist()).T
+    # transform_non_inv_mat = np.matmul(transform_non_inv_mat, np.eye(3) * grid_spacing)
+    # tr.mat.fromlist(transform_non_inv_mat.tolist())
+    tr.vec.fromlist(marker_offset_tranform_vec.tolist())
+
+    arr = np.zeros([grid_size, grid_size, grid_size], dtype=np.float32)
+
+    mask_grid.interpolate_values(arr, tr)
+
+    return arr
+
+
 def get_corr(reference_sample_mask, sample_mask, diag):
     reference_mask_size = np.sum(reference_sample_mask)
     sample_mask_size = np.sum(sample_mask)
@@ -3784,6 +3842,7 @@ def analyse_dataset(
         linkage: np.ndarray,
         dataset_clusters: np.ndarray,
         dataset_index: int,
+        reference_mask,
         known_apos: List[str],
         out_dir: Path,
         params: Params,
@@ -3868,6 +3927,11 @@ def analyse_dataset(
     )
     print(max([comparator_truncated_dataset.reflections.resolution_high() for comparator_truncated_dataset in
                comparator_truncated_datasets.values()]))
+
+    comparator_sample_arrays = {dtag: comparator_sample_array*reference_mask
+                                for dtag, comparator_sample_array
+                                in comparator_sample_arrays.items()
+                                }
 
     # Get the sample associated with the dataset of interest
     dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
@@ -7063,6 +7127,8 @@ def analyse_residue_gpu(
     if params.debug:
         print(f"Resolution is: {resolution}")
 
+
+
     # Sample the datasets to ndarrays
     if params.debug:
         print(f"Getting sample arrays...")
@@ -7075,6 +7141,22 @@ def analyse_residue_gpu(
         int(params.grid_size / 2),
         params.grid_spacing * 2,
     )
+
+    # Get the reference mask
+    reference_mask = get_reference_mask(reference_dataset,
+                                        marker,
+                                        alignments[reference_dataset.dtag][marker],
+                                        params.structure_factors,
+                                        params.sample_rate,
+                                        int(params.grid_size / 2),
+                                        params.grid_spacing * 2,
+                                        )
+
+    # Mask the arrays
+    sample_arrays = {dtag: array*reference_mask
+                     for dtag, array
+                     in sample_arrays.items()
+                     }
 
     # Get the distance matrix
     distance_matrix: np.ndarray = get_distance_matrix(sample_arrays)
@@ -7132,6 +7214,7 @@ def analyse_residue_gpu(
             linkage,
             dataset_clusters,
             dataset_index,
+            reference_mask,
             known_apos,
             out_dir,
             params,
