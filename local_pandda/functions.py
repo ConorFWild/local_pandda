@@ -3961,6 +3961,7 @@ def analyse_dataset(
     sample_mean: np.ndarray = get_mean(comparator_sample_arrays)
     sample_std: np.ndarray = get_std(comparator_sample_arrays)
     sample_z: np.ndarray = get_z(dataset_sample, sample_mean, sample_std)
+    sample_z = np.nan_to_num(sample_z)
     if params.debug:
         print(f"\tGot mean: max {np.max(sample_mean)}, min: {np.min(sample_mean)}")
         print(f"\tGot std: max {np.max(sample_std)}, min: {np.min(sample_std)}")
