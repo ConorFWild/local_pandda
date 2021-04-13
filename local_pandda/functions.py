@@ -3789,8 +3789,8 @@ def get_events(sample,
 
     rotated_structure: gemmi.Structure = rotate_translate_structure(structure, np.eye(3), max_dist)
 
-    lower_bound = _get_fragment_expected_size(rotated_structure, 0.5)
-    upper_bound = _get_fragment_expected_size(rotated_structure, 0.8)
+    lower_bound = _get_fragment_expected_size(rotated_structure, 0.4)
+    upper_bound = _get_fragment_expected_size(rotated_structure, 0.7)
     print(f"Expected size: {lower_bound} to {upper_bound}")
 
     persistence_dict = {}
