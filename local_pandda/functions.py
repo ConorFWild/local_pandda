@@ -3787,7 +3787,7 @@ def get_events(sample,
                       _centroid,
                       ):
 
-        def _center_structure(__structure, __point):
+        def _get_structure_mean(__structure):
             xs = []
             ys = []
             zs = []
@@ -3805,6 +3805,11 @@ def get_events(sample,
             mean_y = np.mean(np.array(ys))
             mean_z = np.mean(np.array(zs))
 
+            return mean_x, mean_y, mean_z
+
+        def _center_structure(__structure, __point):
+            mean_x, mean_y, mean_z = _get_structure_mean(__structure)
+
             for model in __structure:
                 for chain in model:
                     for residue in chain:
@@ -3818,8 +3823,8 @@ def get_events(sample,
             return __structure
 
         def _transform_structure(__structure, translation, rotation_matrix):
+            mean_x, mean_y, mean_z = _get_structure_mean(__structure)
             structure_copy = __structure.clone()
-
             structure_copy = _center_structure(structure_copy, [0.0, 0.0, 0.0])
 
             transform: gemmi.Transform = gemmi.Transform()
@@ -3837,7 +3842,9 @@ def get_events(sample,
                             rotated_position = gemmi.Position(rotated_vec.x, rotated_vec.y, rotated_vec.z)
                             atom.pos = rotated_position
 
-            structure_copy = _center_structure(structure_copy, translation)
+            structure_copy = _center_structure(structure_copy, [mean_x + translation[0],
+                                                                mean_y + translation[1],
+                                                                mean_z + translation[2]])
 
             return structure_copy
 
@@ -3870,13 +3877,15 @@ def get_events(sample,
             return sum(vals) / n
 
         grid = gemmi.FloatGrid(*_depth_array.shape)
-        grid.set_unit_cell(gemmi.UnitCell(0.5 * grid.nu,
+        grid.set_unit_cell(
+            gemmi.UnitCell(0.5 * grid.nu,
                                           0.5 * grid.nv,
                                           0.5 * grid.nw,
                                           90,
                                           90,
                                           90
-                                          ))
+                                          )
+        )
         indexes = list(
             itertools.product(
                 [x for x in range(0, grid.nu)],
@@ -3886,16 +3895,25 @@ def get_events(sample,
         )
         print(f"Num non-zero indexes: {len(indexes)}")
 
-        # Center
-        centered_structure = _center_structure(structure,
-                                               [_centroid[0] * 0.5, _centroid[1] * 0.5, _centroid[2] * 0.5, ])
 
         # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
         max_val = np.max(_depth_array)
+        j = 0
         for index in indexes:
             if _depth_array[index[0], index[1], index[2]] == max_val:
                 grid.set_value(index[0], index[1], index[2], 1.0)
+                j = j + 1
 
+        print(f"Masked {j} points!")
+
+        # Center
+        centroid_cart = [_centroid[0] * 0.5, _centroid[1] * 0.5, _centroid[2] * 0.5, ]
+        print(f"Cartesian centroid of fragment is: {centroid_cart}")
+        centered_structure = _center_structure(structure,
+                                               centroid_cart,
+                                               )
+
+        # Optimise
         res = scipy.optimize.shgo(
             lambda params: _score_fit(centered_structure,
                                                          params
