@@ -3876,6 +3876,60 @@ def get_events(sample,
 
             return 1 - (sum(vals) / n)
 
+        def _get_probe_structure(_structure):
+            structure_clone = _structure.clone()
+
+            j = 0
+            verticies = {}
+            for model in _structure:
+                for chain in model:
+                    for residue in chain:
+                        for atom_1 in residue:
+                            if atom_1.element.name != "H":
+                                verticies[j] = atom_1
+                                j = j + 1
+            edges = {}
+            for atom_1_index in verticies:
+                for atom_2_index in verticies:
+                    if atom_1_index == atom_2_index:
+                        continue
+                    atom_1 = verticies[atom_1_index]
+                    atom_2 = verticies[atom_2_index]
+                    pos_1 = atom_1.pos
+                    pos_2 = atom_2.pos
+                    distance = pos_1.dist(pos_2)
+                    if distance < 2.0:
+                        virtual_atom = gemmi.Atom()
+                        new_pos = gemmi.Position(
+                            (pos_1.x + pos_2.x) / 2,
+                            (pos_1.y + pos_2.y) / 2,
+                            (pos_1.z + pos_2.z) / 2,
+
+                        )
+                        atom_symbol: str = "C"
+                        virtual_atom.name = atom_symbol
+                        gemmi_element: gemmi.Element = gemmi.Element(atom_symbol)
+                        virtual_atom.element = gemmi_element
+                        virtual_atom.pos = new_pos
+
+
+                        if atom_1_index < atom_2_index:
+                            edges[(atom_1_index, atom_2_index)] = virtual_atom
+
+                        else:
+                            edges[(atom_2_index, atom_1_index)] = virtual_atom
+
+            for model in structure_clone:
+                for chain in model:
+                    for residue in chain:
+                        for edge_index in edges:
+                            virtual_atom = edges[edge_index]
+                            residue.add_atom(virtual_atom)
+
+            print(f"Number of real atoms: {len(verticies)}")
+            print(f"Number of virtual atoms: {len(edges)}")
+            return structure_clone
+
         grid = gemmi.FloatGrid(*_depth_array.shape)
         grid.set_unit_cell(
             gemmi.UnitCell(0.5 * grid.nu,
@@ -3912,6 +3966,8 @@ def get_events(sample,
         centered_structure = _center_structure(structure,
                                                centroid_cart,
                                                )
+
+        probe_structure = _get_probe_structure(centered_structure)
 
         # Optimise
         res = scipy.optimize.shgo(
