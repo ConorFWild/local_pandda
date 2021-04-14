@@ -3683,7 +3683,8 @@ def get_events(sample,
         stacked_arrays[stacked_arrays < __lower_bound] = 0
         stacked_arrays[stacked_arrays > __upper_bound] = 0
 
-        _depth_array = np.sum(stacked_arrays > 0, axis=0)
+        # _depth_array = np.sum(stacked_arrays > 0, axis=0)
+        _depth_array = np.sum(stacked_arrays, axis=0)
 
         return _depth_array
 
@@ -3709,8 +3710,6 @@ def get_events(sample,
     def _get_persistence(_array, _structure, _lower_bound, _upper_bound):
 
         contours = np.linspace(0.5, 3.0, 50)
-
-
 
         clustered_arrays = []
         for contour in contours:
@@ -7216,8 +7215,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x1003":
         #     continue
 
-        # if dtag not in ["HAO1A-x0381", "HAO1A-x0604", "HAO1A-x0964", "HAO1A-x0964", "HAO1A-x0132", "HAO1A-x0808", "HAO1A-x0707", "HAO1A-x1003"]:
-        #     continue
+        if dtag not in ["HAO1A-x0381", "HAO1A-x0604", "HAO1A-x0964", "HAO1A-x0964", "HAO1A-x0132", "HAO1A-x0808", "HAO1A-x0707", "HAO1A-x1003"]:
+            continue
 
         dataset = residue_datasets[dtag]
 
