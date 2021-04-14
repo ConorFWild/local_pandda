@@ -1313,13 +1313,13 @@ def sample_datasets(
 
 
 def get_reference_mask(reference_dataset,
-                                        marker,
+                       marker,
                        transform,
-                                        structure_factors,
-                                        sample_rate,
-                                        grid_size,
-                                        grid_spacing ,
-                                        ):
+                       structure_factors,
+                       sample_rate,
+                       grid_size,
+                       grid_spacing,
+                       ):
     reflections: gemmi.Mtz = reference_dataset.reflections
     unaligned_xmap: gemmi.FloatGrid = reflections.transform_f_phi_to_map(
         structure_factors.f,
@@ -1333,7 +1333,6 @@ def get_reference_mask(reference_dataset,
                                 )
 
     mask_grid.set_unit_cell(unaligned_xmap.unit_cell)
-
 
     for model in reference_dataset.structure:
         for chain in model:
@@ -3734,7 +3733,7 @@ def get_events(sample,
 
         _persistance_maxima = _get_persistance_maxima(depth_array)
 
-        return _persistance_maxima
+        return _persistance_maxima, depth_array
 
     def _get_event_maps(_sample, _sample_mean):
         _event_maps = {}
@@ -3783,6 +3782,133 @@ def get_events(sample,
 
         return max_index_fragment_position_dataset_frame
 
+    def _fit_fragment(_structure,
+                      _depth_array,
+                      _centroid,
+                      ):
+
+        def _center_structure(__structure, __point):
+            xs = []
+            ys = []
+            zs = []
+            for model in __structure:
+                for chain in model:
+                    for residue in chain:
+                        for atom in residue:
+                            # print(atom.pos)
+                            pos: gemmi.Position = atom.pos
+                            xs.append(pos.x)
+                            ys.append(pos.y)
+                            zs.append(pos.z)
+
+            mean_x = np.mean(np.array(xs))
+            mean_y = np.mean(np.array(ys))
+            mean_z = np.mean(np.array(zs))
+
+            for model in __structure:
+                for chain in model:
+                    for residue in chain:
+                        for atom in residue:
+                            pos: gemmi.Position = atom.pos
+                            new_x = pos.x - mean_x + __point[0]
+                            new_y = pos.y - mean_y + __point[1]
+                            new_z = pos.z - mean_z + __point[2]
+                            atom.pos = gemmi.Position(new_x, new_y, new_z)
+
+            return __structure
+
+        def _transform_structure(__structure, translation, rotation_matrix):
+            structure_copy = __structure.clone()
+
+            structure_copy = _center_structure(structure_copy, [0.0, 0.0, 0.0])
+
+            transform: gemmi.Transform = gemmi.Transform()
+            transform.mat.fromlist(rotation_matrix.tolist())
+            transform.vec.fromlist([0.0, 0.0, 0.0])
+
+            for model in structure_copy:
+                for chain in model:
+                    for residue in chain:
+                        for atom in residue:
+                            # print(atom.pos)
+                            pos: gemmi.Position = atom.pos
+                            rotated_vec = transform.apply(pos)
+                            # print(rotated_vec)
+                            rotated_position = gemmi.Position(rotated_vec.x, rotated_vec.y, rotated_vec.z)
+                            atom.pos = rotated_position
+
+            structure_copy = _center_structure(structure_copy, translation)
+
+            return structure_copy
+
+        def _score_fit(__structure, x, y, z, rx, ry, rz):
+
+            rotation = spsp.transform.Rotation.from_euler("xyz",
+                                                          [
+                                                              rx,
+                                                              ry,
+                                                              rz,
+                                                          ],
+                                                          degrees=True)
+            rotation_matrix: np.ndarray = rotation.as_matrix()
+            structure_copy = _transform_structure(__structure,
+                                                  [x, y, z],
+                                                  rotation_matrix
+                                                  )
+
+            vals = []
+            n = 0
+            for model in structure_copy:
+                for chain in model:
+                    for residue in chain:
+                        for atom in residue:
+                            if atom.element.name != "H":
+                                vals.append(grid.interpolate_value(atom.pos))
+                                n = n +1
+
+            return sum(vals) / n
+
+        grid = gemmi.FloatGrid(*_depth_array.shape)
+        grid.set_unit_cell(gemmi.UnitCell(0.5 * grid.nu,
+                                          0.5 * grid.nv,
+                                          0.5 * grid.nw,
+                                          90,
+                                          90,
+                                          90
+                                          ))
+        indexes = list(
+            itertools.product(
+                [x for x in range(0, grid.nu)],
+                [y for y in range(0, grid.nu)],
+                [z for z in range(0, grid.nu)],
+            )
+        )
+        print(f"Num non-zero indexes: {len(indexes)}")
+
+        # Center
+        centered_structure = _center_structure(structure,
+                                               [_centroid[0] * 0.5, _centroid[1] * 0.5, _centroid[2] * 0.5, ])
+
+        # Loop over those indexes, transforming them to grid at origin, assigning 0 to all points outside cell (0,0,0)
+        max_val = np.max(_depth_array)
+        for index in indexes:
+            if _depth_array[index[0], index[1], index[2]] == max_val:
+                grid.set_value(index[0], index[1], index[2], 1.0)
+
+        res = scipy.optimize.shgo(
+            lambda _x, _y, _z, _rx, _ry, _rz: _score_fit(centered_structure,
+                                                         _x,
+                                                         _y,
+                                                         _z,
+                                                         _rx,
+                                                         _ry,
+                                                         _rz,
+                                                         ),
+            [(-3, 3), (-3, 3), (-3, 3), (0, 360), (0, 360), (0, 360)])
+        print(f"Optimisation result: {res.x} {res.fun}")
+
+        return res.fun
+
     event_maps: Dict[int, np.ndarray] = _get_event_maps(sample, sample_mean)
     print(f"Event maps has length: {len(event_maps)}")
 
@@ -3800,28 +3926,33 @@ def get_events(sample,
     #     persistence_dict[bdc] = _get_persistence(event_map, structure)
     print(f"Persistance dict is: {persistence_dict}")
 
-    initial_persistence_maxima_bdc = max(persistence_dict, key=lambda _bdc: persistence_dict[_bdc][0])
+    initial_persistence_maxima_bdc = max(persistence_dict, key=lambda _bdc: persistence_dict[_bdc][0][0])
     print(f"intiial Persistance maxima bdc is: {initial_persistence_maxima_bdc}")
     persistence_maxima_bdc = max(
         [
             _bdc
             for _bdc
             in persistence_dict
-            if persistence_dict[_bdc][0] == persistence_dict[initial_persistence_maxima_bdc][0]
+            if persistence_dict[_bdc][0][0] == persistence_dict[initial_persistence_maxima_bdc][0][0]
         ]
     )
     print(f"Persistance maxima bdc is: {initial_persistence_maxima_bdc}")
 
-    centroid_cart = _coord_to_cart(persistence_dict[persistence_maxima_bdc][1],
+    centroid_cart = _coord_to_cart(persistence_dict[persistence_maxima_bdc][0][1],
                                    sample,
                                    spacing,
                                    alignment,
                                    marker,
                                    )
 
+    fit = _fit_fragment(structure,
+                        persistence_dict[persistence_maxima_bdc][1],
+                        persistence_dict[persistence_maxima_bdc][0][1]
+                        )
+
     event = Event(
         bdc=persistence_maxima_bdc,
-        score=persistence_dict[persistence_maxima_bdc][0],
+        score=fit,
         centroid=centroid_cart,
         fragment_size=lower_bound,
     )
@@ -3940,12 +4071,10 @@ def analyse_dataset(
                                         params.grid_spacing,
                                         )
 
-    comparator_sample_arrays = {dtag: comparator_sample_array*reference_mask
+    comparator_sample_arrays = {dtag: comparator_sample_array * reference_mask
                                 for dtag, comparator_sample_array
                                 in comparator_sample_arrays.items()
                                 }
-
-
 
     # Get the sample associated with the dataset of interest
     dataset_sample: np.ndarray = comparator_sample_arrays[dataset.dtag]
@@ -7142,8 +7271,6 @@ def analyse_residue_gpu(
     if params.debug:
         print(f"Resolution is: {resolution}")
 
-
-
     # Sample the datasets to ndarrays
     if params.debug:
         print(f"Getting sample arrays...")
@@ -7168,7 +7295,7 @@ def analyse_residue_gpu(
                                         )
 
     # Mask the arrays
-    sample_arrays = {dtag: array*reference_mask
+    sample_arrays = {dtag: array * reference_mask
                      for dtag, array
                      in sample_arrays.items()
                      }
@@ -7215,7 +7342,8 @@ def analyse_residue_gpu(
         # if dtag != "HAO1A-x1003":
         #     continue
 
-        if dtag not in ["HAO1A-x0381", "HAO1A-x0604", "HAO1A-x0964", "HAO1A-x0964", "HAO1A-x0132", "HAO1A-x0808", "HAO1A-x0707", "HAO1A-x1003"]:
+        if dtag not in ["HAO1A-x0381", "HAO1A-x0604", "HAO1A-x0964", "HAO1A-x0964", "HAO1A-x0132", "HAO1A-x0808",
+                        "HAO1A-x0707", "HAO1A-x1003"]:
             continue
 
         dataset = residue_datasets[dtag]
