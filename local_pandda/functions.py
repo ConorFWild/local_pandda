@@ -2209,9 +2209,9 @@ def get_backtransformed_map_mtz(
     grid: gemmi.FloatGrid = dataset.reflections.transform_f_phi_to_map(
         structure_factors.f,
         structure_factors.phi,
-        sample_rate=sample_rate,
+        sample_rate=1,
     )
-    grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
+    # grid.spacegroup = gemmi.find_spacegroup_by_name('P 1')
     grid.fill(0)
 
     # reference to moving
@@ -2297,6 +2297,8 @@ def get_backtransformed_map_mtz(
 
         interpolated_value: float = corrected_density_grid.interpolate_value(transformed_sample_position)
         grid.set_value(index[0], index[1], index[2], interpolated_value)
+
+    grid.symmetrize_max()
 
     return grid
 
