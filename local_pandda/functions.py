@@ -3841,7 +3841,8 @@ def get_events(sample,
 
             return structure_copy
 
-        def _score_fit(__structure, x, y, z, rx, ry, rz):
+        def _score_fit(__structure, params):
+            x, y, z, rx, ry, rz = params
 
             rotation = spsp.transform.Rotation.from_euler("xyz",
                                                           [
@@ -3896,13 +3897,8 @@ def get_events(sample,
                 grid.set_value(index[0], index[1], index[2], 1.0)
 
         res = scipy.optimize.shgo(
-            lambda _x, _y, _z, _rx, _ry, _rz: _score_fit(centered_structure,
-                                                         _x,
-                                                         _y,
-                                                         _z,
-                                                         _rx,
-                                                         _ry,
-                                                         _rz,
+            lambda params: _score_fit(centered_structure,
+                                                         params
                                                          ),
             [(-3, 3), (-3, 3), (-3, 3), (0, 360), (0, 360), (0, 360)])
         print(f"Optimisation result: {res.x} {res.fun}")
