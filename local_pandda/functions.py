@@ -3874,7 +3874,7 @@ def get_events(sample,
                                 vals.append(grid.interpolate_value(atom.pos))
                                 n = n +1
 
-            return sum(vals) / n
+            return 1 - (sum(vals) / n)
 
         grid = gemmi.FloatGrid(*_depth_array.shape)
         grid.set_unit_cell(
