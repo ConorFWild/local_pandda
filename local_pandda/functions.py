@@ -3912,7 +3912,6 @@ def get_events(sample,
                         virtual_atom.element = gemmi_element
                         virtual_atom.pos = new_pos
 
-
                         if atom_1_index < atom_2_index:
                             edges[(atom_1_index, atom_2_index)] = virtual_atom
 
