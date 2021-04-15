@@ -4909,7 +4909,7 @@ def analyse_dataset_b_factor_gpu(
     ):
         print(result)
 
-    exit()
+
 
     # Get a result object
     dataset_results: DatasetAffinityResults = DatasetAffinityResults(
@@ -5474,7 +5474,6 @@ def analyse_dataset_rmsd_protein_scaled_gpu(
     ):
         print(result)
 
-    exit()
 
     # End loop over fragment builds
 
@@ -5981,7 +5980,6 @@ def analyse_dataset_signal_gpu(
     ):
         print(result)
 
-    exit()
 
     # End loop over fragment builds
 
@@ -6453,7 +6451,6 @@ def analyse_dataset_z_gpu(
     ):
         print(result)
 
-    exit()
 
     # End loop over fragment builds
 
@@ -6706,7 +6703,6 @@ def analyse_dataset_rmsd_gpu(
                 except:
                     pass
 
-            exit()
 
             max_rscc_bdc = max(rsccs, key=lambda x: rsccs[x][0])
             max_rscc_correlation_index = rsccs[max_rscc_bdc]
@@ -7343,7 +7339,7 @@ def analyse_residue_gpu(
     # Sample the datasets to ndarrays
     if params.debug:
         print(f"Getting sample arrays...")
-    sample_arrays: MutableMapping[str, np.ndarray] = sample_datasets(
+    sample_arrays: MutableMappingk[str, np.ndarray] = sample_datasets(
         truncated_datasets,
         marker,
         alignments,
