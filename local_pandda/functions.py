@@ -3970,7 +3970,7 @@ def get_events(sample,
 
         # Optimise
         res = scipy.optimize.shgo(
-            lambda params: _score_fit(centered_structure,
+            lambda params: _score_fit(probe_structure,
                                                          params
                                                          ),
             [(-3, 3), (-3, 3), (-3, 3), (0, 360), (0, 360), (0, 360)])
